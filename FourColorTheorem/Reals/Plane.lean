@@ -1,5 +1,7 @@
 import FourColorTheorem.Reals.Basic
 
+/- Definitions for points, regions, and maps in the real plane -/
+
 structure Point (α : Type _) [RealStructure α] where
   x : α
   y : α
