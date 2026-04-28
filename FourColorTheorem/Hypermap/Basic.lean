@@ -217,6 +217,37 @@ theorem faceinv_eq_iff_eq_face {x y : α}
   : H.faceinv x = y ↔ x = H.face y:=by{
   rw[faceinv_eq, comp_apply, ←H.face_inj, fen_cancel]
 }
+theorem eq_edgeinv_iff_edge_eq {x y : α}
+  : x = H.edgeinv y ↔ H.edge x = y:=by{
+  rw[edgeinv_eq, comp_apply, ←H.edge_inj, enf_cancel]
+}
+theorem eq_nodeinv_iff_node_eq {x y : α}
+  : x = H.nodeinv y ↔ H.node x = y:=by{
+  rw[nodeinv_eq, comp_apply, ←H.node_inj, nfe_cancel]
+}
+theorem eq_faceinv_iff_face_eq {x y : α}
+  : x = H.faceinv y ↔ H.face x = y:=by{
+  rw[faceinv_eq, comp_apply, ←H.face_inj, fen_cancel]
+}
+theorem edgeinv_bijective : Bijective H.edgeinv := Fintype.bijective_bijInv H.edge_bijective
+theorem nodeinv_bijective : Bijective H.nodeinv := Fintype.bijective_bijInv H.node_bijective
+theorem faceinv_bijective : Bijective H.faceinv := Fintype.bijective_bijInv H.face_bijective
+theorem edgeinv_injective : Injective H.edgeinv := H.edgeinv_bijective.injective
+theorem nodeinv_injective : Injective H.nodeinv := H.nodeinv_bijective.injective
+theorem faceinv_injective : Injective H.faceinv := H.faceinv_bijective.injective
+
+theorem edgeinv_leftinv (x : α) : H.edgeinv (H.edge x) = x:=
+  Fintype.leftInverse_bijInv H.edge_bijective x
+theorem nodeinv_leftinv (x : α) : H.nodeinv (H.node x) = x:=
+  Fintype.leftInverse_bijInv H.node_bijective x
+theorem faceinv_leftinv (x : α) : H.faceinv (H.face x) = x:=
+  Fintype.leftInverse_bijInv H.face_bijective x
+theorem edgeinv_rightinv (x : α) : H.edge (H.edgeinv x) = x:=
+  Fintype.rightInverse_bijInv H.edge_bijective x
+theorem nodeinv_rightinv (x : α) : H.node (H.nodeinv x) = x:=
+  Fintype.rightInverse_bijInv H.node_bijective x
+theorem faceinv_rightinv (x : α) : H.face (H.faceinv x) = x:=
+  Fintype.rightInverse_bijInv H.face_bijective x
 
 theorem edge_eq_self_iff_edgeinv_eq_self {x : α}
   : H.edge x = x ↔ H.edgeinv x = x:=by{
@@ -336,10 +367,10 @@ theorem csetoid_eq_gsetoid {H : Hypermap α} : H.csetoid = H.gsetoid := by{
   unfold csetoid gsetoid
   simp[cclink_iff_cglink]
 }
-def moebius_path (H : Hypermap α) :List α → Prop
-| [] => false
-| x::p => (x::p).Nodup ∧ (x::p).IsChain H.clink
-  ∧ H.node x ∈ p.drop (p.idxOf (H.nodeinv (List.getLastD p x)))
+def moebius_path (H : Hypermap α) (p : List α) : Prop :=
+  if hp: p = [] then False
+  else p.Nodup ∧ p.IsChain H.clink
+  ∧ H.node (p.head hp) ∈ p.tail.drop (p.tail.idxOf (H.nodeinv (p.getLast hp)))
 def jordan (H : Hypermap α) := ∀q, ¬H.moebius_path q
 theorem nil_not_moebius_path:¬H.moebius_path []:=by{unfold moebius_path;simp}
 theorem moebius_path_ne_nil {p : List α} (hp : H.moebius_path p) : p ≠ [] :=
@@ -351,7 +382,7 @@ theorem head_node_mem_moebius_path_tail {p : List α} (hp : H.moebius_path p) :
     | x::p' => {
       simp only [List.tail_cons, List.head_cons]
       unfold moebius_path at hp
-      simp only at hp
+      simp only [reduceCtorEq, ↓reduceDIte, List.nodup_cons, List.head_cons] at hp
       exact List.mem_of_mem_drop hp.right.right
     }
   }
@@ -369,10 +400,10 @@ theorem last_nodeinv_mem_moebius_path_tail {p : List α} (hp : H.moebius_path p)
       simp only [List.tail_cons]
       rw[List.getLast_cons_eq_getLastD]
       unfold moebius_path at hp
-      simp only at hp
       rw[←List.idxOf_lt_length_iff]
       have hp'':=List.length_pos_of_mem hp.right.right
-      simp only [List.length_drop, tsub_pos_iff_lt] at hp''
+      simp only [List.length_drop, tsub_pos_iff_lt, List.tail_cons
+      , List.getLast_cons_eq_getLastD] at hp''
       exact hp''
     }
   }
@@ -392,7 +423,6 @@ theorem moebius_path_not_eq {p : List α} (hp : H.moebius_path p) :
       rw[List.getLast_cons_eq_getLastD]
       have hy := last_nodeinv_mem_moebius_path_tail_cons hp
       unfold moebius_path at hp
-      simp only at hp
       rw[List.nodup_cons] at hp
       intro hn
       apply hp.left.left
@@ -422,6 +452,229 @@ theorem moebius_path_not_eq'_cons {x : α} {p : List α} (hp : H.moebius_path (x
     simp at hp
     simp[hp]
   }
+theorem moebius_path_tail_ne_nil {p : List α} (hp : H.moebius_path p) :
+  p.tail ≠ []:=by{
+    match p with
+    | x::p' => {
+      simp only [List.tail_cons, ne_eq]
+      simp only [moebius_path, reduceCtorEq, ↓reduceDIte, List.nodup_cons, List.tail_cons,
+        List.head_cons] at hp
+      have hp':=List.mem_of_mem_drop hp.right.right
+      apply List.ne_nil_of_mem hp'
+    }
+  }
+theorem moebius_path_head_ne_last {p : List α} (hp : H.moebius_path p) :
+  p.head (moebius_path_ne_nil hp) ≠ p.getLast (moebius_path_ne_nil hp) := by{
+    have hpn:=moebius_path_ne_nil hp
+    have hp'n:=moebius_path_tail_ne_nil hp
+    unfold moebius_path at hp
+    rw[dite_cond_eq_false (by{simp[hpn]})] at hp
+    have hpd:=hp.left
+    rw[←List.cons_head_tail hpn] at hpd
+    rw[List.nodup_cons] at hpd
+    intro h
+    apply hpd.left
+    rw[h]
+    rw[←List.getLast_tail hp'n]
+    apply List.getLast_mem
+  }
+theorem moebius_path_node_head_mem_tail {p : List α} (hp : H.moebius_path p)
+  : H.node (p.head (moebius_path_ne_nil hp)) ∈ p.tail :=by{
+    have hpn:=moebius_path_ne_nil hp
+    unfold moebius_path at hp
+    simp only [hpn, ↓reduceDIte] at hp
+    exact List.mem_of_mem_drop hp.right.right
+  }
+theorem moebius_path_node_head_mem_dropLast_tail {p : List α} (hp : H.moebius_path p)
+  : H.node (p.head (moebius_path_ne_nil hp)) ∈ p.dropLast.tail :=by{
+    have ih:=moebius_path_node_head_mem_tail hp
+    have hpn:=moebius_path_ne_nil hp
+    nth_rw 1 [←List.concat_dropLast_getLast hpn] at ih
+    have h:p.dropLast ≠ []:=by{
+      intro h
+      simp[h] at ih
+    }
+    rw[List.tail_append_of_ne_nil h, List.mem_append] at ih
+    apply ih.resolve_right
+    simp only [List.mem_cons, List.not_mem_nil, or_false]
+    apply moebius_path_not_eq'
+    exact hp
+  }
+theorem moebius_path_node_head_mem {p : List α} (hp : H.moebius_path p)
+  : H.node (p.head (moebius_path_ne_nil hp)) ∈ p :=by{
+    apply List.mem_of_mem_tail
+    apply moebius_path_node_head_mem_tail
+    exact hp
+  }
+theorem moebius_path_head_ne_node {p : List α} (hp : H.moebius_path p)
+: p.head (moebius_path_ne_nil hp) ≠ H.node (p.head (moebius_path_ne_nil hp)) := by{
+  have hpn:=moebius_path_ne_nil hp
+  have hp_backup := hp
+  unfold moebius_path at hp
+  simp only [hpn, ↓reduceDIte] at hp
+  have hpd:=hp.left
+  rw[←List.cons_head_tail hpn, List.nodup_cons] at hpd
+  intro h
+  apply hpd.left
+  rw[h]
+  apply moebius_path_node_head_mem_tail
+  exact hp_backup
+}
+theorem moebius_path_nodeinv_getLast_mem_tail {p : List α} (hp : H.moebius_path p)
+: H.nodeinv (p.getLast (moebius_path_ne_nil hp)) ∈ p.tail := by{
+  have hpn:=moebius_path_ne_nil hp
+  have hp_backup := hp
+  unfold moebius_path at hp
+  simp only [hpn, ↓reduceDIte] at hp
+  have hpm:=hp.right.right
+  have hpm':=List.ne_nil_of_mem hpm
+  simp only [ne_eq, List.drop_eq_nil_iff, not_le] at hpm'
+  rw[List.idxOf_lt_length_iff] at hpm'
+  exact hpm'
+}
+theorem moebius_path_nodeinv_ne_getLast {p : List α} (hp : H.moebius_path p)
+: H.nodeinv (p.getLast (moebius_path_ne_nil hp)) ≠ p.getLast (moebius_path_ne_nil hp) := by{
+  have hpn:=moebius_path_ne_nil hp
+  have hp'n:=moebius_path_tail_ne_nil hp
+  have hp_backup := hp
+  unfold moebius_path at hp
+  simp only [hpn] at hp
+  have hpm:=hp.right.right
+  intro h
+  rw[h] at hpm
+  rw[←List.getLast_tail hp'n] at hpm
+  rw[List.idxOf_getLast hp'n (by{
+    have hpd:=hp.left
+    rw[←List.cons_head_tail hpn, ←List.concat_dropLast_getLast hp'n] at hpd
+    rw[←List.concat_eq_append, List.nodup_cons, List.nodup_concat] at hpd
+    exact hpd.right.left
+  })] at hpm
+  rw[List.drop_length_sub_one hp'n] at hpm
+  simp only [List.getLast_tail, List.mem_cons, List.not_mem_nil, or_false] at hpm
+  apply moebius_path_not_eq' hp_backup
+  exact hpm
+}
+theorem moebius_path_nodeinv_getLast_mem_dropLast_tail {p : List α} (hp : H.moebius_path p)
+: H.nodeinv (p.getLast (moebius_path_ne_nil hp)) ∈ p.dropLast.tail := by{
+  have ih:=moebius_path_nodeinv_getLast_mem_tail hp
+  have hpn:=moebius_path_ne_nil hp
+  nth_rw 1 [←List.concat_dropLast_getLast hpn] at ih
+  have h:p.dropLast ≠ []:=by{
+    intro h
+    simp[h] at ih
+  }
+  rw[List.tail_append_of_ne_nil h, List.mem_append] at ih
+  apply ih.resolve_right
+  simp only [List.mem_cons, List.not_mem_nil, or_false]
+  apply moebius_path_nodeinv_ne_getLast
+  exact hp
+}
+theorem moebius_path_nodeinv_getLast_mem_dropLast {p : List α} (hp : H.moebius_path p)
+: H.nodeinv (p.getLast (moebius_path_ne_nil hp)) ∈ p.dropLast := by{
+  apply List.mem_of_mem_tail
+  apply moebius_path_nodeinv_getLast_mem_dropLast_tail
+  exact hp
+}
+theorem moebius_path_nodeinv_getLast_mem {p : List α} (hp : H.moebius_path p)
+: H.nodeinv (p.getLast (moebius_path_ne_nil hp)) ∈ p := by{
+  apply List.mem_of_mem_tail
+  apply moebius_path_nodeinv_getLast_mem_tail
+  exact hp
+}
+theorem card_ge_three_of_moebius_path {p : List α} (hp : H.moebius_path p)
+  : Fintype.card α ≥ 3:=by{
+    apply Nat.le_of_not_gt
+    simp only [Nat.lt_succ_iff]
+    rw[Fintype.card_le_two_iff]
+    rw[not_or, not_exists]
+    simp only [not_exists, not_forall, not_or]
+    have hpn:=moebius_path_ne_nil hp
+    rw[not_isEmpty_iff]
+    apply And.intro (Nonempty.intro (p.head hpn))
+    intro a b
+    have h0:=moebius_path_not_eq hp
+    have h1:=moebius_path_head_ne_last hp
+    have h2:=moebius_path_nodeinv_ne_getLast hp
+    cases em (H.nodeinv (p.getLast hpn) = a) with
+    | inl ha => {
+      rw[←ha]
+      cases em (p.getLast hpn = b) with
+      | inl hb => {
+        use p.head hpn
+        rw[←hb]
+        exact ⟨h0, h1⟩
+      }
+      | inr hb => {
+        use p.getLast hpn
+        exact ⟨h2.symm, hb⟩
+      }
+    }
+    | inr ha => {
+      cases em (p.getLast hpn = b) with
+      | inl hb => {
+        use H.nodeinv (p.getLast hpn)
+        rw[←hb]
+        exact ⟨ha, h2⟩
+      }
+      | inr hb => {
+        cases em (H.nodeinv (p.getLast hpn) = b) with
+        | inl hb' => {
+          cases em (p.getLast hpn = a) with
+          | inl ha' => {
+            rw[←ha', ←hb']
+            use p.head hpn
+          }
+          | inr ha' => {
+            use p.getLast hpn
+          }
+        }
+        | inr hb' => {
+          use H.nodeinv (p.getLast hpn)
+        }
+      }
+    }
+  }
+theorem length_ge_three_of_moebius_path {p : List α} (hp : H.moebius_path p)
+  : p.length ≥ 3 := by{
+    have h0:=moebius_path_node_head_mem_dropLast_tail hp
+    have hn:=moebius_path_ne_nil hp
+    have hn':=moebius_path_tail_ne_nil hp
+    rw[←List.cons_head_tail hn, ←List.concat_dropLast_getLast hn']
+    simp only [List.getLast_tail, List.length_cons]
+    apply Nat.succ_le_succ
+    rw[List.length_append, List.length_singleton]
+    apply Nat.succ_le_succ
+    rw[←List.tail_dropLast]
+    apply List.length_pos_of_mem h0
+  }
+theorem moebius_path_tail_tail_ne_nil {p : List α} (hp : H.moebius_path p)
+  : p.tail.tail ≠ [] := by{
+    have h:=length_ge_three_of_moebius_path hp
+    match p with
+    | [] | [_] | [_, _] => simp at h
+    | _::_::_::_ => simp
+  }
+theorem card_pos_of_moebius_path {p : List α} (hp : H.moebius_path p)
+  : Fintype.card α > 0:=by{
+    apply (Nat.lt_of_lt_of_le · (card_ge_three_of_moebius_path hp))
+    simp
+  }
+theorem moebius_path_nodup {p : List α} (hp : H.moebius_path p)
+  : p.Nodup := by{
+    simp[moebius_path] at hp
+    simp[hp]
+  }
+theorem moebius_path_isChain_clink {p : List α} (hp : H.moebius_path p)
+  : p.IsChain H.clink := by{
+    simp[moebius_path] at hp
+    simp[hp]
+  }
+theorem moebius_path_cross_nlink {p : List α} (hp : H.moebius_path p)
+  : H.node (p.head (moebius_path_ne_nil hp)) ∈
+  p.tail.drop (p.tail.idxOf (H.nodeinv (p.getLast (moebius_path_ne_nil hp)))) := by{
+    simp[moebius_path, moebius_path_ne_nil hp] at hp
+    simp[hp]
+  }
 @[reducible] def permN (H : Hypermap α) : Hypermap α := ⟨H.node, H.face, H.edge, H.nfe_cancel⟩
 @[reducible] def permF (H : Hypermap α) : Hypermap α := ⟨H.face, H.edge, H.node, H.fen_cancel⟩
 
@@ -433,6 +686,15 @@ theorem permF_triple : H.permF.permF.permF = H := rfl
 theorem permN_edge : H.permN.edge = H.node := rfl
 theorem permN_node : H.permN.node = H.face := rfl
 theorem permN_face : H.permN.face = H.edge := rfl
+theorem permN_edgeinv : H.permN.edgeinv = H.nodeinv := by{
+  rw[edgeinv_eq, nodeinv_eq, permN_node, permN_face]
+}
+theorem permN_nodeinv : H.permN.nodeinv = H.faceinv := by{
+  rw[nodeinv_eq, faceinv_eq, permN_face, permN_edge]
+}
+theorem permN_faceinv : H.permN.faceinv = H.edgeinv := by{
+  rw[faceinv_eq, edgeinv_eq, permN_edge, permN_node]
+}
 theorem permN_cedge : H.permN.cedge = H.cnode := rfl
 theorem permN_cnode : H.permN.cnode = H.cface := rfl
 theorem permN_cface : H.permN.cface = H.cedge := rfl
@@ -477,6 +739,15 @@ theorem permN_planar : H.permN.planar ↔ H.planar := by{
 theorem permF_edge : H.permF.edge = H.face := rfl
 theorem permF_node : H.permF.node = H.edge := rfl
 theorem permF_face : H.permF.face = H.node := rfl
+theorem permF_edgeinv : H.permF.edgeinv = H.faceinv := by{
+  rw[edgeinv_eq, faceinv_eq, permF_node, permF_face]
+}
+theorem permF_nodeinv : H.permF.nodeinv = H.edgeinv := by{
+  rw[nodeinv_eq, edgeinv_eq, permF_face, permF_edge]
+}
+theorem permF_faceinv : H.permF.faceinv = H.nodeinv := by{
+  rw[faceinv_eq, nodeinv_eq, permF_edge, permF_node]
+}
 theorem permF_cedge : H.permF.cedge = H.cface := rfl
 theorem permF_cnode : H.permF.cnode = H.cedge := rfl
 theorem permF_cface : H.permF.cface = H.cnode := rfl
@@ -592,7 +863,7 @@ theorem dual_jordan_imp (hJ : H.jordan) : H.dual.jordan := by{
     rw[dual_nodeinv] at hqn0 hfy
     rw[dual_node] at hqn1
     unfold moebius_path at hq
-    simp only at hq
+    simp only [reduceCtorEq, ↓reduceDIte, List.tail_cons, List.getLast_cons_eq_getLastD] at hq
     rw[dual_nodeinv, dual_node, dual_clink] at hq
     let y:=q'.getLastD x
     let k:=(List.idxOf (face y) q')
@@ -703,7 +974,6 @@ theorem dual_jordan_imp (hJ : H.jordan) : H.dual.jordan := by{
       apply hJ (z::q3' ++ (y'::q2'') ++ x::q1)
       simp only [List.cons_append]
       unfold moebius_path
-      simp only
       constructor
       · {
         have hqn:=hq.left
@@ -756,6 +1026,7 @@ theorem dual_jordan_imp (hJ : H.jordan) : H.dual.jordan := by{
         have hqn':=hqn.right.left.right.right y' (by{simp}) y'
         simp only [List.mem_cons, not_true_eq_false, imp_false, not_or] at hqn'
         rw[hq2] at hqn'
+        rw[List.head_cons, List.tail_cons, List.getLast_cons_eq_getLastD]
         rw[List.getLastD_append_cons, hq1, nodeinv_eq, comp_apply, fen_cancel, hq2]
         rw[List.append_assoc, List.cons_append]
         have hd:List.drop (List.idxOf (face y) (q3' ++ face y::(q2'' ++ x :: q1)))

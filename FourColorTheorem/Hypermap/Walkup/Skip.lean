@@ -1607,7 +1607,18 @@ theorem cross_edge_of_isbarb {x : α} (hb : H.isbarb x)
     simp[cross_edge, hb, cedge_equivalence.refl]
   }
 
-@[reducible] def WalkupN (H : Hypermap α) (x : α) : Hypermap {a // a ≠ x} := (H.WalkupE x).permN
-@[reducible] def WalkupF (H : Hypermap α) (x : α) : Hypermap {a // a ≠ x} := (H.WalkupE x).permF
+@[reducible] def WalkupN (H : Hypermap α) (x : α) : Hypermap {a // a ≠ x} :=
+  (H.permN.WalkupE x).permF
+@[reducible] def WalkupF (H : Hypermap α) (x : α) : Hypermap {a // a ≠ x} :=
+  (H.permF.WalkupE x).permN
+
+theorem walkupe_nodeinv {x : α} : (H.WalkupE x).nodeinv = skip H.nodeinv_injective x:=by{
+  rw[nodeinv, ←Fintype.skip_bijInv_comm H.node_bijective]
+  congr
+}
+theorem walkupe_faceinv {x : α} : (H.WalkupE x).faceinv = skip H.faceinv_injective x:=by{
+  rw[faceinv, ←Fintype.skip_bijInv_comm H.face_bijective]
+  congr
+}
 
 end Hypermap
