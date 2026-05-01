@@ -601,6 +601,12 @@ theorem Fintype.bijInv_minimalPeriod' [DecidableEq α] {f : α → α} (hf : Bij
     intro n
     exact bijInv_IsPeriodicPt hf
   }
+theorem Fintype.bijInv_minimalPeriod [DecidableEq α] {f : α → α} (hf : Bijective f)
+  : minimalPeriod (bijInv hf) = minimalPeriod f:=by{
+    rw[←minimalPeriod'_eq_minimalPeriod]
+    rw[←minimalPeriod'_eq_minimalPeriod]
+    apply Fintype.bijInv_minimalPeriod' hf
+  }
 theorem Relation.funReflTransGen_conj [DecidableEq α] {f : α → α} (hf : Bijective f) (g : α → α)
   : funReflTransGen ((Fintype.bijInv hf) ∘ g ∘ f) = ReflTransGen (InvImage (fromFun g) f) := by{
     ext a b
@@ -649,7 +655,58 @@ def Fintype.injective_setoid {f : α → α} (hf : Injective f):Setoid α where
     unfold injective_setoid
     apply Relation.funReflTransGen.finDec
   }
+
+theorem List.isChain_bijInv_iff_isChain_reverse [DecidableEq α] {l : List α} {f : α → α}
+  (hf : Bijective f)
+  : List.IsChain (fromFun (Fintype.bijInv hf)) l ↔ List.IsChain (fromFun f) l.reverse := by{
+    match l with
+    | [] | [_] => simp
+    | a :: b :: t => {
+      rw[List.isChain_cons_cons]
+      rw[List.reverse_cons, List.reverse_cons]
+      rw[List.isChain_concat_append]
+      rw[←List.reverse_cons]
+      rw[and_comm]
+      apply and_congr
+      · apply isChain_bijInv_iff_isChain_reverse hf
+      · {
+        simp only [fromFun, isChain_cons_cons, IsChain.singleton, and_true]
+        rw[←hf.injective.eq_iff, Fintype.rightInverse_bijInv hf, Eq.comm]
+      }
+    }
+  }
 end Fintype
+theorem Function.iterate_isPeriodicPt {α : Type _} {f : α → α}
+  {x : α} {n : ℕ} (hp : IsPeriodicPt f n x) (m : ℕ) : IsPeriodicPt f n (f^[m] x) := by{
+    rw[IsPeriodicPt, IsFixedPt] at *
+    rw[←iterate_add_apply, add_comm, iterate_add_apply, hp]
+  }
+section Finite
+variable {α : Type _}
+variable [Finite α]
+theorem Function.minimalPeriod_eq_of_funReflTransGen_injective {f : α → α} (hf : Injective f)
+  {x y : α} (hxy : funReflTransGen f x y) : minimalPeriod f x = minimalPeriod f y := by{
+    have hyx:=funReflTransGen_symm_of_injective hf hxy
+    rw[funReflTransGen_iff_iterate] at hxy hyx
+    have ⟨n, hxyn⟩:=hxy
+    have ⟨m, hyxm⟩:=hyx
+    rw[minimalPeriod_eq_minimalPeriod_iff]
+    intro k
+    constructor
+    · {
+      intro hkx
+      rw[←hxyn]
+      apply iterate_isPeriodicPt
+      exact hkx
+    }
+    · {
+      intro hky
+      rw[←hyxm]
+      apply iterate_isPeriodicPt
+      exact hky
+    }
+  }
+end Finite
 
 -- skip
 

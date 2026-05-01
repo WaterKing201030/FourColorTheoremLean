@@ -1,12 +1,17 @@
 import Batteries.Data.List.Basic
 import Init.Data.List.Pairwise
 import Mathlib.Data.List.Nodup
+import Mathlib.Order.Minimal
 
 open Relation
 open Function
 
 variable {α : Type _}
-
+theorem List.mem_take_of_mem_take_le {l : List α} {x : α} {n m : ℕ}
+  (hlx : x ∈ l.take n) (hnm : n ≤ m) : x ∈ l.take m := by{
+    apply List.take_subset_take_left _ hnm
+    exact hlx
+  }
 theorem List.ne_nil_iff_exists_concat {l : List α}
   : l ≠ [] ↔ ∃l' x, l' ++ [x] = l:=by{
     induction l with
@@ -71,6 +76,10 @@ theorem List.getLastD_append_cons {a : α} {l₁ : List α} {x : α} {l₂ : Lis
 theorem List.drop_idxOf_head [DecidableEq α] {x : α} {p : List α} (hxp : x ∈ p)
   : (p.drop (p.idxOf x)).head (by{simp[idxOf_lt_length_iff, hxp]}) = x:=by{
     simp
+  }
+theorem List.idxOf_head [DecidableEq α] {p : List α} (hp : p ≠ [])
+  : p.idxOf (p.head hp) = 0 := by{
+    match p with | _::_ => simp
   }
 theorem List.idxOf?_isSome_iff [DecidableEq α] {x : α} {l : List α}
   : (l.idxOf? x).isSome ↔ x ∈ l:=by{
@@ -190,5 +199,149 @@ theorem List.nodup_attachWith {p : List α} {P : α → Prop} (hp : ∀ x ∈ p,
     | nil => simp
     | cons x p' ih => {
       simp[ih]
+    }
+  }
+
+theorem List.idxOf_getLast_of_nodup [DecidableEq α] {p : List α} (hp : p ≠ [])
+  (hpd : p.Nodup) : p.idxOf (p.getLast hp) = p.length - 1 := by{
+    rw[idxOf_getLast]
+    rw[←List.concat_dropLast_getLast hp] at hpd
+    rw[←List.concat_eq_append, List.nodup_concat] at hpd
+    exact hpd.left
+  }
+theorem List.idxOf_drop_of_notMem [DecidableEq α] {p : List α} {x : α} {n : ℕ}
+  (hpx : x ∉ p.take n) : (p.drop n).idxOf x = p.idxOf x - n := by{
+    nth_rw 2 [←List.take_append_drop n p]
+    rw[List.idxOf_append_of_notMem hpx]
+    rw[Nat.add_comm, List.length_take]
+    cases Nat.le_total n p.length with
+    | inl hnp => rw[Nat.min_eq_left hnp, Nat.add_sub_cancel]
+    | inr hnp => {
+      rw[List.drop_of_length_le hnp]
+      rw[Nat.min_eq_right hnp]
+      simp[hnp]
+    }
+  }
+theorem List.idxOf_ge_of_mem_drop_of_notMem_take [DecidableEq α] {p : List α} {x : α} {n : ℕ}
+  (hpx : x ∈ p.drop n) (hpx' : x ∉ p.take n) : n ≤ p.idxOf x:= by{
+    have ih:=idxOf_drop_of_notMem hpx'
+    apply Nat.le_of_not_lt
+    intro h
+    simp only [Nat.le_of_lt h, Nat.sub_eq_zero_of_le] at ih
+    rw[List.idxOf_eq_zero_iff_eq_nil_or_head_eq] at ih
+    have h0:=ne_nil_of_mem hpx
+    apply (Or.resolve_left · h0) at ih
+    rw[head?_eq_some_head h0, Option.some_inj] at ih
+    rw[←List.take_append_drop n p] at h
+    rw[List.idxOf_append_of_notMem hpx', length_take] at h
+    rw[ne_eq, drop_eq_nil_iff, Nat.not_le] at h0
+    rw[Nat.min_eq_left (Nat.le_of_lt h0)] at h
+    have h':=Nat.lt_of_le_of_lt (Nat.le_add_right _ _) h
+    simp at h'
+  }
+theorem List.idxOf_ge_of_mem_drop_of_nodup [DecidableEq α] {p : List α} {x : α} {n : ℕ}
+  (hpx : x ∈ p.drop n) (hpd : p.Nodup) : n ≤ p.idxOf x:= by{
+    apply List.idxOf_ge_of_mem_drop_of_notMem_take hpx
+    rw[←List.take_append_drop n p, List.nodup_append_comm, List.nodup_append'] at hpd
+    apply hpd.right.right hpx
+  }
+def List.revInduction {C : List α → Sort _} (nil : C [])
+  (concat : (xs : List α) → (x : α) → C xs → C (xs.concat x))
+  (l : List α) : C l :=
+  List.reverse_reverse l ▸ l.reverse.rec (motive:=C ∘ reverse) nil
+    (fun h t ht => Eq.mp (id
+      (Eq.mpr (id (congrArg (fun _a ↦ C (t.reverse.concat h) = C _a) (reverse_cons' h t)))
+        (Eq.refl (C (t.reverse.concat h))))) (concat t.reverse h ht) :
+    (h : α) → (t : List α) → (C ∘ reverse) t → (C ∘ reverse) (h::t))
+theorem List.append_suffix_append_right {l₁ l₂ l : List α} : l₁ ++ l <:+ l₂ ++ l ↔ l₁ <:+ l₂ := by{
+  rw[suffix_iff_eq_append]
+  rw[suffix_iff_eq_append]
+  simp[Nat.add_sub_add_right, List.take_append_of_le_length (Nat.sub_le _ _)]
+  simp[←List.append_assoc]
+}
+theorem List.exists_mem_iff_exists_getElem_minimal {P : α → Prop} {l : List α} :
+  (∃ x ∈ l, P x) ↔ ∃i, ∃(hi : i < l.length), P l[i] ∧ ∀j, (hj : j < i) → ¬P l[j]:=by{
+    constructor
+    · {
+      intro h
+      rw[List.exists_mem_iff_exists_getElem] at h
+      have h':=exists_minimal_of_wellFoundedLT _ h
+      unfold Minimal at h'
+      have ⟨i, ⟨hi0, hi1⟩, hi'⟩:=h'
+      use i
+      use hi0
+      apply And.intro hi1
+      intro j hj hj'
+      have hi'':=hi' ⟨Nat.lt_trans hj hi0, hj'⟩ (Nat.le_of_lt hj)
+      apply Nat.not_le_of_gt hj hi''
+    }
+    · {
+      intro ⟨i, _, hi, _⟩
+      exact ⟨l[i], List.getElem_mem _, hi⟩
+    }
+  }
+theorem List.nodup_iff_getElem?_ne_getElem?' {l : List α} :
+  l.Nodup ↔ ∀ (i j : ℕ), i ≠ j → i < l.length → j < l.length → l[i]? ≠ l[j]?
+  :=by{
+    rw[nodup_iff_getElem?_ne_getElem?]
+    constructor
+    · {
+      intro h i j hij hil hjl
+      cases lt_or_gt_of_ne hij with
+      | inl hij => {
+        exact h _ _ hij hjl
+      }
+      | inr hij => {
+        symm
+        exact h _ _ hij hil
+      }
+    }
+    · {
+      intro h i j hij hjl
+      exact h _ _ (ne_of_lt hij) (lt_trans hij hjl) hjl
+    }
+  }
+theorem List.getElem?_eq_some_getElem {xs : List α} {i : ℕ} (h : i < xs.length) :
+  xs[i]? = some xs[i] := by{simp[getElem?_eq_some_getElem_iff h]}
+theorem List.nodup_iff_getElem_ne_getElem {l : List α} :
+  l.Nodup ↔ ∀ (i j : ℕ), (hij:i < j) → (hjl:j < l.length) → l[i] ≠ l[j]
+  :=by{
+    rw[nodup_iff_getElem?_ne_getElem?]
+    constructor
+    · {
+      intro h i j hij hjl
+      have h':=h i j hij hjl
+      rw[getElem?_eq_some_getElem (lt_trans hij hjl)] at h'
+      rw[getElem?_eq_some_getElem hjl] at h'
+      rw[ne_eq, Option.some_inj] at h'
+      exact h'
+    }
+    · {
+      intro h i j hij hjl
+      rw[getElem?_eq_some_getElem (lt_trans hij hjl)]
+      rw[getElem?_eq_some_getElem hjl]
+      rw[ne_eq, Option.some_inj]
+      exact h _ _ hij hjl
+    }
+  }
+theorem List.nodup_iff_getElem_ne_getElem' {l : List α} :
+  l.Nodup ↔ ∀ (i j : ℕ), (hij:i ≠ j) → (hil:i < l.length) → (hjl:j < l.length) → l[i] ≠ l[j]
+  :=by{
+    rw[nodup_iff_getElem_ne_getElem]
+    constructor
+    · {
+      intro h i j hij hil hjl
+      cases lt_or_gt_of_ne hij with
+      | inl hij => {
+        exact h _ _ hij hjl
+      }
+      | inr hij => {
+        symm
+        exact h _ _ hij hil
+      }
+    }
+    · {
+      intro h i j hij hjl
+      exact h _ _ (ne_of_lt hij) (lt_trans hij hjl) hjl
     }
   }

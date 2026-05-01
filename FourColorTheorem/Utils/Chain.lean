@@ -1,4 +1,5 @@
 import Mathlib.Data.List.Induction
+import Mathlib.Data.List.Chain
 import FourColorTheorem.Utils.List
 
 open Relation

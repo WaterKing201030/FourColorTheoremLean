@@ -70,6 +70,12 @@ theorem cface_equivalence : Equivalence H.cface where
   refl := fun _ => ReflTransGen.refl
   symm := cface_Symm.symm _ _
   trans := ReflTransGen.trans
+theorem cedge_pred_eq_of_cedge {x y : α} (hxy : H.cedge x y)
+  : H.cedge x = H.cedge y := cedge_equivalence.pred_eq_iff.mpr hxy
+theorem cnode_pred_eq_of_cnode {x y : α} (hxy : H.cnode x y)
+  : H.cnode x = H.cnode y := cnode_equivalence.pred_eq_iff.mpr hxy
+theorem cface_pred_eq_of_cface {x y : α} (hxy : H.cface x y)
+  : H.cface x = H.cface y := cface_equivalence.pred_eq_iff.mpr hxy
 
 def glink (H : Hypermap α) : α → α → Prop := fromFun H.edge ∪ (fromFun H.node ∪ fromFun H.face)
 theorem glink_iff {x y : α} : H.glink x y ↔ H.edge x = y ∨ H.node x = y ∨ H.face x = y := by rfl
@@ -282,6 +288,17 @@ theorem not_nodeinv_self_of_glink {x : α} (hgx : ¬H.glink x x) : H.nodeinv x �
   not_node_self_of_glink hgx ∘ node_eq_self_iff_nodeinv_eq_self.mpr
 theorem not_faceinv_self_of_glink {x : α} (hgx : ¬H.glink x x) : H.faceinv x ≠ x:=
   not_face_self_of_glink hgx ∘ face_eq_self_iff_faceinv_eq_self.mpr
+
+theorem edge_self_cedge_iff {x y : α} (he : H.edge x = x) : H.cedge x y ↔ x = y:=by{
+  simp[cedge, funReflTransGen_iff_iterate, iterate_fixed he]
+}
+theorem node_self_cnode_iff {x y : α} (hn : H.node x = x) : H.cnode x y ↔ x = y:=by{
+  simp[cnode, funReflTransGen_iff_iterate, iterate_fixed hn]
+}
+theorem face_self_cface_iff {x y : α} (hf : H.face x = x) : H.cface x y ↔ x = y:=by{
+  simp[cface, funReflTransGen_iff_iterate, iterate_fixed hf]
+}
+
 
 def clink (H : Hypermap α) := fromFun H.nodeinv ∪ fromFun H.face
 def cclink (H : Hypermap α) := ReflTransGen H.clink
@@ -1346,9 +1363,9 @@ theorem fproj_spec_of_mem_hband {p : List α} {x : α} (hx : x ∈ H.fband p)
     rw[hy']
     simp
   }
-def simplePath (H : Hypermap α) (p : List α) := (p.map (Quotient.mk H.fsetoid)).Nodup
-theorem nodup_of_simplePath {p : List α} (hp : H.simplePath p) : p.Nodup := by{
-  unfold simplePath at hp
+def simpleList (H : Hypermap α) (p : List α) := (p.map (Quotient.mk H.fsetoid)).Nodup
+theorem nodup_of_simpleList {p : List α} (hp : H.simpleList p) : p.Nodup := by{
+  unfold simpleList at hp
   exact List.Nodup.of_map _ hp
 }
 
