@@ -345,3 +345,4 @@ theorem List.nodup_iff_getElem_ne_getElem' {l : List α} :
       exact h _ _ (ne_of_lt hij) (lt_trans hij hjl) hjl
     }
   }
+

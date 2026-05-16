@@ -409,3 +409,74 @@ theorem List.isChain_attachWith_of_imp_mem {p : List α} {P : α → Prop} (hP :
     · apply getElem_mem
     · apply getElem_mem
   }
+
+def List.IsCycleChain (r : α → α → Prop) (l : List α) : Prop :=
+  if hln : l = [] then True
+  else l.IsChain r ∧ r (l.getLast hln) (l.head hln)
+@[inline] instance List.IsCycleChain.instDecidable {r : α → α → Prop} [DecidableRel r]
+  : DecidablePred (List.IsCycleChain r) := fun _ => instDecidableDite
+theorem List.IsCycleChain.isChain {r : α → α → Prop} {l : List α}
+  (hlr : l.IsCycleChain r) : l.IsChain r := by{
+    rw[IsCycleChain] at hlr
+    cases em (l = []) with
+    | inl hln => simp[hln]
+    | inr hln => {
+      simp[hln] at hlr
+      simp[hlr]
+    }
+  }
+@[simp] theorem List.isCycleChain_nil {r : α → α → Prop}
+  : IsCycleChain r [] := by{simp[IsCycleChain]}
+theorem List.isCycleChain_iff_getElem {r : α → α → Prop} {l : List α} (hln : l ≠ [])
+  : l.IsCycleChain r ↔ ∀i, r
+  (l[i % l.length]'(by{apply Nat.mod_lt; apply length_pos_of_ne_nil hln}))
+  (l[(i + 1) % l.length]'(by{apply Nat.mod_lt; apply length_pos_of_ne_nil hln}))
+  := by{
+    rw[IsCycleChain, dite_cond_eq_false (by{simp[hln]})]
+    rw[isChain_iff_getElem, getLast_eq_getElem, head_eq_getElem]
+    constructor
+    · {
+      intro ⟨hl, hr⟩ i
+      have hi := Nat.mod_lt i (length_pos_of_ne_nil hln)
+      have hi':=Nat.le_pred_of_lt hi
+      have hln':=Nat.succ_pred (Nat.ne_zero_of_lt hi)
+      have hln'':=Nat.succ_mod_succ_eq_zero_iff (a:=i) (b:=l.length.pred)
+      simp only [Nat.pred_eq_sub_one, Nat.sub_add_cancel (Nat.zero_lt_of_lt hi)] at hln''
+      rw[Nat.pred_eq_sub_one] at hi'
+      rcases lt_or_eq_of_le hi' with hi' | hi'
+      · {
+        simp only [Nat.ne_of_lt hi', iff_false] at hln''
+        have hln0 : l.length ≠ 1 :=by{
+          intro hln0
+          simp[hln0, Nat.mod_one] at hln''
+        }
+        have hln''':(i + 1) % l.length = i % l.length + 1 := by{
+          rw[Nat.add_mod, Nat.one_mod_eq_one.mpr hln0]
+          rw[Nat.mod_eq_of_lt]
+          apply Nat.succ_lt_of_lt_pred
+          exact hi'
+        }
+        simp only [hln''']
+        apply hl
+      }
+      · {
+        simp only [hi', iff_true] at hln''
+        simp[hln'', hi', hr]
+      }
+    }
+    · {
+      intro h
+      constructor
+      · {
+        intro i hi
+        have h':=h i
+        simp[Nat.mod_eq_of_lt hi, Nat.mod_eq_of_lt (Nat.lt_of_succ_lt hi)] at h'
+        simp[h']
+      }
+      · {
+        have h':=h (l.length - 1)
+        simp[Nat.sub_add_cancel (length_pos_of_ne_nil hln)] at h'
+        simp[h']
+      }
+    }
+  }
