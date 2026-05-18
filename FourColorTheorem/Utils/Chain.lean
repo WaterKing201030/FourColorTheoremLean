@@ -480,3 +480,32 @@ theorem List.isCycleChain_iff_getElem {r : α → α → Prop} {l : List α} (hl
       }
     }
   }
+
+theorem List.IsCycleChain.rotate {r : α → α → Prop} {l : List α} (hlk : l.IsCycleChain r)
+  (k : ℕ) : (l.rotate k).IsCycleChain r := by{
+    induction k generalizing l with
+    | zero => simp[hlk]
+    | succ k' ih => {
+      rw[Nat.add_comm, rotate_add]
+      apply ih
+      match l with
+      | [] => simp
+      | [a] => simp[hlk]
+      | a :: b :: l' => {
+        rw[rotate_cons_succ, rotate_zero]
+        rw[IsCycleChain, dite_cond_eq_false (by{simp})]
+        rw[IsCycleChain, dite_cond_eq_false (by{simp})] at hlk
+        rw[getLast_cons_cons, head_cons] at hlk
+        rw[getLast_append_singleton]
+        simp only [cons_append, head_cons]
+        rw[List.isChain_cons_cons] at hlk
+        refine ⟨?_, hlk.1.1⟩
+        rw[←cons_append, isChain_append]
+        simp only [IsChain.singleton, ne_eq, reduceCtorEq, not_false_eq_true,
+          getLast?_eq_some_getLast, Option.mem_def, Option.some.injEq, head?_cons, forall_eq',
+          true_and]
+        apply And.intro hlk.1.2
+        exact hlk.right
+      }
+    }
+  }

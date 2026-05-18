@@ -307,6 +307,13 @@ theorem half_mod2_sub_unit {d : GPoint} : (d.mod2 - ⟨1, 1⟩).half = d.mod2 - 
     simp[hx, hy]
 }
 
+theorem half_neg_mod2 {d : GDart} : (-d.mod2).half = -d.mod2 := by{
+  simp only [neg_def, x_mod2, y_mod2, GPoint.ext_iff, x_half, y_half]
+  cases Int.emod_two_eq d.x with | inl hx | inr hx =>
+  cases Int.emod_two_eq d.y with | inl hy | inr hy =>
+    simp[hx, hy]
+}
+
 def ccw : GPoint → GPoint
 | ⟨x, y⟩ => ⟨1 - y, x⟩
 theorem x_ccw {p : GPoint} : p.ccw.x = 1 - p.y := rfl
@@ -352,6 +359,14 @@ theorem ccw_2 {p : GPoint} : p.ccw.ccw = ⟨1, 1⟩ - p := by{
     simp only [←Equiv.toFun_as_coe, equivProd, ofProd, toProd]
   }
 }
+theorem ccw_2_ne {p : GPoint} : p.ccw.ccw ≠ p := by{
+  rw[ccw_2]
+  match p with
+  | ⟨x, y⟩ => {
+    simp
+    omega
+  }
+}
 
 theorem neg_toUnitSquareDart {p : GPoint} : (-p).toUnitSquareDart = p.toUnitSquareDart := by{
   match p with
@@ -373,6 +388,19 @@ theorem ccw_toUnitSquareDart {p : GPoint} : p.ccw.toUnitSquareDart = p.toUnitSqu
     cases Int.emod_two_eq_zero_or_one y with | inl hy | inr hy =>
       simp[hx, hy, Int.sub_emod, UnitSquareDart.ccw]
   }
+}
+
+theorem ccw_injective : Injective ccw := by{
+  intro x y hxy
+  have hxy':=congrArg (ccw^[3] ·) hxy
+  simp[ccw_4] at hxy'
+  simp[hxy']
+}
+theorem ccw_3_ne {p : GPoint} : p.ccw.ccw.ccw ≠ p := by{
+  apply ccw_injective.ne_iff.mp
+  rw[ccw_4]
+  symm
+  exact ccw_ne
 }
 
 def arc (c : GCorner) : GVector := c.ccw - c
@@ -538,7 +566,45 @@ theorem face_4 {d : GDart} : face (face (face (face d))) = d := face_4_periodic
 theorem node_4 {d : GDart} : node (node (node (node d))) = d := node_4_periodic
 theorem edge_2 {d : GDart} : edge (edge d) = d := edge_2_periodic
 
-theorem end0_edge {d : GDart} : end0 (edge d) = end1 d := by{
+theorem face_3 {d : GDart} : face (face (face d)) = edge (node d) := by{
+  apply face_injective
+  rw[face_4, fen_cancel]
+}
+theorem node_3 {d : GDart} : node (node (node d)) = face (edge d) := by{
+  apply node_injective
+  rw[node_4, nfe_cancel]
+}
+theorem edge_eq_node_face {d : GDart} : edge d = node (face d) := by{
+  apply edge_injective
+  rw[edge_2, enf_cancel]
+}
+
+theorem face_ne_node {d : GDart} : face d ≠ node d :=by{
+  simp only [face, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, add_def, node, ne_eq, mk.injEq,
+    not_and]
+  cases Int.emod_two_eq_zero_or_one d.x with | inl hx | inr hx =>
+  cases Int.emod_two_eq_zero_or_one d.y with | inl hy | inr hy =>
+    simp[hx, hy]; try omega
+}
+theorem face_ne_edge {d : GDart} : face d ≠ edge d :=by{
+  simp only [face, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, add_def, edge, ne_eq, mk.injEq,
+    not_and]
+  cases Int.emod_two_eq_zero_or_one d.x with | inl hx | inr hx =>
+  cases Int.emod_two_eq_zero_or_one d.y with | inl hy | inr hy =>
+    simp[hx, hy]; try omega
+}
+theorem node_ne_edge {d : GDart} : node d ≠ edge d :=by{
+  simp only [node, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, add_def, edge, ne_eq, mk.injEq,
+    not_and]
+  cases Int.emod_two_eq_zero_or_one d.x with | inl hx | inr hx =>
+  cases Int.emod_two_eq_zero_or_one d.y with | inl hy | inr hy =>
+    simp[hx, hy]; try omega
+}
+theorem node_ne_face {d : GDart} : node d ≠ face d := face_ne_node.symm
+theorem edge_ne_face {d : GDart} : edge d ≠ face d := face_ne_edge.symm
+theorem edge_ne_node {d : GDart} : edge d ≠ node d := node_ne_edge.symm
+
+theorem edge_end0 {d : GDart} : end0 (edge d) = end1 d := by{
   match d with | ⟨x, y⟩ => {
     simp only [end0, half, edge, arc, ccw, mod2, sub_def, sub_sub_sub_cancel_left,
       sub_sub_sub_cancel_right, add_def, end1, mk.injEq]
@@ -550,9 +616,9 @@ theorem end0_edge {d : GDart} : end0 (edge d) = end1 d := by{
   }
 }
 
-theorem end1_edge {d : GDart} : end1 (edge d) = end0 d := by{
+theorem edge_end1 {d : GDart} : end1 (edge d) = end0 d := by{
   nth_rw 2 [←edge_2 (d:=d)]
-  rw[end0_edge]
+  rw[edge_end0]
 }
 
 theorem face_toUnitSquareDart {d : GDart} : (face d).toUnitSquareDart = d.toUnitSquareDart.ccw
@@ -647,7 +713,21 @@ theorem edge_half {d : GDart} : (edge d).half = d.half + d.mod2.ccw + d.mod2 - �
   rw[sub_add_cancel_left, ccw_2, neg_sub]
   exact half_mod2_sub_unit
 }
-
+theorem edge_half_eq_edge0_add {d : GDart} : (edge d).half = end0 d + d.mod2.ccw - ⟨1, 1⟩:=by{
+  rw[edge_half, add_right_comm, ←end0]
+}
+theorem node_half_eq_end0_sub {d : GDart} : (node d).half = end0 d - d.mod2.ccw := by{
+  rw[node, arc, ←sub_add, sub_add_eq_add_sub]
+  nth_rw 1 [←double_half_add_mod2 (d:=d)]
+  rw[add_assoc, ←two_nsmul, ←nsmul_add, ←end0, sub_eq_add_neg, half_add_double]
+  rw[mod2_ccw, half_neg_mod2, ←sub_eq_add_neg]
+}
+theorem node_half {d : GDart} : (node d).half = d.half - d.mod2.ccw + d.mod2 := by{
+  rw[node_half_eq_end0_sub, end0, sub_add_eq_add_sub]
+}
+theorem end0_double {p : GPixel} : end0 (2 • p) = p := by{
+  rw[end0, half_double, mod2_double, add_zero]
+}
 theorem face_end0 {d : GDart} : end0 (face d) = end1 d := by{
   match d with | ⟨x, y⟩ => {
     simp only [end0, end1, half, face, arc, GPoint.ccw, mod2, sub_def]
@@ -655,6 +735,10 @@ theorem face_end0 {d : GDart} : end0 (face d) = end1 d := by{
     cases Int.emod_two_eq_zero_or_one y with | inl hy | inr hy =>
       simp[hx, hy, Int.add_ediv, Int.sign, Int.add_emod]
   }
+}
+theorem node_end0 {d : GDart} : end0 (node d) = end0 d :=by{
+  nth_rw 2 [←fen_cancel d]
+  rw[face_end0, edge_end1]
 }
 
 theorem face_mod2 {d : GDart} : (face d).mod2 = d.mod2.ccw := by{
@@ -697,6 +781,68 @@ theorem edge_ne {d : GDart} : edge d ≠ d := by{
     simp only [mod2, add_def, x_ccw, y_ccw, mk.injEq, not_and]
     cases Int.emod_two_eq dx with
     | inl hx | inr hx => simp[hx]
+  }
+}
+theorem face_2_ne {d : GDart} : face (face d) ≠ d := by{
+  simp only [face, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, add_def, ne_eq]
+  match d with | ⟨dx, dy⟩ => {
+    simp only [mk.injEq, not_and]
+    cases Int.emod_two_eq_zero_or_one dx with | inl hx | inr hx =>
+    cases Int.emod_two_eq_zero_or_one dy with | inl hy | inr hy =>
+      simp[hx, hy]; try omega
+  }
+}
+theorem face_3_ne {d : GDart} : face (face (face d)) ≠ d := by{
+  simp only [face, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, add_def, ne_eq]
+  match d with | ⟨dx, dy⟩ => {
+    simp only [mk.injEq, not_and]
+    cases Int.emod_two_eq_zero_or_one dx with | inl hx | inr hx =>
+    cases Int.emod_two_eq_zero_or_one dy with | inl hy | inr hy =>
+      simp[hx, hy]; try omega
+  }
+}
+theorem node_2_ne {d : GDart} : node (node d) ≠ d := by{
+  simp only [node, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, ne_eq]
+  match d with | ⟨dx, dy⟩ => {
+    simp only [mk.injEq, not_and]
+    cases Int.emod_two_eq_zero_or_one dx with | inl hx | inr hx =>
+    cases Int.emod_two_eq_zero_or_one dy with | inl hy | inr hy =>
+      simp[hx, hy]; try omega
+  }
+}
+theorem node_3_ne {d : GDart} : node (node (node d)) ≠ d := by{
+  simp only [node, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, ne_eq]
+  match d with | ⟨dx, dy⟩ => {
+    simp only [mk.injEq, not_and]
+    cases Int.emod_two_eq_zero_or_one dx with | inl hx | inr hx =>
+    cases Int.emod_two_eq_zero_or_one dy with | inl hy | inr hy =>
+      simp[hx, hy]; try omega
+  }
+}
+theorem end0_ne_end1 {d : GDart} : end0 d ≠ end1 d := by{
+  rw[end0, end1, ne_eq, add_left_cancel_iff]
+  exact Ne.symm ccw_ne
+}
+theorem face_end0_ne_end0 {d : GDart} : end0 (face d) ≠ end0 d :=by{
+  rw[face_end0]
+  exact Ne.symm end0_ne_end1
+}
+theorem face_2_end0_ne_end0 {d : GDart} : end0 (face (face d)) ≠ end0 d :=by{
+  simp only [end0, face, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, ne_eq, add_def, x_half, y_half]
+  match d with | ⟨dx, dy⟩ => {
+    simp only [mk.injEq, not_and]
+    cases Int.emod_two_eq_zero_or_one dx with | inl hx | inr hx =>
+    cases Int.emod_two_eq_zero_or_one dy with | inl hy | inr hy =>
+      simp[hx, hy]; try omega
+  }
+}
+theorem face_3_end0_ne_end0 {d : GDart} : end0 (face (face (face d))) ≠ end0 d :=by{
+  simp only [end0, face, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, ne_eq, add_def, x_half, y_half]
+  match d with | ⟨dx, dy⟩ => {
+    simp only [mk.injEq, not_and]
+    cases Int.emod_two_eq_zero_or_one dx with | inl hx | inr hx =>
+    cases Int.emod_two_eq_zero_or_one dy with | inl hy | inr hy =>
+      simp[hx, hy]; try omega
   }
 }
 theorem end0_add_end1_mod2_ne_zero {d : GDart} : (end0 d + end1 d).mod2 ≠ 0 := by{
@@ -751,11 +897,64 @@ theorem end0_add_end1_eq_iff_eq_or_edge_eq {d0 d1 : GDart}
       intro h
       rcases h with h | h
       · simp[h]
-      · simp[h, end0_edge, end1_edge, add_comm]
+      · simp[h, edge_end0, edge_end1, add_comm]
     }
   }
-
-def GRegion := Set GPixel
+theorem half_eq_cases_face {d0 d1 : GDart}
+  : d0.half = d1.half ↔ d0 = d1 ∨ d0 = face d1 ∨ d0 = face (face d1) ∨ d0 = face (face (face d1))
+  := by{
+    constructor
+    · {
+      intro h
+      nth_rw 1 [face, arc]
+      nth_rw 1 [face, face_mod2, arc, face, arc]
+      nth_rw 1 [face, face_mod2, face_mod2, arc, face, face_mod2, arc, face, arc]
+      rw[add_right_comm, ←add_sub_assoc, ←add_sub_assoc, ←add_sub_assoc, sub_add_cancel]
+      rw[add_sub_assoc, add_sub_assoc, add_right_comm, ←add_sub_assoc, ←add_sub_assoc]
+      rw[←add_sub_assoc, ←add_sub_assoc, sub_add_cancel]
+      rw[←GPoint.double_half_add_mod2 (d:=d0)]
+      rw[add_sub_right_comm, add_sub_right_comm, add_sub_right_comm]
+      nth_rw 1 2 5 8 [←GPoint.double_half_add_mod2 (d:=d1)]
+      rw[add_sub_cancel_right, h]
+      simp only [add_left_cancel_iff]
+      apply mod2_eq_mod2_cases
+    }
+    · {
+      intro h
+      rcases h with h | h | h | h
+      all_goals
+      simp[h, face_half]
+    }
+  }
+theorem end0_eq_cases_node {d0 d1 : GDart}
+  : end0 d0 = end0 d1 ↔ d0 = d1 ∨ d0 = node d1 ∨ d0 = node (node d1) ∨ d0 = node (node (node d1))
+  := by{
+    constructor
+    · {
+      intro h
+      nth_rw 1 [node, arc]
+      nth_rw 1 [node, node_mod2, arc, node, arc]
+      nth_rw 1 [node, node_mod2, node_mod2, arc, node, node_mod2, arc, node, arc]
+      rw[sub_sub, add_comm, ←add_sub_assoc, sub_add_cancel]
+      rw[sub_sub, add_comm, ←add_sub_assoc, sub_add_cancel]
+      simp only [←sub_add, sub_add_eq_add_sub, eq_sub_iff_add_eq]
+      nth_rw 1 3 6 9 [←double_half_add_mod2 (d:=d1)]
+      nth_rw 1 [←add_right_cancel_iff (a:=d1.mod2)]
+      simp only [add_assoc, ←two_nsmul, ←nsmul_add]
+      repeat rw[←end0, ←h]
+      rw[end0, nsmul_add, two_nsmul d0.mod2, ←add_assoc, double_half_add_mod2]
+      simp only [add_left_cancel_iff]
+      simp only [Eq.comm (b:=d0.mod2)]
+      apply mod2_eq_mod2_cases
+    }
+    · {
+      intro h
+      rcases h with h | h | h | h
+      all_goals
+      simp[h, node_end0]
+    }
+  }
+abbrev GRegion := Set GPixel
 abbrev GDartRegion:=GRegion
 structure GInterval where
   min : ℤ
@@ -763,34 +962,39 @@ structure GInterval where
 structure GRectangle where
   hspan : GInterval
   vspan : GInterval
-@[inline] instance GRegion.instMembership : Membership GPixel GRegion := Set.instMembership
-theorem GRegion.mem_iff {R : GRegion} {p : GPixel} : p ∈ R ↔ R p := by rfl
-@[ext] theorem GRegion.ext {R1 R2 : GRegion} (h : ∀ p, p ∈ R1 ↔ p ∈ R2) : R1 = R2 :=
-  Set.ext h
-@[inline] instance GRegion.instEmptyCollection
-  : EmptyCollection (GRegion) := Set.instEmptyCollection
-theorem GRegion.empty_def_iff : (∅ : GRegion) = {_p : GPoint | False} := by rfl
-theorem GRegion.mem_empty_iff {p : GPixel} : p ∈ (∅ : GRegion) ↔ False := by rfl
-@[inline] instance GRegion.instHasSubset : HasSubset (GRegion) := Set.instHasSubset
-theorem GRegion.subset_iff {R1 R2 : GRegion} : R1 ⊆ R2 ↔ ∀ p, p ∈ R1 → p ∈ R2 := by rfl
-@[inline] instance GRegion.instHasUnion : Union GRegion := Set.instUnion
-theorem GRegion.mem_union_iff {R1 R2 : GRegion} {p : GPixel} :
-  p ∈ R1 ∪ R2 ↔ p ∈ R1 ∨ p ∈ R2 := by rfl
-theorem GRegion.union_def_iff {R1 R2 : GRegion} : R1 ∪ R2 = {p | p ∈ R1 ∨ p ∈ R2} := by rfl
-@[inline] instance GRegion.instHasInter : Inter GRegion := Set.instInter
-theorem GRegion.mem_inter_iff {R1 R2 : GRegion} {p : GPixel} :
-  p ∈ R1 ∩ R2 ↔ p ∈ R1 ∧ p ∈ R2 := by rfl
-theorem GRegion.inter_def_iff {R1 R2 : GRegion} : R1 ∩ R2 = {p | p ∈ R1 ∧ p ∈ R2} := by rfl
 def GInterval.toSet (I : GInterval) : Set ℤ := {x | I.min ≤ x ∧ x < I.max}
 def GInterval.Mem (I : GInterval) (x : ℤ) : Prop := x ∈ I.toSet
 @[inline] instance GInterval.instMembership : Membership ℤ GInterval where mem := GInterval.Mem
 theorem GInterval.mem_iff (I : GInterval) (x : ℤ) : x ∈ I ↔ I.min ≤ x ∧ x < I.max := by rfl
+theorem GInterval.mem_iff_toSet {I : GInterval} {x : ℤ} : x ∈ I ↔ x ∈ I.toSet := by{rfl}
 def GRectangle.toRegion (R : GRectangle) : GRegion := {p | p.x ∈ R.hspan ∧ p.y ∈ R.vspan}
 def GRectangle.Mem (R : GRectangle) (p : GPixel) : Prop := p ∈ R.toRegion
 @[inline] instance GRectangle.instMembership :
   Membership GPoint GRectangle where mem := GRectangle.Mem
 theorem GRectangle.mem_iff (R : GRectangle) (p : GPixel) :
   p ∈ R ↔ p.x ∈ R.hspan ∧ p.y ∈ R.vspan := by rfl
+theorem GRectangle.mem_iff_toRegion {R : GRectangle} {x : GPixel} : x ∈ R ↔ x ∈ R.toRegion
+  := by{rfl}
+def GInterval.subset (I1 I2 : GInterval) : Prop := ∀ {x : ℤ}, x ∈ I1 → x ∈ I2
+@[inline] instance GInterval.instHasSubset : HasSubset GInterval :=
+  ⟨subset⟩
+theorem GInterval.subset_iff {I1 I2 : GInterval} : I1 ⊆ I2 ↔ ∀ {x : ℤ}, x ∈ I1 → x ∈ I2 := by{rfl}
+theorem GInterval.subset_iff_set_subset {I1 I2 : GInterval} : I1 ⊆ I2 ↔ I1.toSet ⊆ I2.toSet
+:= by{
+  rw[subset_iff, Set.subset_def]
+  simp[mem_iff, toSet]
+}
+def GRectangle.subset (R1 R2 : GRectangle) : Prop := ∀ {x : GPoint}, x ∈ R1 → x ∈ R2
+@[inline] instance GRectangle.instHasSubset : HasSubset GRectangle :=
+  ⟨subset⟩
+theorem GRectangle.subset_iff {R1 R2 : GRectangle}
+  : R1 ⊆ R2 ↔ ∀ {x : GPoint}, x ∈ R1 → x ∈ R2 := by{rfl}
+theorem GRectangle.subset_iff_region_subset {R1 R2 : GRectangle}
+  : R1 ⊆ R2 ↔ R1.toRegion ⊆ R2.toRegion
+:= by{
+  rw[subset_iff]
+  simp[mem_iff, toRegion]
+}
 
 namespace GInterval
 def width (I : GInterval) : ℕ := (I.max - I.min).toNat
@@ -824,6 +1028,21 @@ theorem mem_enum_iff {I : GInterval} {x : ℤ} : x ∈ I.enum ↔ x ∈ I := by{
     use (x - I.min).toNat
     simp[h0, h1]
   }
+}
+
+theorem subset_of_contain {I1 I2 : GInterval} (hm : I2.min ≤ I1.min) (hM : I1.max ≤ I2.max)
+  : I1 ⊆ I2 := by{
+    simp only [subset_iff_set_subset, toSet, Set.setOf_subset_setOf, and_imp]
+    intro a ha0 ha1
+    constructor
+    · exact le_trans hm ha0
+    · exact lt_of_lt_of_le ha1 hM
+  }
+theorem empty_of_ge {I : GInterval} (hm : I.min ≥ I.max) : I.toSet = ∅ :=by{
+  ext x
+  simp only [toSet, Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false, not_and, not_lt]
+  intro h
+  exact le_trans hm h
 }
 end GInterval
 
@@ -867,6 +1086,37 @@ theorem proper_of_mem {R : GRectangle} {p : GPoint} (h : p ∈ R) : R.proper := 
   rw[proper, ←enum_length]
   exact List.length_pos_of_mem h
 }
+theorem empty_iff_any_empty {R : GRectangle}
+  : R.toRegion = ∅ ↔ R.hspan.toSet = ∅ ∨ R.vspan.toSet = ∅
+  := by{
+    simp only [Set.ext_iff, Set.mem_empty_iff_false, iff_false, toRegion, Set.mem_setOf]
+    simp only [Classical.not_and_iff_not_or_not, GInterval.mem_iff_toSet]
+    constructor
+    · {
+      intro h
+      cases em (∀x, x ∉ R.hspan.toSet) with
+      | inl hh => exact Or.inl hh
+      | inr hh => {
+        rw[not_forall] at hh
+        have ⟨x, hx⟩:=hh
+        cases em (∀x, x ∉ R.vspan.toSet) with
+        | inl hv => exact Or.inr hv
+        | inr hv => {
+          rw[not_forall] at hv
+          have ⟨y, hy⟩:=hv
+          rw[not_not] at hx hy
+          have h':=h ⟨x, y⟩
+          simp[hx, hy] at h'
+        }
+      }
+    }
+    · {
+      intro h x
+      rcases h with h | h
+      · exact Or.inl (h x.x)
+      · exact Or.inr (h x.y)
+    }
+  }
 end GRectangle
 
 def GPoint.touch : GPixel → GRectangle
@@ -880,6 +1130,161 @@ theorem GPoint.mem_touch {p : GPixel} : p ∈ p.touch := by{
 theorem GPoint.mem_gtouch {p : GPixel} : p ∈ p.gtouch := by{
   match p with | ⟨x, y⟩ => simp[GRectangle.mem_iff, GInterval.mem_iff, gtouch]
 }
+theorem end0_mem_touch {d : GDart} : end0 d ∈ d.half.touch := by{
+  simp only [end0, touch, GRectangle.mem_iff, GInterval.mem_iff]
+  simp only [add_def, tsub_le_iff_right, add_lt_add_iff_left]
+  rw[add_assoc, le_add_iff_nonneg_right, add_assoc, le_add_iff_nonneg_right]
+  simp only [x_mod2, y_mod2]
+  simp only [Int.emod_lt_of_pos _ (by{simp} : 0 < (2 : ℤ)), and_true]
+  cases Int.emod_two_eq d.x with | inl hx | inr hx =>
+  cases Int.emod_two_eq d.y with | inl hy | inr hy =>
+    simp[hx, hy]
+}
+theorem half_mem_touch_of_end0_eq_end0 {p q : GDart} (hpq : end0 q = end0 p)
+  : q.half ∈ p.half.touch := by{
+    have hpq:=hpq.symm
+    simp only [touch, GRectangle.mem_iff, GInterval.mem_iff, x_half, y_half]
+    simp only [end0, GPoint.ext_iff, add_def, x_half, y_half, x_mod2, y_mod2] at hpq
+    simp only [sub_le_iff_le_add]
+    rw[←eq_sub_iff_add_eq, ←eq_sub_iff_add_eq] at hpq
+    simp only [hpq, sub_le_iff_le_add]
+    simp only [sub_add_eq_add_sub, lt_sub_iff_add_lt, add_assoc]
+    simp only [add_le_add_iff_left, add_lt_add_iff_left]
+    simp only [lt_of_lt_of_le
+      (Int.emod_lt_of_pos _ (by{simp}):_ % 2 < (2 : ℤ))
+      (le_add_of_nonneg_left (Int.emod_nonneg _ (by{simp})) : (2 : ℤ) ≤ _ % 2 + 2)
+    ]
+    simp only [and_true]
+    simp only [le_trans
+      (Int.le_sub_one_of_lt (Int.emod_lt _ (by{simp})) : _ % 2 ≤ (1 : ℤ))
+      (le_add_of_nonneg_right (Int.emod_nonneg _ (by{simp})) : (1 : ℤ) ≤ 1 + _ % 2)
+    ]
+    trivial
+  }
+theorem half_mem_touch_of_end0_eq_end0_face {p q : GDart} (hpq : end0 q = end0 (face p))
+  : q.half ∈ p.half.touch := by{
+    have hpq:=hpq.symm
+    simp only [touch, GRectangle.mem_iff, GInterval.mem_iff, x_half, y_half]
+    simp only [end0, face_half, face_mod2,
+    GPoint.ext_iff, add_def, x_half, y_half, x_mod2, y_mod2, x_ccw, y_ccw] at hpq
+    simp only [sub_le_iff_le_add]
+    rw[←eq_sub_iff_add_eq, ←eq_sub_iff_add_eq] at hpq
+    simp only [hpq, sub_le_iff_le_add]
+    simp only [sub_add_eq_add_sub, lt_sub_iff_add_lt, add_assoc]
+    simp only [add_le_add_iff_left, add_lt_add_iff_left]
+    simp only [lt_of_lt_of_le
+      (Int.emod_lt_of_pos _ (by{simp}):_ % 2 < (2 : ℤ))
+      (le_add_of_nonneg_left (Int.emod_nonneg _ (by{simp})) : (2 : ℤ) ≤ _ % 2 + 2)
+    ]
+    simp only [and_true]
+    simp only [le_trans
+      (Int.le_sub_one_of_lt (Int.emod_lt _ (by{simp})) : _ % 2 ≤ (1 : ℤ))
+      (le_add_of_nonneg_right (Int.emod_nonneg _ (by{simp})) : (1 : ℤ) ≤ 1 + _ % 2)
+    ]
+    simp only [and_true]
+    rw[←add_sub_assoc, le_sub_iff_add_le]
+    constructor
+    · {
+      apply add_le_add
+      · apply Int.le_of_lt_add_one (Int.emod_lt _ (by{simp}))
+      · apply Int.le_of_lt_add_one (Int.emod_lt _ (by{simp}))
+    }
+    rw[sub_lt_iff_lt_add, add_right_comm]
+    apply lt_add_of_nonneg_of_lt
+    · {
+      apply add_nonneg
+      · apply Int.emod_nonneg _ (by{simp})
+      · apply Int.emod_nonneg _ (by{simp})
+    }
+    simp
+  }
+theorem half_mem_touch_of_end0_eq_end0_face_face {p q : GDart} (hpq : end0 q = end0 (face (face p)))
+  : q.half ∈ p.half.touch := by{
+    have hpq:=hpq.symm
+    simp only [touch, GRectangle.mem_iff, GInterval.mem_iff, x_half, y_half]
+    simp only [end0, face_half, face_mod2,
+    GPoint.ext_iff, add_def, x_half, y_half, x_mod2, y_mod2, x_ccw, y_ccw] at hpq
+    simp only [sub_le_iff_le_add]
+    rw[←eq_sub_iff_add_eq, ←eq_sub_iff_add_eq] at hpq
+    simp only [hpq, sub_le_iff_le_add]
+    simp only [sub_add_eq_add_sub, lt_sub_iff_add_lt, add_assoc]
+    simp only [add_le_add_iff_left, add_lt_add_iff_left]
+    simp only [sub_lt_iff_lt_add]
+    rw[add_right_comm (b:=2), add_right_comm (b:=2)]
+    simp only [←add_sub_assoc, le_sub_iff_add_le]
+    have h:=(by{
+      intro n m
+      apply add_le_add
+      · apply Int.le_of_lt_add_one (Int.emod_lt _ (by{simp}))
+      · apply Int.le_of_lt_add_one (Int.emod_lt _ (by{simp}))
+    } : ∀{n m:ℤ}, n % 2 + m % 2 ≤ 1 + 1)
+    simp only [h, true_and]
+    have h':=(by{
+      intro n m
+      apply lt_add_of_nonneg_of_lt
+      · {
+        apply add_nonneg
+        · apply Int.emod_nonneg _ (by{simp})
+        · apply Int.emod_nonneg _ (by{simp})
+      }
+      simp
+    } : ∀{n m:ℤ}, 1 < n % 2 + m % 2 + 2)
+    simp[h']
+  }
+theorem half_mem_touch_of_end0_eq_end0_face_3 {p q : GDart}
+(hpq : end0 q = end0 (face (face (face p))))
+  : q.half ∈ p.half.touch := by{
+    have hpq:=hpq.symm
+    simp only [touch, GRectangle.mem_iff, GInterval.mem_iff, x_half, y_half]
+    simp only [end0, face_half, face_mod2,
+    GPoint.ext_iff, add_def, x_half, y_half, x_mod2, y_mod2, x_ccw, y_ccw] at hpq
+    simp only [sub_le_iff_le_add]
+    rw[←eq_sub_iff_add_eq, ←eq_sub_iff_add_eq] at hpq
+    simp only [hpq, sub_le_iff_le_add]
+    simp only [sub_add_eq_add_sub, lt_sub_iff_add_lt, add_assoc]
+    simp only [add_le_add_iff_left, add_lt_add_iff_left]
+    simp only [sub_lt_iff_lt_add]
+    rw[add_right_comm (b:=2), add_right_comm (b:=2)]
+    simp only [←add_sub_assoc, le_sub_iff_add_le]
+    have h:=(by{
+      intro n m
+      apply add_le_add
+      · apply Int.le_of_lt_add_one (Int.emod_lt _ (by{simp}))
+      · apply Int.le_of_lt_add_one (Int.emod_lt _ (by{simp}))
+    } : ∀{n m:ℤ}, n % 2 + m % 2 ≤ 1 + 1)
+    simp only [h, true_and]
+    have h':=(by{
+      intro n m
+      apply lt_add_of_nonneg_of_lt
+      · {
+        apply add_nonneg
+        · apply Int.emod_nonneg _ (by{simp})
+        · apply Int.emod_nonneg _ (by{simp})
+      }
+      simp
+    } : ∀{n m:ℤ}, 1 < n % 2 + m % 2 + 2)
+    simp only [Int.reduceAdd, tsub_le_iff_right, h', and_true]
+    rw[add_sub_assoc]
+    constructor
+    · {
+      rw[←Int.lt_iff_add_one_le]
+      apply lt_add_of_lt_of_nonneg
+      · apply Int.emod_lt _ (by{simp})
+      apply Int.emod_nonneg _ (by{simp})
+    }
+    · {
+      apply lt_add_of_nonneg_of_lt
+      · {
+        apply add_nonneg
+        · apply Int.emod_nonneg _ (by{simp})
+        · {
+          rw[le_sub_iff_add_le, zero_add]
+          apply Int.le_of_lt_add_one (Int.emod_lt _ (by{simp}))
+        }
+      }
+      simp
+    }
+  }
 
 def chop (d : GDart) : GRegion :=
   {p |
@@ -889,25 +1294,25 @@ def chop (d : GDart) : GRegion :=
     | gp10 => d.half.x ≥ p.x
     | gp11 => d.half.y ≥ p.y }
 
-theorem GPoint.half_mem_chop {d : GDart} : d.half ∈ chop d := by{
+theorem half_mem_chop {d : GDart} : d.half ∈ chop d := by{
   unfold chop
-  rw[GRegion.mem_iff]
+  rw[Set.mem_setOf]
   match d.toUnitSquareDart with
-  | gp00 | gp01 | gp10 | gp11 => simp only [ge_iff_le, setOf, le_refl]
+  | gp00 | gp01 | gp10 | gp11 => simp only [ge_iff_le, le_refl]
 }
 
 theorem mem_edge_chop_iff {d : GDart} {p : GPixel} : p ∈ chop (edge d) ↔ p ∉ chop d := by{
   unfold chop
-  simp only [GRegion.mem_iff, edge_toUnitSquareDart, edge_half']
+  simp only [Set.mem_setOf, edge_toUnitSquareDart, edge_half']
   match d.toUnitSquareDart with
-  | gp00 | gp01 | gp10 | gp11 => simp[opp, setOf, Int.add_one_le_iff, Int.le_sub_one_iff]
+  | gp00 | gp01 | gp10 | gp11 => simp[opp, Int.add_one_le_iff, Int.le_sub_one_iff]
 }
 
 theorem fn_chop_eq_ff_chop {d : GDart} : chop (face (node d)) = chop (face (face d)) := by{
   ext p
   unfold chop
-  simp only [face_toUnitSquareDart, node_toUnitSquareDart, face_half, node_half', ge_iff_le,
-    GRegion.mem_iff]
+  simp only [face_toUnitSquareDart, node_toUnitSquareDart, face_half, node_half', ge_iff_le
+  , Set.mem_setOf]
   match d.toUnitSquareDart with
   | gp00 | gp01 | gp10 | gp11 => simp[UnitSquareDart.ccw]
 }
@@ -916,9 +1321,257 @@ theorem fef_chop_eq {d : GDart} : chop (face (edge (face d))) = chop d := by{
   ext p
   unfold chop
   simp only [face_toUnitSquareDart, edge_toUnitSquareDart, face_half, edge_half', ge_iff_le,
-    GRegion.mem_iff]
+    Set.mem_setOf]
   match d.toUnitSquareDart with
   | gp00 | gp01 | gp10 | gp11 => simp[UnitSquareDart.ccw, UnitSquareDart.opp]
+}
+
+theorem end0_mem_chop_face {d : GDart} : end0 d ∈ chop (face d) := by{
+  rw[end0, chop, Set.mem_setOf]
+  simp only [face_toUnitSquareDart]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    simp only [UnitSquareDart.ccw, face_half, add_def, ge_iff_le,
+      add_le_iff_nonpos_right, le_add_iff_nonneg_right]
+    simp only [toUnitSquareDart, x_mod2, y_mod2] at hd
+    match d with | ⟨dx, dy⟩ => {
+      simp only at hd
+      simp only [x_mod2, y_mod2]
+      cases Int.emod_two_eq dx with | inl hx | inr hx =>
+      cases Int.emod_two_eq dy with | inl hy | inr hy =>
+        simp[hx, hy] at hd
+        try simp[hx, hy]
+    }
+  }
+}
+theorem node_half_mem_chop {d : GDart} : (node d).half ∈ chop d := by{
+  rw[node_half_eq_end0_sub, chop, end0, Set.mem_setOf]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    simp only [add_def, sub_def, x_mod2, y_mod2, x_ccw, y_ccw]
+    have h':=toUnitSquareDart_toGCorner (d:=d)
+    rw[hd] at h'
+    simp only [toGCorner, GPoint.ext_iff, x_mod2, y_mod2] at h'
+    simp[←h'.left, ←h'.right]
+  }
+}
+theorem end0_mem_chop_face_face {d : GDart} : end0 d ∈ chop (face (face d)) := by{
+  rw[end0, chop, Set.mem_setOf]
+  simp only [face_toUnitSquareDart]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    simp only [UnitSquareDart.ccw, face_half, add_def, ge_iff_le,
+      add_le_iff_nonpos_right, le_add_iff_nonneg_right]
+    simp only [toUnitSquareDart, x_mod2, y_mod2] at hd
+    match d with | ⟨dx, dy⟩ => {
+      simp only at hd
+      simp only [x_mod2, y_mod2]
+      cases Int.emod_two_eq dx with | inl hx | inr hx =>
+      cases Int.emod_two_eq dy with | inl hy | inr hy =>
+        simp[hx, hy] at hd
+        try simp[hx, hy]
+    }
+  }
+}
+theorem half_mem_chop_face {d : GDart} : d.half ∈ chop (face d) := by{
+  rw[chop, Set.mem_setOf]
+  simp only [face_toUnitSquareDart]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    simp only [UnitSquareDart.ccw, face_half, ge_iff_le]
+    apply le_refl
+  }
+}
+theorem node_half_mem_chop_face {d : GDart} : (node d).half ∈ chop (face d) := by{
+  rw[node_half, chop, Set.mem_setOf]
+  simp only [face_toUnitSquareDart]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    simp only [UnitSquareDart.ccw, face_half, add_def, ge_iff_le, sub_def]
+    simp only [x_mod2, y_mod2, x_ccw, y_ccw]
+    simp only [toUnitSquareDart, x_mod2, y_mod2] at hd
+    match d with | ⟨dx, dy⟩ => {
+      simp only at hd
+      cases Int.emod_two_eq dx with | inl hx | inr hx =>
+      cases Int.emod_two_eq dy with | inl hy | inr hy =>
+        simp[hx, hy] at hd
+        try simp[hx, hy]
+    }
+  }
+}
+theorem node_node_half_mem_chop_face {d : GDart} : (node (node d)).half ∈ chop (face d) := by{
+  rw[node_half, chop, Set.mem_setOf]
+  simp only [face_toUnitSquareDart, face_half, node_mod2, node_half]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    simp only [UnitSquareDart.ccw, add_def, ge_iff_le, sub_def]
+    simp only [x_mod2, y_mod2, x_ccw, y_ccw]
+    simp only [toUnitSquareDart, x_mod2, y_mod2] at hd
+    match d with | ⟨dx, dy⟩ => {
+      simp only at hd
+      cases Int.emod_two_eq dx with | inl hx | inr hx =>
+      cases Int.emod_two_eq dy with | inl hy | inr hy =>
+        simp[hx, hy] at hd
+        try simp[hx, hy]
+    }
+  }
+}
+theorem node_node_node_half_mem_chop_face {d : GDart}
+  : (node (node (node d))).half ∈ chop (face d) := by{
+  rw[node_half, chop, Set.mem_setOf]
+  simp only [face_toUnitSquareDart, face_half, node_mod2, node_half]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    simp only [UnitSquareDart.ccw, add_def, ge_iff_le, sub_def]
+    simp only [x_mod2, y_mod2, x_ccw, y_ccw]
+    simp only [toUnitSquareDart, x_mod2, y_mod2] at hd
+    match d with | ⟨dx, dy⟩ => {
+      simp only at hd
+      cases Int.emod_two_eq dx with | inl hx | inr hx =>
+      cases Int.emod_two_eq dy with | inl hy | inr hy =>
+        simp[hx, hy] at hd
+        try simp[hx, hy]
+    }
+  }
+}
+theorem half_mem_chop_face_of_end0_eq {d a : GDart} (hda : end0 a = end0 d)
+  : a.half ∈ chop (face d) := by{
+    rw[end0_eq_cases_node] at hda
+    rcases hda with hda | hda | hda | hda
+    · rw[hda]; apply half_mem_chop_face
+    · rw[hda]; apply node_half_mem_chop_face
+    · rw[hda]; apply node_node_half_mem_chop_face
+    · rw[hda]; apply node_node_node_half_mem_chop_face
+  }
+
+theorem half_mem_chop_face_face {d : GDart} : d.half ∈ chop (face (face d)) := by{
+  rw[chop, Set.mem_setOf]
+  simp only [face_toUnitSquareDart]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    simp only [UnitSquareDart.ccw, face_half, ge_iff_le]
+    apply le_refl
+  }
+}
+theorem half_mem_chop_face_face_face {d : GDart} : d.half ∈ chop (face (face (face d))) := by{
+  rw[chop, Set.mem_setOf]
+  simp only [face_toUnitSquareDart]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    simp only [UnitSquareDart.ccw, face_half, ge_iff_le]
+    apply le_refl
+  }
+}
+theorem half_mem_chop_of_half_eq {d a : GDart} (hda : a.half = d.half)
+: a.half ∈ chop d := by{
+  rw[Eq.comm, half_eq_cases_face] at hda
+  rcases hda with hda | hda | hda | hda
+  · rw[hda]; apply half_mem_chop
+  · rw[hda]; apply half_mem_chop_face
+  · rw[hda]; apply half_mem_chop_face_face
+  · rw[hda]; apply half_mem_chop_face_face_face
+}
+theorem node_half_mem_chop_face_face {d : GDart} : (node d).half ∈ chop (face (face d)) := by{
+  rw[node_half, chop, Set.mem_setOf]
+  simp only [face_toUnitSquareDart]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    simp only [UnitSquareDart.ccw, face_half, add_def, ge_iff_le, sub_def]
+    simp only [x_mod2, y_mod2, x_ccw, y_ccw]
+    simp only [toUnitSquareDart, x_mod2, y_mod2] at hd
+    match d with | ⟨dx, dy⟩ => {
+      simp only at hd
+      cases Int.emod_two_eq dx with | inl hx | inr hx =>
+      cases Int.emod_two_eq dy with | inl hy | inr hy =>
+        simp[hx, hy] at hd
+        try simp[hx, hy]
+    }
+  }
+}
+theorem node_node_half_mem_chop_face_face {d : GDart}
+: (node (node d)).half ∈ chop (face (face d)) := by{
+  rw[node_half, chop, Set.mem_setOf]
+  simp only [face_toUnitSquareDart, face_half, node_mod2, node_half]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    simp only [UnitSquareDart.ccw, add_def, ge_iff_le, sub_def]
+    simp only [x_mod2, y_mod2, x_ccw, y_ccw]
+    simp only [toUnitSquareDart, x_mod2, y_mod2] at hd
+    match d with | ⟨dx, dy⟩ => {
+      simp only at hd
+      cases Int.emod_two_eq dx with | inl hx | inr hx =>
+      cases Int.emod_two_eq dy with | inl hy | inr hy =>
+        simp[hx, hy] at hd
+        try simp[hx, hy]
+    }
+  }
+}
+theorem node_node_node_half_mem_chop_face_face {d : GDart}
+  : (node (node (node d))).half ∈ chop (face (face d)) := by{
+  rw[node_half, chop, Set.mem_setOf]
+  simp only [face_toUnitSquareDart, face_half, node_mod2, node_half]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    simp only [UnitSquareDart.ccw, add_def, ge_iff_le, sub_def]
+    simp only [x_mod2, y_mod2, x_ccw, y_ccw]
+    simp only [toUnitSquareDart, x_mod2, y_mod2] at hd
+    match d with | ⟨dx, dy⟩ => {
+      simp only at hd
+      cases Int.emod_two_eq dx with | inl hx | inr hx =>
+      cases Int.emod_two_eq dy with | inl hy | inr hy =>
+        simp[hx, hy] at hd
+        try simp[hx, hy]
+    }
+  }
+}
+theorem half_mem_chop_face_face_of_end0_eq {d a : GDart} (hda : end0 a = end0 d)
+  : a.half ∈ chop (face (face d)) := by{
+    rw[end0_eq_cases_node] at hda
+    rcases hda with hda | hda | hda | hda
+    · rw[hda]; apply half_mem_chop_face_face
+    · rw[hda]; apply node_half_mem_chop_face_face
+    · rw[hda]; apply node_node_half_mem_chop_face_face
+    · rw[hda]; apply node_node_node_half_mem_chop_face_face
+  }
+
+theorem half_mem_chop_of_end0_eq_end0_face_face {d a : GDart}
+(hda : end0 a = end0 (face (face d))) : a.half ∈ chop d := by{
+  rw[chop, Set.mem_setOf]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    have hd':=toUnitSquareDart_toGCorner (d:=d)
+    rw[hd] at hd'
+    simp only [toGCorner] at hd'
+    simp only [end0, face_half, face_mod2, ←hd', GPoint.ccw] at hda
+    simp only [add_def, sub_self, sub_zero, add_zero, mk.injEq] at hda
+    rw[←eq_sub_iff_add_eq (c:=a.mod2.x)] at hda
+    rw[←eq_sub_iff_add_eq (c:=a.mod2.y)] at hda
+    simp only [hda, x_mod2, y_mod2]
+    try simp only [add_sub_assoc, le_add_iff_nonneg_right, Int.sub_nonneg,
+      ge_iff_le, tsub_le_iff_right]
+    try apply Int.le_of_lt_add_one (Int.emod_lt _ (by{simp}))
+    try apply Int.emod_nonneg _ (by{simp})
+  }
+}
+
+theorem half_mem_chop_of_end0_eq_end0_face_3 {d a : GDart}
+(hda : end0 a = end0 (face (face (face d)))) : a.half ∈ chop d := by{
+  rw[chop, Set.mem_setOf]
+  match hd : d.toUnitSquareDart with
+  | gp00 | gp01 | gp10 | gp11 => {
+    have hd':=toUnitSquareDart_toGCorner (d:=d)
+    rw[hd] at hd'
+    simp only [toGCorner] at hd'
+    simp only [end0, face_half, face_mod2, ←hd', GPoint.ccw] at hda
+    simp only [add_def, sub_self, sub_zero, add_zero, mk.injEq] at hda
+    rw[←eq_sub_iff_add_eq (c:=a.mod2.x)] at hda
+    rw[←eq_sub_iff_add_eq (c:=a.mod2.y)] at hda
+    simp only [hda, x_mod2, y_mod2]
+    try simp only [add_sub_assoc, le_add_iff_nonneg_right, Int.sub_nonneg,
+      ge_iff_le, tsub_le_iff_right]
+    try apply Int.le_of_lt_add_one (Int.emod_lt _ (by{simp}))
+    try apply Int.emod_nonneg _ (by{simp})
+  }
 }
 
 def chop1 (d : GDart) := chop (face (face (edge d)))
@@ -945,16 +1598,48 @@ def chopRect (r : GRectangle) (d : GDart) : GRectangle :=
 theorem chopRect_toRegion {r : GRectangle} {d : GDart}
 : (chopRect r d).toRegion = r.toRegion ∩ chop d := by{
   ext p
-  simp only [GRegion.mem_iff, GRegion.inter_def_iff, setOf]
-  simp only [chopRect, chop, GRectangle.toRegion, setOf]
+  simp only [Set.mem_inter_iff]
+  simp only [chopRect, chop, GRectangle.toRegion, Set.mem_setOf]
+  simp only [GInterval.mem_iff]
   match d.toUnitSquareDart with
   | gp00 | gp01 | gp10 | gp11 => {
-    simp only [GInterval.mem_iff, max_le_iff, lt_min_iff, Int.lt_add_one_iff]
+    simp only [max_le_iff, lt_min_iff, Int.lt_add_one_iff]
     tauto
   }
 }
 
+theorem chopRect_subset_chop {r : GRectangle} {d : GDart}
+: (chopRect r d).toRegion ⊆ chop d := by{
+  rw[chopRect_toRegion]
+  apply Set.inter_subset_right
+}
+theorem chopRect_subset_rect {r : GRectangle} {d : GDart}
+: chopRect r d ⊆ r := by{
+  rw[GRectangle.subset_iff_region_subset, chopRect_toRegion]
+  apply Set.inter_subset_left
+}
+
 def chop1Rect (r : GRectangle) (d : GDart) : GRectangle := chopRect r (face (face (edge d)))
+theorem chop1Rect_toRegion {r : GRectangle} {d : GDart}
+: (chop1Rect r d).toRegion = r.toRegion ∩ chop1 d := by{
+  rw[chop1Rect, chopRect_toRegion, chop1]
+}
+theorem chop1Rect_subset_chop1 {r : GRectangle} {d : GDart}
+: (chop1Rect r d).toRegion ⊆ chop1 d := by{
+  rw[chop1Rect_toRegion]
+  apply Set.inter_subset_right
+}
+theorem chop1Rect_subset_rect {r : GRectangle} {d : GDart}
+: chop1Rect r d ⊆ r := by{
+  rw[GRectangle.subset_iff_region_subset, chop1Rect_toRegion]
+  apply Set.inter_subset_left
+}
+theorem chopRect_subset_chop1Rect {r : GRectangle} {d : GDart}
+: chopRect r d ⊆ chop1Rect r d := by{
+  rw[GRectangle.subset_iff_region_subset, chopRect_toRegion, chop1Rect_toRegion]
+  apply Set.inter_subset_inter_right
+  exact chop_subset_chop1
+}
 
 def GRectangle.zoom : GRectangle → GRectangle
 | ⟨⟨x0, x1⟩, ⟨y0, y1⟩⟩ => ⟨⟨x0 * 2, x1 * 2⟩, ⟨y0 * 2, y1 * 2⟩⟩

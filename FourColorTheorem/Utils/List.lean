@@ -2,6 +2,7 @@ import Batteries.Data.List.Basic
 import Init.Data.List.Pairwise
 import Mathlib.Data.List.Nodup
 import Mathlib.Order.Minimal
+import Mathlib.Data.List.Rotate
 
 open Relation
 open Function
@@ -346,3 +347,111 @@ theorem List.nodup_iff_getElem_ne_getElem' {l : List α} :
     }
   }
 
+theorem List.take_drop_append_drop_of_le {l : List α} {n m : ℕ} (hnm : m ≤ n)
+  : (l.take n).drop m ++ l.drop n = l.drop m := by{
+  rw[drop_take]
+  nth_rw 2 [←Nat.sub_add_cancel hnm]
+  rw[drop_take_append_drop']
+}
+
+theorem List.rotate_add {l : List α} {n m : ℕ}
+  : l.rotate (n + m) = (l.rotate n).rotate m := by{
+    rw[rotate_eq_drop_append_take_mod]
+    rw[rotate_eq_drop_append_take_mod]
+    rw[rotate_eq_drop_append_take_mod]
+    simp only [length_append, length_drop, length_take]
+    cases em (l = []) with
+    | inl hln => simp[hln]
+    | inr hln => {
+      have hln' : l.length > 0 := length_pos_of_ne_nil hln
+      have hln'' {n : ℕ}: n % l.length < l.length := Nat.mod_lt _ hln'
+      rw[min_eq_left_of_lt hln'', Nat.sub_add_cancel (le_of_lt hln'')]
+      rw[drop_append, drop_drop, take_append]
+      rw[length_drop]
+      rw[Nat.sub_sub_right _ (le_of_lt hln'')]
+      rw[Nat.add_comm (m % l.length)]
+      rw[take_take]
+      rw[min_eq_left (by{
+        apply Nat.sub_le_of_le_add
+        rw[Nat.add_le_add_iff_left]
+        exact le_of_lt hln''
+      })]
+      rw[Nat.mod_add_mod_eq]
+      cases em (n % l.length + m % l.length < l.length) with
+      | inl hnm => {
+        simp only [hnm, ↓reduceIte, Nat.add_zero, append_assoc, append_cancel_left_eq]
+        have h':=Nat.mod_add_mod_eq (a:=n) (b:=m) (c:=l.length)
+        rw[ite_cond_eq_true _ _ (by{simp[hnm]}), Nat.add_zero] at h'
+        rw[Nat.sub_eq_zero_of_le (le_of_lt hln''), drop_zero, take_zero, append_nil]
+        rw[←h']
+        rw[take_add]
+      }
+      | inr hnm => {
+        simp only [hnm, ↓reduceIte, Nat.add_sub_cancel, append_assoc]
+        symm
+        rw[drop_of_length_le (by{simp}), nil_append]
+        rw[←append_assoc]
+        congr 1
+        rw[take_drop, Nat.mod_add_mod_eq]
+        simp only [hnm, ↓reduceIte]
+        nth_rw 2 [take_of_length_le (by{simp})]
+        rw[take_drop_append_drop_of_le]
+        have h':=Nat.mod_add_mod_eq (a:=n) (b:=m) (c:=l.length)
+        rw[ite_cond_eq_false _ _ (by{simp[hnm]})] at h'
+        rw[←Nat.add_le_add_iff_right (n:=l.length), ←h']
+        rw[Nat.add_le_add_iff_left]
+        apply le_of_lt hln''
+      }
+    }
+  }
+
+theorem List.head_rotate_idxOf [DecidableEq α] {l : List α} {x : α} (hx : x ∈ l)
+  : (l.rotate (l.idxOf x)).head ((ne_nil_of_mem hx) ∘ rotate_eq_nil_iff.mp) = x := by{
+    have hx':l.rotate (l.idxOf x) ≠ []:=(ne_nil_of_mem hx) ∘ rotate_eq_nil_iff.mp
+    apply Option.some_injective
+    rw[←head?_eq_some_head hx']
+    rw[head?_rotate (idxOf_lt_length_of_mem hx), getElem?_idxOf hx]
+  }
+
+theorem List.Nodup.tail {l : List α} (hl : l.Nodup) : l.tail.Nodup := by{
+  rw[←drop_one]
+  apply hl.drop
+}
+
+theorem List.Disjoint.rotate_right {l1 l2 : List α} (h : l1.Disjoint l2) (k : ℕ)
+  : l1.Disjoint (l2.rotate k) := by{
+    intro x hx
+    simp only [mem_rotate, imp_false]
+    exact h hx
+  }
+theorem List.Disjoint.rotate_left {l1 l2 : List α} (h : l1.Disjoint l2) (k : ℕ)
+  : (l1.rotate k).Disjoint l2 := by{
+    intro x hx
+    simp only [mem_rotate] at hx
+    exact h hx
+  }
+theorem List.disjoint_rotate_right {l1 l2 : List α} {k : ℕ}
+  : l1.Disjoint (l2.rotate k) ↔ l1.Disjoint l2 := by{
+    cases em (l2 = []) with
+    | inl hl2 => simp[hl2]
+    | inr hl2 => {
+      constructor
+      · {
+        intro h
+        rw[←rotate_mod] at h
+        have h':=h.rotate_right (l2.length - k % l2.length)
+        rw[←rotate_add, Nat.add_sub_cancel'] at h'
+        · rw[rotate_length] at h'; exact h'
+        · {
+          apply le_of_lt
+          apply Nat.mod_lt
+          exact length_pos_of_ne_nil hl2
+        }
+      }
+      apply (Disjoint.rotate_right · k)
+    }
+  }
+theorem List.disjoint_rotate_left {l1 l2 : List α} {k : ℕ}
+  : (l1.rotate k).Disjoint l2 ↔ l1.Disjoint l2 := by{
+    rw[disjoint_comm, disjoint_rotate_right, disjoint_comm]
+  }

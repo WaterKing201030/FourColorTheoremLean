@@ -27,7 +27,7 @@ def Point.equivProd : Point ≃ ℝ × ℝ where
 @[implicit_reducible] instance Point.instAddCommGroup : AddCommGroup Point
   := equivProd.addCommGroup
 
-def Region:=Set Point
+abbrev Region:=Set Point
 def Map:=Point → Region
 structure Interval where
   min : ℝ
@@ -36,24 +36,6 @@ structure Rectangle where
   hspan : Interval
   vspan : Interval
 
-@[inline] instance Region.instMembership : Membership Point Region := Set.instMembership
-theorem Region.mem_iff {R : Region} {p : Point} : p ∈ R ↔ R p := by rfl
-@[ext] theorem Region.ext {R1 R2 : Region} (h : ∀ p, p ∈ R1 ↔ p ∈ R2) : R1 = R2 :=
-  Set.ext h
-@[inline] instance Region.instEmptyCollection
-  : EmptyCollection (Region) := Set.instEmptyCollection
-theorem Region.empty_def_iff : (∅ : Region) = {_p : Point | False} := by rfl
-theorem Region.mem_empty_iff {p : Point} : p ∈ (∅ : Region) ↔ False := by rfl
-@[inline] instance Region.instHasSubset : HasSubset (Region) := Set.instHasSubset
-theorem Region.subset_iff {R1 R2 : Region} : R1 ⊆ R2 ↔ ∀ p, p ∈ R1 → p ∈ R2 := by rfl
-@[inline] instance Region.instHasUnion : Union Region := Set.instUnion
-theorem Region.mem_union_iff {R1 R2 : Region} {p : Point} :
-  p ∈ R1 ∪ R2 ↔ p ∈ R1 ∨ p ∈ R2 := by rfl
-theorem Region.union_def_iff {R1 R2 : Region} : R1 ∪ R2 = {p | p ∈ R1 ∨ p ∈ R2} := by rfl
-@[inline] instance Region.instHasInter : Inter Region := Set.instInter
-theorem Region.mem_inter_iff {R1 R2 : Region} {p : Point} :
-  p ∈ R1 ∩ R2 ↔ p ∈ R1 ∧ p ∈ R2 := by rfl
-theorem Region.inter_def_iff {R1 R2 : Region} : R1 ∩ R2 = {p | p ∈ R1 ∧ p ∈ R2} := by rfl
 theorem Map.mem_map_apply_iff {m : Map} {p1 p2 : Point}
   : p2 ∈ m p1 ↔ m p1 p2 := by rfl
 theorem Map.map_apply_iff_mem {m : Map} {p1 p2 : Point}
@@ -125,9 +107,9 @@ theorem Region.mem_closure_rectangle_iff {R : Region} {p : Point} :
     intro h u hu hup
     have ⟨v, hvp, hvsub⟩ := Region.open_rectangle_iff.mp hu p hup
     have ⟨p, hp⟩:=h v hvp
-    rw[Region.mem_inter_iff] at hp
+    rw[Set.mem_inter_iff] at hp
     use p
-    rw[Region.inter_def_iff]
+    rw[Set.mem_inter_iff]
     exact ⟨hp.left, Set.mem_of_subset_of_mem hvsub hp.right⟩
   }
 }
@@ -176,4 +158,3 @@ def Map.colorable_with (m : Map) (n : ℕ) : Prop :=
   ∃ k, IsColoringMap m k ∧ k.at_most_regions n
 
 end RealPlane
-
