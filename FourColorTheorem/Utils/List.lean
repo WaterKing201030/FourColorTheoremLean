@@ -3,6 +3,7 @@ import Init.Data.List.Pairwise
 import Mathlib.Data.List.Nodup
 import Mathlib.Order.Minimal
 import Mathlib.Data.List.Rotate
+import Mathlib.Data.List.Lattice
 
 open Relation
 open Function
@@ -455,3 +456,151 @@ theorem List.disjoint_rotate_left {l1 l2 : List α} {k : ℕ}
   : (l1.rotate k).Disjoint l2 ↔ l1.Disjoint l2 := by{
     rw[disjoint_comm, disjoint_rotate_right, disjoint_comm]
   }
+theorem List.subset_union_left [DecidableEq α] {l1 l2 : List α}
+  : l1 ⊆ l1 ∪ l2 := by{
+    intro x hx
+    apply mem_union_left
+    exact hx
+  }
+theorem List.subset_union_right [DecidableEq α] {l1 l2 : List α}
+  : l2 ⊆ l1 ∪ l2 := by{
+    intro x hx
+    apply mem_union_right
+    exact hx
+  }
+theorem List.disjoint_union_left_iff_disjoint_append_left [DecidableEq α] {l1 l2 l3 : List α}
+  : (l1 ∪ l2).Disjoint l3 ↔ (l1 ++ l2).Disjoint l3 := by{
+    rw[List.Disjoint, List.Disjoint]
+    simp only [List.mem_union_iff, List.mem_append]
+  }
+theorem List.disjoint_union_right_iff_disjoint_append_right [DecidableEq α] {l1 l2 l3 : List α}
+  : l1.Disjoint (l2 ∪ l3) ↔ l1.Disjoint (l2 ++ l3) := by{
+    rw[List.Disjoint, List.Disjoint]
+    simp only [List.mem_union_iff, List.mem_append]
+  }
+theorem List.disjoint_union_left [DecidableEq α] {l1 l2 l3 : List α}
+  : (l1 ∪ l2).Disjoint l3 ↔ l1.Disjoint l3 ∧ l2.Disjoint l3 := by{
+    rw[List.disjoint_union_left_iff_disjoint_append_left, List.disjoint_append_left]
+  }
+theorem List.disjoint_union_right [DecidableEq α] {l1 l2 l3 : List α}
+  : l1.Disjoint (l2 ∪ l3) ↔ l1.Disjoint l2 ∧ l1.Disjoint l3 := by{
+    rw[List.disjoint_union_right_iff_disjoint_append_right, List.disjoint_append_right]
+  }
+
+theorem List.length_le_length_of_nodup_of_subset {l1 l2 : List α}
+  (h1d : l1.Nodup) (h2d : l2.Nodup) (h12 : l1 ⊆ l2) : l1.length ≤ l2.length := by{
+    match l1 with
+    | [] => simp
+    | a::l1' => {
+      rw[subset_def] at h12
+      have h12':=@h12 a (by{simp})
+      classical
+      have h:=length_rotate l2 (l2.idxOf a)
+      rw[←h]
+      have h2:l2 ≠ []:=by{intro h2; simp[h2] at h12'}
+      have h2':l2.rotate (idxOf a l2) ≠ []:=
+        by{apply ne_nil_of_length_pos; simp[length_pos_of_ne_nil h2]}
+      rw[←cons_head_tail h2']
+      rw[head_rotate_idxOf h12']
+      simp only [←mem_rotate (l:=l2) (n:=idxOf a l2)] at h12
+      rw[←cons_head_tail h2', head_rotate_idxOf h12'] at h12
+      simp only [mem_cons, forall_eq_or_imp, true_or, true_and] at h12
+      simp only [length_cons, Nat.add_le_add_iff_right, ge_iff_le]
+      rw[nodup_cons] at h1d
+      apply length_le_length_of_nodup_of_subset
+      · apply h1d.right
+      · apply Nodup.tail; rw[List.nodup_rotate]; apply h2d
+      intro x hx
+      have h12'':=h12 x hx
+      apply h12''.resolve_left
+      intro hn
+      apply h1d.left
+      exact hn ▸ hx
+    }
+  }
+
+theorem List.subset_antisymm_of_nodup {l1 l2 : List α} (hl1 : l1.Nodup) (hl2 : l2.Nodup)
+  : l1 ⊆ l2 → l2 ⊆ l1 → l1.Perm l2 := by{
+    intro h12 h21
+    rw[perm_ext_iff_of_nodup hl1 hl2]
+    intro _
+    constructor
+    · apply h12
+    · apply h21
+  }
+
+theorem List.subset_antisymm_iff_of_nodup {l1 l2 : List α} (hl1 : l1.Nodup) (hl2 : l2.Nodup)
+  : l1 ⊆ l2 ∧ l2 ⊆ l1 ↔ l1.Perm l2 := by{
+    constructor
+    · {
+      simp only [and_imp]
+      apply subset_antisymm_of_nodup hl1 hl2
+    }
+    intro h
+    exact ⟨h.subset, h.symm.subset⟩
+  }
+
+theorem List.rotate_subset {l1 l2 : List α} {n : ℕ}
+  : l1.rotate n ⊆ l2 ↔ l1 ⊆ l2 := by{
+    simp[subset_def]
+  }
+theorem List.subset_rotate {l1 l2 : List α} {n : ℕ}
+  : l1 ⊆ l2.rotate n ↔ l1 ⊆ l2 := by{
+    simp[subset_def]
+  }
+
+theorem List.perm_of_nodup_subset_length_eq {l1 l2 : List α}
+  (h1d : l1.Nodup) (h2d : l2.Nodup) (h12 : l1 ⊆ l2) (h12' : l1.length = l2.length) : l1.Perm l2 := by{
+    cases em (l1 = []) with
+    | inl hl1 => {simp[hl1, Eq.comm] at h12'; simp[hl1, h12']}
+    | inr hl1 => {
+      have hl2 : l2 ≠ [] := by{intro hl2; simp[hl2] at h12'; contradiction}
+      have h12'':=h12 (List.head_mem hl1)
+      classical
+      have h12_ih : l1 ⊆ l2.rotate (l2.idxOf (l1.head hl1)) := by{
+        rw[subset_rotate]
+        apply h12
+      }
+      have h12'_ih : l1.length = (l2.rotate (l2.idxOf (l1.head hl1))).length := by{
+        rw[length_rotate, h12']
+      }
+      have hl2_ih : l2.rotate (l2.idxOf (l1.head hl1)) ≠ [] := by{
+        simp[hl2]
+      }
+      have h2d_ih : (l2.rotate (l2.idxOf (l1.head hl1))).Nodup := by{
+        rw[nodup_rotate]
+        apply h2d
+      }
+      nth_rw 1 [←cons_head_tail hl1, ←cons_head_tail hl2_ih] at h12_ih h12'_ih
+      rw[←cons_head_tail hl1, nodup_cons] at h1d
+      rw[←cons_head_tail hl2_ih, nodup_cons] at h2d_ih
+      rw[length_cons, length_cons, Nat.succ_inj] at h12'_ih
+      have ih:l1.Perm (l2.rotate (l2.idxOf (l1.head hl1))):=by{
+        nth_rw 1 [←cons_head_tail hl1, ←cons_head_tail hl2_ih]
+        rw[head_rotate_idxOf h12'']
+        rw[perm_cons]
+        have ih':l1.tail.length < l1.length := by{
+          simp only [length_tail]
+          apply Nat.pred_lt
+          simp[hl1]
+        }
+        apply perm_of_nodup_subset_length_eq
+        · apply h1d.right
+        · apply h2d_ih.right
+        · {
+          intro x hx
+          have h12_ih':=@h12_ih x (by{right; exact hx})
+          rw[mem_cons] at h12_ih'
+          apply Or.resolve_left h12_ih'
+          rw[head_rotate_idxOf h12'']
+          intro h
+          apply h1d.left
+          exact h ▸ hx
+        }
+        · apply h12'_ih
+      }
+      apply ih.trans
+      apply rotate_perm
+    }
+  }
+termination_by l1.length

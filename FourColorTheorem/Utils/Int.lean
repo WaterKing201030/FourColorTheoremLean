@@ -47,3 +47,27 @@ theorem Int.sub_one_emod_two {a : ℤ} : (a - 1) % 2 = 1 - a % 2 := by{
   cases emod_two_eq a with
   | inl ha | inr ha => simp[ha, sub_emod]
 }
+
+theorem Int.add_one_ediv_two_of_mod_zero {a : ℤ} (ha : a % 2 = 0) : (a + 1) / 2 = a / 2 := by{
+  rw[Int.add_ediv (by{simp})]
+  simp[ha]
+}
+theorem Int.sub_one_ediv_two_of_mod_one {a : ℤ} (ha : a % 2 = 1) : (a - 1) / 2 = a / 2 := by{
+  symm
+  nth_rw 1 [←sub_add_cancel a 1]
+  apply add_one_ediv_two_of_mod_zero
+  rw[sub_one_emod_two]
+  simp[ha]
+}
+theorem Int.add_one_ediv_two_of_mod_one {a : ℤ} (ha : a % 2 = 1) : (a + 1) / 2 = a / 2 + 1 := by{
+  rw[Int.add_ediv (by{simp})]
+  simp[ha]
+}
+theorem Int.sub_one_ediv_two_of_mod_zero {a : ℤ} (ha : a % 2 = 0) : (a - 1) / 2 = a / 2 - 1 := by{
+  symm
+  nth_rw 1 [←sub_add_cancel a 1]
+  rw[sub_eq_iff_eq_add]
+  apply add_one_ediv_two_of_mod_one
+  rw[sub_one_emod_two]
+  simp[ha]
+}

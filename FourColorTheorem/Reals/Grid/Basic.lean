@@ -7,6 +7,7 @@ import Mathlib.Algebra.Order.CompleteField
 import Mathlib.Algebra.Group.TransferInstance
 import Mathlib.Dynamics.PeriodicPts.Defs
 import FourColorTheorem.Utils.Int
+import FourColorTheorem.Utils.List
 
 open Function
 open Relation
@@ -570,6 +571,19 @@ theorem face_3 {d : GDart} : face (face (face d)) = edge (node d) := by{
   apply face_injective
   rw[face_4, fen_cancel]
 }
+theorem face_3_eq_add_arc_ccw {d : GDart} : face (face (face d)) = d + d.mod2.ccw.arc := by{
+  apply face_injective
+  rw[face_4, face]
+  match d with | ⟨dx, dy⟩ => {
+    simp only [arc, sub_def, x_ccw, y_ccw, x_mod2, y_mod2, sub_sub_sub_cancel_left, add_def,
+      mk.injEq]
+    cases Int.emod_two_eq dx with | inl hdx | inr hdx =>
+    cases Int.emod_two_eq dy with | inl hdy | inr hdy => {
+      simp[hdx, hdy]
+      omega
+    }
+  }
+}
 theorem node_3 {d : GDart} : node (node (node d)) = face (edge d) := by{
   apply node_injective
   rw[node_4, nfe_cancel]
@@ -1117,6 +1131,14 @@ theorem empty_iff_any_empty {R : GRectangle}
       · exact Or.inr (h x.y)
     }
   }
+
+theorem subset_iff_enum {R1 R2 : GRectangle}
+  : R1 ⊆ R2 ↔ R1.enum ⊆ R2.enum := by{
+    simp[subset_iff, List.subset_def, ←mem_enum_iff]
+  }
+theorem subset.refl : ∀r : GRectangle, r ⊆ r := by{
+  simp[GRectangle.subset_iff_enum]
+}
 end GRectangle
 
 def GPoint.touch : GPixel → GRectangle
@@ -1286,6 +1308,107 @@ theorem half_mem_touch_of_end0_eq_end0_face_3 {p q : GDart}
     }
   }
 
+theorem node_half_mem_touch_half {d : GDart} : (node d).half ∈ touch d.half := by{
+  apply half_mem_touch_of_end0_eq_end0
+  rw[node_end0]
+}
+theorem face_half_mem_touch_half {d : GDart} : (face d).half ∈ touch d.half := by{
+  apply half_mem_touch_of_end0_eq_end0_face
+  rfl
+}
+theorem edge_half_mem_touch_half {d : GDart} : (edge d).half ∈ touch d.half := by{
+  apply half_mem_touch_of_end0_eq_end0_face
+  rw[edge_end0, face_end0]
+}
+theorem node_mem_touch {p : GPixel} : node p ∈ touch p := by{
+  match p with | ⟨px, py⟩ => {
+    simp only [touch, node, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, GRectangle.mem_iff,
+      GInterval.mem_iff, tsub_le_iff_right]
+    cases Int.emod_two_eq px with | inl hdx | inr hdx =>
+    cases Int.emod_two_eq py with | inl hdy | inr hdy => {
+      simp[hdx, hdy]
+      omega
+    }
+  }
+}
+theorem nn_mem_touch {p : GPixel} : node (node p) ∈ touch p := by{
+  match p with | ⟨px, py⟩ => {
+    simp only [touch, node, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, GRectangle.mem_iff,
+      GInterval.mem_iff, tsub_le_iff_right]
+    cases Int.emod_two_eq px with | inl hdx | inr hdx =>
+    cases Int.emod_two_eq py with | inl hdy | inr hdy => {
+      simp[hdx, hdy]
+      omega
+    }
+  }
+}
+theorem face_mem_touch {p : GPixel} : face p ∈ touch p := by{
+  match p with | ⟨px, py⟩ => {
+    simp only [touch, face, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, GRectangle.mem_iff,
+      GInterval.mem_iff, tsub_le_iff_right, add_def]
+    cases Int.emod_two_eq px with | inl hdx | inr hdx =>
+    cases Int.emod_two_eq py with | inl hdy | inr hdy => {
+      simp[hdx, hdy]
+      try omega
+    }
+  }
+}
+theorem ff_mem_touch {p : GPixel} : face (face p) ∈ touch p := by{
+  match p with | ⟨px, py⟩ => {
+    simp only [touch, face, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, GRectangle.mem_iff,
+      GInterval.mem_iff, tsub_le_iff_right, add_def]
+    cases Int.emod_two_eq px with | inl hdx | inr hdx =>
+    cases Int.emod_two_eq py with | inl hdy | inr hdy => {
+      simp[hdx, hdy]
+      try omega
+    }
+  }
+}
+theorem edge_mem_touch {p : GPixel} : edge p ∈ touch p := by{
+  match p with | ⟨px, py⟩ => {
+    simp only [touch, edge, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, GRectangle.mem_iff,
+      GInterval.mem_iff, tsub_le_iff_right, add_def]
+    cases Int.emod_two_eq px with | inl hdx | inr hdx =>
+    cases Int.emod_two_eq py with | inl hdy | inr hdy => {
+      simp[hdx, hdy]
+      try omega
+    }
+  }
+}
+theorem fe_mem_touch {p : GPixel} : face (edge p) ∈ touch p := by{
+  match p with | ⟨px, py⟩ => {
+    simp only [touch, face, edge, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, GRectangle.mem_iff,
+      GInterval.mem_iff, tsub_le_iff_right, add_def]
+    cases Int.emod_two_eq px with | inl hdx | inr hdx =>
+    cases Int.emod_two_eq py with | inl hdy | inr hdy => {
+      simp[hdx, hdy]
+      try omega
+    }
+  }
+}
+theorem en_mem_touch {p : GPixel} : edge (node p) ∈ touch p := by{
+  match p with | ⟨px, py⟩ => {
+    simp only [touch, edge, node, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, GRectangle.mem_iff,
+      GInterval.mem_iff, tsub_le_iff_right, add_def]
+    cases Int.emod_two_eq px with | inl hdx | inr hdx =>
+    cases Int.emod_two_eq py with | inl hdy | inr hdy => {
+      simp[hdx, hdy]
+      try omega
+    }
+  }
+}
+theorem nf_mem_touch {p : GPixel} : (node (face p)) ∈ touch p := by{
+  match p with | ⟨px, py⟩ => {
+    simp only [touch, node, face, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, GRectangle.mem_iff,
+      GInterval.mem_iff, tsub_le_iff_right, add_def]
+    cases Int.emod_two_eq px with | inl hdx | inr hdx =>
+    cases Int.emod_two_eq py with | inl hdy | inr hdy => {
+      simp[hdx, hdy]
+      try omega
+    }
+  }
+}
+
 def chop (d : GDart) : GRegion :=
   {p |
     match d.toUnitSquareDart with
@@ -1324,6 +1447,10 @@ theorem fef_chop_eq {d : GDart} : chop (face (edge (face d))) = chop d := by{
     Set.mem_setOf]
   match d.toUnitSquareDart with
   | gp00 | gp01 | gp10 | gp11 => simp[UnitSquareDart.ccw, UnitSquareDart.opp]
+}
+
+theorem f3e_chop_eq {d : GDart} : chop (face (face (face (edge d)))) = chop (face d) := by{
+  rw[←fn_chop_eq_ff_chop, nfe_cancel]
 }
 
 theorem end0_mem_chop_face {d : GDart} : end0 d ∈ chop (face d) := by{
@@ -1574,6 +1701,13 @@ theorem half_mem_chop_of_end0_eq_end0_face_3 {d a : GDart}
   }
 }
 
+theorem chop_disjoint_edge_chop {d : GDart} : Disjoint (chop d) (chop (edge d)) := by{
+  rw[Set.disjoint_iff_forall_ne]
+  simp only [mem_edge_chop_iff]
+  intro a ha b hb hab
+  exact hb (hab ▸ ha)
+}
+
 def chop1 (d : GDart) := chop (face (face (edge d)))
 theorem chop_subset_chop1 {d : GDart} : chop d ⊆ chop1 d := by{
   unfold chop1 chop
@@ -1586,6 +1720,12 @@ theorem chop_subset_chop1 {d : GDart} : chop d ⊆ chop1 d := by{
     left
     exact hp
   }
+}
+theorem f3e_chop1_eq {d : GDart} : chop1 (face (face (face (edge d)))) = chop1 (face d) := by{
+  rw[chop1, chop1, face_3, edge_2, ←fn_chop_eq_ff_chop]
+  congr
+  apply node_injective
+  rw[node_3, edge_2, nfe_cancel]
 }
 
 def chopRect (r : GRectangle) (d : GDart) : GRectangle :=
@@ -1668,5 +1808,319 @@ theorem GRectangle.area_zoom {r : GRectangle} : r.zoom.area = r.area * 4 := by{
   simp[area, width_zoom, height_zoom]
   ring
 }
+
+def GRectangle.inner : GRectangle → GRectangle
+| ⟨⟨x0, x1⟩, ⟨y0, y1⟩⟩ => ⟨⟨x0 + 1, x1 - 1⟩, ⟨y0 + 1, y1 - 1⟩⟩
+
+theorem GRectangle.mem_inner_iff {r : GRectangle} {p : GPixel}
+: p ∈ r.inner ↔ touch p ⊆ r := by{
+  simp only [touch, subset_iff, mem_iff, GInterval.mem_iff, inner]
+  simp only [tsub_le_iff_right, and_imp, lt_sub_iff_add_lt]
+  simp only [Int.lt_iff_add_one_le (a:=p.x + 1), Int.lt_iff_add_one_le (a:=p.y + 1)]
+  rw[add_assoc (b:=1) (c:=1)]
+  rw[add_assoc (b:=1) (c:=1)]
+  constructor
+  · {
+    intro ⟨⟨h0, h1⟩, ⟨h2, h3⟩⟩ q h0' h1' h2' h3'
+    constructor
+    · {
+      constructor
+      · apply Int.le_of_add_le_add_right (b:=1); exact le_trans h0 h0'
+      · apply lt_of_lt_of_le h1' h1
+    }
+    · {
+      constructor
+      · apply Int.le_of_add_le_add_right (b:=1); exact le_trans h2 h2'
+      · apply lt_of_lt_of_le h3' h3
+    }
+  }
+  · {
+    intro h
+    have h0:=@h (p + ⟨1, 1⟩)
+    simp only [add_def, add_lt_add_iff_left, Nat.one_lt_ofNat, forall_const] at h0
+    ring_nf at h0
+    simp only [le_add_iff_nonneg_left, Nat.ofNat_nonneg, forall_const] at h0
+    simp only [←add_assoc, ←Int.lt_iff_add_one_le]
+    ring_nf
+    simp only [h0, and_true]
+    have h1:=@h (p - ⟨1, 1⟩)
+    simp only [sub_def, sub_add_cancel, Std.le_refl, forall_const] at h1
+    ring_nf at h1
+    simp only [Int.reduceNeg, add_lt_add_iff_right, Int.reduceLT, le_neg_add_iff_add_le,
+      neg_add_lt_iff_lt_add, forall_const] at h1
+    repeat rw[add_comm 1] at h1
+    simp only [←Int.lt_iff_add_one_le] at h1
+    simp[h1]
+  }
+}
+
+theorem GRectangle.inner_subset {r : GRectangle}
+  : r.inner ⊆ r := by{
+    intro p
+    rw[mem_inner_iff]
+    intro h
+    apply h
+    apply mem_touch
+  }
+
+theorem touch_subset_chop1_iff_mem_chop {p : GPixel} {d : GDart} :
+  (touch p).toRegion ⊆ chop1 d ↔ p ∈ chop d:=by{
+    rw[chop1]
+    simp only [chop, face_toUnitSquareDart, edge_toUnitSquareDart]
+    simp only [face_half, edge_half]
+    simp only [add_def, sub_def, x_half, y_half, touch, GRectangle.toRegion]
+    simp only [x_ccw, y_ccw, x_mod2, y_mod2, Set.mem_setOf, Set.subset_def]
+    simp only [GInterval.mem_iff, UnitSquareDart.ccw, opp]
+    have hd:=toUnitSquareDart_toGCorner (d:=d)
+    simp only [toGCorner, GPoint.ext_iff, x_mod2, y_mod2] at hd
+    match hdu : d.toUnitSquareDart with
+    | gp00 | gp01 | gp10 | gp11 => {
+      simp only [ge_iff_le]
+      simp only [hdu] at hd
+      simp only [← hd, sub_zero, add_sub_cancel_right, add_zero, sub_self]
+      constructor
+      · {
+        intro h
+        have h0:=h ⟨p.x, p.y-1⟩
+        have h1:=h ⟨p.x-1, p.y⟩
+        have h2:=h ⟨p.x+1, p.y⟩
+        have h3:=h ⟨p.x, p.y+1⟩
+        simp only [tsub_le_iff_right, le_add_iff_nonneg_right, zero_le_one, lt_add_iff_pos_right,
+          Nat.ofNat_pos, and_self, Std.le_refl, true_and, sub_add_cancel, and_true,
+          add_lt_add_iff_left, Nat.one_lt_ofNat, sub_lt_iff_lt_add] at h0 h1 h2 h3
+        simp only [add_assoc, Int.reduceAdd, lt_add_iff_pos_right, Nat.ofNat_pos, forall_const,
+          le_add_iff_nonneg_right, Nat.ofNat_nonneg, add_le_add_iff_right] at h0 h1 h2 h3
+        assumption
+      }
+      · {
+        omega
+      }
+    }
+  }
+
+theorem mem_chop1Rect_inner_iff_mem_inner_chopRect {r : GRectangle} {p : GPixel}
+  {d : GDart} : p ∈ (chop1Rect r d).inner ↔ p ∈ chopRect r.inner d :=by{
+    rw[GRectangle.mem_inner_iff]
+    rw[GRectangle.mem_iff_toRegion, chopRect_toRegion]
+    rw[Set.mem_inter_iff, ←GRectangle.mem_iff_toRegion, GRectangle.mem_inner_iff]
+    rw[GRectangle.subset_iff_region_subset, chop1Rect_toRegion]
+    rw[Set.subset_inter_iff, ←GRectangle.subset_iff_region_subset]
+    apply and_congr
+    · rfl
+    · apply touch_subset_chop1_iff_mem_chop
+  }
+
+theorem GRectangle.area_le_area_of_subset {r1 r2 : GRectangle}
+  (h : r1 ⊆ r2) : r1.area ≤ r2.area := by{
+    rw[←enum_length, ←enum_length]
+    apply List.length_le_length_of_nodup_of_subset
+    · apply r1.enum_nodup
+    · apply r2.enum_nodup
+    rw[←subset_iff_enum]
+    exact h
+  }
+
+theorem GRectangle.subset.is_trans : IsTrans GRectangle (· ⊆ ·) where
+  trans:=by{simp only [subset_iff_region_subset]; intro _ _ _ h1 h2; apply Set.Subset.trans h1 h2}
+@[implicit_reducible] instance GRectangle.subset.instTrans
+: Trans (α:=GRectangle) (· ⊆ ·) (· ⊆ ·) (· ⊆ ·) where
+  trans:=by{apply is_trans.trans}
+theorem GRectangle.subset.trans {a b c : GRectangle} : a ⊆ b → b ⊆ c → a ⊆ c := instTrans.trans
+
+theorem GRectangle.toRegion_eq_of_subset_of_area_eq {r1 r2 : GRectangle}
+  (h : r1 ⊆ r2) (h' : r1.area = r2.area) : r1.toRegion = r2.toRegion := by{
+    rw[←enum_length, ←enum_length] at h'
+    have ih:=List.perm_of_nodup_subset_length_eq r1.enum_nodup r2.enum_nodup
+      (by{rw[←subset_iff_enum]; exact h}) h'
+    ext x
+    rw[←mem_iff_toRegion, ←mem_iff_toRegion]
+    rw[←mem_enum_iff, ←mem_enum_iff]
+    rw[List.perm_ext_iff_of_nodup r1.enum_nodup r2.enum_nodup] at ih
+    apply ih
+  }
+
+theorem chopRect_area_le_area {r : GRectangle} {d : GDart}
+  : (chopRect r d).area ≤ r.area := by{
+    apply GRectangle.area_le_area_of_subset
+    apply chopRect_subset_rect
+  }
+
+theorem chopRect_area_lt_of_mem_inner {r : GRectangle} {d : GDart}
+  (hrd : d.half ∈ r.inner) : (chopRect r d).area < r.area := by{
+    have ih1:=chopRect_area_le_area (r:=r) (d:=d)
+    apply lt_or_eq_of_le at ih1
+    apply ih1.resolve_right
+    intro h
+    have ih2:=GRectangle.toRegion_eq_of_subset_of_area_eq chopRect_subset_rect h
+    have ih3:(edge d).half ∈ r:=by{
+      rw[GRectangle.mem_inner_iff] at hrd
+      apply hrd
+      apply edge_half_mem_touch_half
+    }
+    have ih4:(edge d).half ∉ chopRect r d:=by{
+      rw[GRectangle.mem_iff_toRegion, chopRect_toRegion, Set.mem_inter_iff, not_and]
+      intro _
+      nth_rw 1 [←edge_2 (d:=d)]
+      rw[mem_edge_chop_iff, not_not]
+      apply half_mem_chop
+    }
+    rw[GRectangle.mem_iff_toRegion] at ih3 ih4
+    rw[ih2] at ih4
+    exact ih4 ih3
+  }
+
+theorem chopRect_edge_area_lt_of_mem_inner {r : GRectangle} {d : GDart}
+  (hrd : d.half ∈ r.inner) : (chopRect r (edge d)).area < r.area := by{
+    have ih1:=chopRect_area_le_area (r:=r) (d:=edge d)
+    apply lt_or_eq_of_le at ih1
+    apply ih1.resolve_right
+    intro h
+    have ih2:=GRectangle.toRegion_eq_of_subset_of_area_eq chopRect_subset_rect h
+    have ih3:d.half ∈ r:=by{
+      apply GRectangle.inner_subset
+      exact hrd
+    }
+    have ih4:d.half ∉ chopRect r (edge d):=by{
+      rw[GRectangle.mem_iff_toRegion, chopRect_toRegion, Set.mem_inter_iff, not_and]
+      intro _
+      rw[mem_edge_chop_iff, not_not]
+      apply half_mem_chop
+    }
+    rw[GRectangle.mem_iff_toRegion] at ih3 ih4
+    rw[ih2] at ih4
+    exact ih4 ih3
+  }
+
+theorem half_not_mem_chopRect_inner {r : GRectangle} {d : GDart}
+  : d.half ∉ (chopRect r d).inner := by{
+    rw[GRectangle.mem_inner_iff]
+    intro h
+    have h0:(edge d).half ∈ touch (d.half) := by{
+      apply edge_half_mem_touch_half
+    }
+    have h1:(edge d).half ∉ chopRect r d := by{
+      rw[GRectangle.mem_iff_toRegion, chopRect_toRegion, Set.mem_inter_iff]
+      rw[not_and]
+      intro h
+      nth_rw 1 [←edge_2 (d:=d)]
+      rw[mem_edge_chop_iff, not_not]
+      apply half_mem_chop
+    }
+    exact h1 (h h0)
+  }
+
+theorem rectangle_subset_chop_of_mem_of_edge_not_mem {r : GRectangle} {d : GDart}
+  (hd : d.half ∈ r) (hed : (edge d).half ∉ r) : r.toRegion ⊆ chop d := by{
+    match d, r with
+    | ⟨dx, dy⟩, ⟨⟨rx0, rx1⟩, ⟨ry0, ry1⟩⟩ => {
+      simp only [edge_half, add_def, x_half, x_ccw, y_mod2, y_half, y_ccw, x_mod2,
+        sub_def, GRectangle.mem_iff, not_and, GInterval.mem_iff] at hd hed
+      intro x
+      simp only [GRectangle.toRegion, Set.mem_setOf, GInterval.mem_iff, chop, toUnitSquareDart]
+      simp only [x_mod2, y_mod2, x_half, y_half]
+      cases Int.emod_two_eq dx with | inl hdx | inr hdx =>
+      cases Int.emod_two_eq dy with | inl hdy | inr hdy => {
+        simp[hdx, ↓reduceIte, hdy, one_ne_zero, and_imp]
+        omega
+      }
+    }
+  }
+theorem rectangle_subset_chop1_of_mem_inner_of_edge_not_mem_inner {r : GRectangle} {d : GDart}
+  (hd : d.half ∈ r.inner) (hed : (edge d).half ∉ r.inner) : r.toRegion ⊆ chop1 d := by{
+    apply rectangle_subset_chop_of_mem_of_edge_not_mem
+    · {
+      rw[face_half, face_half]
+      rw[GRectangle.mem_inner_iff] at hd
+      apply hd
+      apply edge_half_mem_touch_half
+    }
+    · {
+      match d, r with
+      | ⟨dx, dy⟩, ⟨⟨rx0, rx1⟩, ⟨ry0, ry1⟩⟩ => {
+        simp only [edge_half, add_def, x_half, x_ccw, y_mod2, y_half, y_ccw, x_mod2,
+          sub_def, GRectangle.mem_iff, not_and, GInterval.mem_iff, GRectangle.inner] at hd hed
+        simp only [edge_half, face_half, add_def, x_half, x_ccw, y_mod2, y_half, y_ccw, x_mod2,
+          sub_def, sub_add_sub_cancel, GRectangle.mem_iff, not_and]
+        simp only [face ,edge, arc, mod2, add_def, sub_def, x_ccw, y_ccw, GInterval.mem_iff]
+        cases Int.emod_two_eq dx with | inl hdx | inr hdx =>
+        cases Int.emod_two_eq dy with | inl hdy | inr hdy => {
+          simp[hdx, hdy, and_imp]
+          omega
+        }
+      }
+    }
+  }
+
+theorem GRectangle.inner_subset_inner_of_subset {r1 r2 : GRectangle} (hr12 : r1 ⊆ r2)
+  : r1.inner ⊆ r2.inner := by{
+    intro d hd
+    rw[mem_inner_iff] at *
+    match d, r1, r2 with
+    | ⟨dx, dy⟩, ⟨⟨r0x0, r0x1⟩, ⟨r0y0, r0y1⟩⟩, ⟨⟨r1x0, r1x1⟩, ⟨r1y0, r1y1⟩⟩ => {
+        simp only [subset_iff, mem_iff, GInterval.mem_iff, and_imp, touch] at *
+        intro x h0 h1 h2 h3
+        have hd':=hd h0 h1 h2 h3
+        have hr12':=hr12 hd'.left.left hd'.left.right hd'.right.left hd'.right.right
+        exact hr12'
+      }
+  }
+
+theorem half_mem_chopRect_of_edge_mem_of_mem_chopRect {r : GRectangle} {d : GDart}
+  (hem : (edge d).half ∈ r) {p : GPixel} (hpm : p ∈ chopRect r d)
+  : d.half ∈ chopRect r d := by{
+    match d, p, r with
+    | ⟨dx, dy⟩, ⟨px, py⟩, ⟨⟨rx0, rx1⟩, ⟨ry0, ry1⟩⟩ => {
+      rw[GRectangle.mem_iff_toRegion, chopRect_toRegion]
+      rw[GRectangle.mem_iff_toRegion, chopRect_toRegion] at hpm
+      rw[GRectangle.mem_iff_toRegion] at hem
+      simp only [GRectangle.toRegion, GInterval.mem_iff, edge_half, add_def, x_half, x_ccw, y_mod2,
+        y_half, y_ccw, x_mod2, sub_def, Set.mem_setOf_eq, chop, toUnitSquareDart, ge_iff_le,
+        Set.mem_inter_iff, Std.le_refl] at *
+      cases Int.emod_two_eq dx with | inl hdx | inr hdx =>
+      cases Int.emod_two_eq dy with | inl hdy | inr hdy => {
+        simp[hdx, hdy] at hem hpm
+        simp[hdx, hdy]
+        omega
+      }
+    }
+  }
+
+theorem mem_touch_iff_mem_all_chop1_face {d : GDart} {p : GPixel}
+  : p ∈ d.half.touch ↔
+  ∀d' ∈ [d, face d, face (face d), face (face (face d))], p ∈ chop1 d' := by{
+    constructor
+    · {
+      intro h d' hd'
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at hd'
+      refine (touch_subset_chop1_iff_mem_chop.mpr ?_) h
+      rcases hd' with hd' | hd' | hd' | hd'
+      all_goals
+      rw[hd']
+      apply half_mem_chop_of_half_eq
+      simp[face_half]
+    }
+    · {
+      intro h
+      have h0:=h d
+      have h1:=h (face d)
+      have h2:=h (face (face d))
+      have h3:=h (face (face (face d)))
+      simp only [List.mem_cons, List.not_mem_nil, or_false, true_or, forall_const,
+        or_true, chop1, chop, toUnitSquareDart, face_mod2, edge_mod2, GPoint.ccw_4,
+        face_half, edge_half, add_def, sub_def, x_ccw, y_ccw, x_mod2, y_mod2] at h0 h1 h2 h3
+      simp only [touch, GRectangle.mem_iff, GInterval.mem_iff, tsub_le_iff_right]
+      cases Int.emod_two_eq d.x with | inl hx | inr hx =>
+      cases Int.emod_two_eq d.y with | inl hy | inr hy =>
+        simp[hx, hy] at h0 h1 h2 h3
+        omega
+    }
+  }
+
+theorem mem_touch_iff_mem_all_chop1_half_eq {d : GDart} {p : GPixel}
+  : p ∈ d.half.touch ↔
+  ∀d', d'.half = d.half → p ∈ chop1 d' := by{
+    rw[mem_touch_iff_mem_all_chop1_face]
+    simp[half_eq_cases_face]
+  }
 
 end GridPlane
