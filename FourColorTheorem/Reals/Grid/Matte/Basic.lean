@@ -1824,14 +1824,14 @@ def extend2 {m : Matte} {d : GDart} (hd : Extend2.ext2Hp m d) : Matte where
 
 inductive Extension (m : Matte) : Matte → Prop
 | refl : Extension m m
-| step {d : GDart} {xm0 xm : Matte} (hme  : Extension m xm0)
+| step (d : GDart) (xm0 xm : Matte) (hme : Extension m xm0)
   (hdr : edge d ∈ xm0.ring) (hdisk : ∀x, x ∈ xm ↔ x ∈ extDisk xm0 d)
   : Extension m xm
 
 theorem Extension.subset {m xm : Matte} (h : Extension m xm) : m.disk ⊆ xm.disk := by{
   induction h with
   | refl => apply List.Subset.refl
-  | step hme hdr hdisk ih => {
+  | step _ _ _ hme hdr hdisk ih => {
     apply ih.trans
     intro x
     simp only [mem_iff] at hdisk
