@@ -4,33 +4,6 @@ import FourColorTheorem.Reals.Grid.Matte.CoarseIn
 namespace GridPlane
 namespace Matte
 
-def toRegion (m : Matte) : GRegion := {p | p ∈ m}
-theorem mem_toRegion_iff_mem {m : Matte} {p : GPoint} : p ∈ m.toRegion ↔ p ∈ m := by rfl
-theorem toRegion_subset_iff_disk_subset {m1 m2 : Matte} :
-  m1.toRegion ⊆ m2.toRegion ↔ m1.disk ⊆ m2.disk := by{
-  simp only [toRegion, mem_iff]
-  constructor
-  · exact fun h1 x h2 => Set.mem_setOf.mp (h1 (Set.mem_setOf.mpr h2))
-  · exact fun h1 x h2 => Set.mem_setOf.mpr (h1 (Set.mem_setOf.mp h2))
-}
-
-theorem toRegion_disjoint_iff_disk_disjoint {m1 m2 : Matte} :
-  Disjoint m1.toRegion m2.toRegion ↔ m1.disk.Disjoint m2.disk := by{
-  simp only [toRegion, Set.disjoint_iff_forall_ne]
-  constructor
-  · {
-    intro h x h1 h2
-    have h':=h (Set.mem_setOf.mpr h1) (Set.mem_setOf.mpr h2)
-    exact h' rfl
-  }
-  · {
-    intro h a ha b hb hab
-    rw[←hab] at hb
-    rw[Set.mem_setOf] at ha hb
-    exact h ha hb
-  }
-}
-
 theorem extend_adj {m m1 : Matte} {r : GRectangle} (rEmh : m.coarseIn r.toRegion)
   (hm_r : ∃ q ∈ r, q ∈ m) (hm_ri : ∃ q ∈ r.inner, q ∈ m1) (hm_m1 : m.disk.Disjoint m1.disk)
   : ∃xm : Matte, m.disk ⊆ xm.disk ∧ xm.toRegion ⊆ (r.toRegion ∪ m.toRegion) \ m1.toRegion

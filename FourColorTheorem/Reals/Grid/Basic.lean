@@ -971,15 +971,15 @@ theorem end0_eq_cases_node {d0 d1 : GDart}
 abbrev GRegion := Set GPixel
 abbrev GDartRegion:=GRegion
 structure GInterval where
-  min : ℤ
-  max : ℤ
+  lb : ℤ
+  ub : ℤ
 structure GRectangle where
   hspan : GInterval
   vspan : GInterval
-def GInterval.toSet (I : GInterval) : Set ℤ := {x | I.min ≤ x ∧ x < I.max}
+def GInterval.toSet (I : GInterval) : Set ℤ := {x | I.lb ≤ x ∧ x < I.ub}
 def GInterval.Mem (I : GInterval) (x : ℤ) : Prop := x ∈ I.toSet
 @[inline] instance GInterval.instMembership : Membership ℤ GInterval where mem := GInterval.Mem
-theorem GInterval.mem_iff (I : GInterval) (x : ℤ) : x ∈ I ↔ I.min ≤ x ∧ x < I.max := by rfl
+theorem GInterval.mem_iff (I : GInterval) (x : ℤ) : x ∈ I ↔ I.lb ≤ x ∧ x < I.ub := by rfl
 theorem GInterval.mem_iff_toSet {I : GInterval} {x : ℤ} : x ∈ I ↔ x ∈ I.toSet := by{rfl}
 def GRectangle.toRegion (R : GRectangle) : GRegion := {p | p.x ∈ R.hspan ∧ p.y ∈ R.vspan}
 def GRectangle.Mem (R : GRectangle) (p : GPixel) : Prop := p ∈ R.toRegion
@@ -1011,15 +1011,15 @@ theorem GRectangle.subset_iff_region_subset {R1 R2 : GRectangle}
 }
 
 namespace GInterval
-def width (I : GInterval) : ℕ := (I.max - I.min).toNat
-def enum (I : GInterval) : List ℤ := (List.range I.width).map (Int.ofNat · + I.min)
+def width (I : GInterval) : ℕ := (I.ub - I.lb).toNat
+def enum (I : GInterval) : List ℤ := (List.range I.width).map (Int.ofNat · + I.lb)
 theorem enum_length {I : GInterval} : I.enum.length = I.width := by{simp[enum]}
 theorem enum_nodup {I : GInterval} : I.enum.Nodup := by{
   rw[enum]
   rw[List.nodup_map_iff]
   · exact List.nodup_range
-  apply Injective.comp (g:=(· + I.min)) ?_ Int.ofNat_injective
-  exact fun _ _ => (Int.add_left_inj I.min).mp
+  apply Injective.comp (g:=(· + I.lb)) ?_ Int.ofNat_injective
+  exact fun _ _ => (Int.add_left_inj I.lb).mp
 }
 theorem mem_enum_iff {I : GInterval} {x : ℤ} : x ∈ I.enum ↔ x ∈ I := by{
   rw[enum, List.mem_map, mem_iff]
@@ -1032,19 +1032,19 @@ theorem mem_enum_iff {I : GInterval} {x : ℤ} : x ∈ I.enum ↔ x ∈ I := by{
     · simp[←ha1]
     · {
       rw[←ha1]
-      apply lt_of_lt_of_le (add_lt_add_left ha0 I.min)
+      apply lt_of_lt_of_le (add_lt_add_left ha0 I.lb)
       rw[sub_add_cancel]
     }
   }
   · {
     intro ⟨h0, h1⟩
     simp only [←eq_sub_iff_add_eq]
-    use (x - I.min).toNat
+    use (x - I.lb).toNat
     simp[h0, h1]
   }
 }
 
-theorem subset_of_contain {I1 I2 : GInterval} (hm : I2.min ≤ I1.min) (hM : I1.max ≤ I2.max)
+theorem subset_of_contain {I1 I2 : GInterval} (hm : I2.lb ≤ I1.lb) (hM : I1.ub ≤ I2.ub)
   : I1 ⊆ I2 := by{
     simp only [subset_iff_set_subset, toSet, Set.setOf_subset_setOf, and_imp]
     intro a ha0 ha1
@@ -1052,7 +1052,7 @@ theorem subset_of_contain {I1 I2 : GInterval} (hm : I2.min ≤ I1.min) (hM : I1.
     · exact le_trans hm ha0
     · exact lt_of_lt_of_le ha1 hM
   }
-theorem empty_of_ge {I : GInterval} (hm : I.min ≥ I.max) : I.toSet = ∅ :=by{
+theorem empty_of_ge {I : GInterval} (hm : I.lb ≥ I.ub) : I.toSet = ∅ :=by{
   ext x
   simp only [toSet, Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false, not_and, not_lt]
   intro h
@@ -1730,10 +1730,10 @@ theorem f3e_chop1_eq {d : GDart} : chop1 (face (face (face (edge d)))) = chop1 (
 
 def chopRect (r : GRectangle) (d : GDart) : GRectangle :=
   match d.toUnitSquareDart with
-  | gp00 => ⟨r.hspan, ⟨max r.vspan.min d.half.y, r.vspan.max⟩⟩
-  | gp01 => ⟨⟨max r.hspan.min d.half.x, r.hspan.max⟩, r.vspan⟩
-  | gp10 => ⟨⟨r.hspan.min, min r.hspan.max (d.half.x + 1)⟩, r.vspan⟩
-  | gp11 => ⟨r.hspan, ⟨r.vspan.min, min r.vspan.max (d.half.y + 1)⟩⟩
+  | gp00 => ⟨r.hspan, ⟨max r.vspan.lb d.half.y, r.vspan.ub⟩⟩
+  | gp01 => ⟨⟨max r.hspan.lb d.half.x, r.hspan.ub⟩, r.vspan⟩
+  | gp10 => ⟨⟨r.hspan.lb, min r.hspan.ub (d.half.x + 1)⟩, r.vspan⟩
+  | gp11 => ⟨r.hspan, ⟨r.vspan.lb, min r.vspan.ub (d.half.y + 1)⟩⟩
 
 theorem chopRect_toRegion {r : GRectangle} {d : GDart}
 : (chopRect r d).toRegion = r.toRegion ∩ chop d := by{
@@ -1781,6 +1781,8 @@ theorem chopRect_subset_chop1Rect {r : GRectangle} {d : GDart}
   exact chop_subset_chop1
 }
 
+def GRegion.zoom (r : GRegion) : GRegion :=
+  {p | p.half ∈ r}
 def GRectangle.zoom : GRectangle → GRectangle
 | ⟨⟨x0, x1⟩, ⟨y0, y1⟩⟩ => ⟨⟨x0 * 2, x1 * 2⟩, ⟨y0 * 2, y1 * 2⟩⟩
 theorem GRectangle.mem_zoom {r : GRectangle} {p : GPixel} : p ∈ r.zoom ↔ p.half ∈ r := by{
@@ -1807,6 +1809,12 @@ theorem GRectangle.height_zoom {r : GRectangle} : r.zoom.height = r.height * 2 :
 theorem GRectangle.area_zoom {r : GRectangle} : r.zoom.area = r.area * 4 := by{
   simp[area, width_zoom, height_zoom]
   ring
+}
+theorem GRectangle.zoom_toRegion {r : GRectangle}
+: r.zoom.toRegion = r.toRegion.zoom := by{
+  ext x
+  rw[←mem_iff_toRegion, GRegion.zoom, Set.mem_setOf, mem_zoom,
+  ←mem_iff_toRegion]
 }
 
 def GRectangle.inner : GRectangle → GRectangle
@@ -1861,6 +1869,17 @@ theorem GRectangle.inner_subset {r : GRectangle}
     intro h
     apply h
     apply mem_touch
+  }
+
+theorem GRectangle.inner_zoom_subset_zoom_inner {r : GRectangle}
+  : r.inner.zoom ⊆ r.zoom.inner := by{
+    intro ⟨dx, dy⟩ hx
+    match r with
+    | ⟨⟨rx0, rx1⟩, ⟨ry0, ry1⟩⟩ => {
+      simp[inner, zoom, mem_iff, GInterval.mem_iff] at hx
+      simp[inner, zoom, mem_iff, GInterval.mem_iff]
+      omega
+    }
   }
 
 theorem touch_subset_chop1_iff_mem_chop {p : GPixel} {d : GDart} :

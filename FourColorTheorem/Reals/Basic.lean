@@ -14,7 +14,7 @@ open Relation
 
 namespace RealPlane
 
-structure Point where
+@[ext] structure Point where
   x : ℝ
   y : ℝ
 def Point.toProd : Point → ℝ × ℝ
@@ -30,8 +30,8 @@ def Point.equivProd : Point ≃ ℝ × ℝ where
 abbrev Region:=Set Point
 def Map:=Point → Region
 structure Interval where
-  min : ℝ
-  max : ℝ
+  lb : ℝ
+  ub : ℝ
 structure Rectangle where
   hspan : Interval
   vspan : Interval
@@ -41,16 +41,140 @@ theorem Map.mem_map_apply_iff {m : Map} {p1 p2 : Point}
 theorem Map.map_apply_iff_mem {m : Map} {p1 p2 : Point}
   : m p1 p2 ↔ p2 ∈ m p1 := by rfl
 
-def Interval.toSet (I : Interval) : Set ℝ := {x | I.min < x ∧ x < I.max}
+def Interval.toSet (I : Interval) : Set ℝ := {x | I.lb < x ∧ x < I.ub}
 def Interval.Mem (I : Interval) (x : ℝ) : Prop := x ∈ I.toSet
 @[inline] instance Interval.instMembership : Membership ℝ Interval where mem := Interval.Mem
-theorem Interval.mem_iff (I : Interval) (x : ℝ) : x ∈ I ↔ I.min < x ∧ x < I.max := by rfl
+theorem Interval.mem_iff (I : Interval) (x : ℝ) : x ∈ I ↔ I.lb < x ∧ x < I.ub := by rfl
+theorem Interval.mem_iff_toSet (I : Interval) (x : ℝ) : x ∈ I ↔ x ∈ I.toSet := by rfl
 def Rectangle.toRegion (R : Rectangle) : Region := {p | p.x ∈ R.hspan ∧ p.y ∈ R.vspan}
 def Rectangle.Mem (R : Rectangle) (p : Point) : Prop := p ∈ R.toRegion
 @[inline] instance Rectangle.instMembership :
   Membership Point Rectangle where mem := Rectangle.Mem
 theorem Rectangle.mem_iff (R : Rectangle) (p : Point) :
   p ∈ R ↔ p.x ∈ R.hspan ∧ p.y ∈ R.vspan := by rfl
+theorem Rectangle.mem_iff_toRegion (R : Rectangle) (p : Point) :
+  p ∈ R ↔ p ∈ R.toRegion := by rfl
+
+def Interval.inter : Interval → Interval → Interval
+| ⟨x0, x1⟩, ⟨y0, y1⟩ => ⟨max x0 y0, min x1 y1⟩
+@[inline] instance Interval.instInter : Inter Interval := ⟨inter⟩
+theorem Interval.inter_toSet {I1 I2 : Interval}
+  : (I1 ∩ I2).toSet = I1.toSet ∩ I2.toSet := by{
+    change (I1.inter I2).toSet = _
+    ext x
+    simp[toSet, inter]
+    tauto
+  }
+theorem Interval.mem_inter_iff {I1 I2 : Interval} {x : ℝ}
+  : x ∈ I1 ∩ I2 ↔ x ∈ I1 ∧ x ∈ I2 := by{
+    simp only [mem_iff_toSet, inter_toSet, Set.mem_inter_iff]
+  }
+theorem Interval.inter_lb {I1 I2 : Interval}
+  : (I1 ∩ I2).lb = max I1.lb I2.lb := rfl
+theorem Interval.inter_ub {I1 I2 : Interval}
+  : (I1 ∩ I2).ub = min I1.ub I2.ub := rfl
+def Rectangle.inter : Rectangle → Rectangle → Rectangle
+| ⟨r0x, r0y⟩, ⟨r1x, r1y⟩ => ⟨r0x ∩ r1x, r0y ∩ r1y⟩
+@[inline] instance Rectangle.instInter : Inter Rectangle := ⟨inter⟩
+theorem Rectangle.inter_toRegion {R1 R2 : Rectangle}
+  : (R1 ∩ R2).toRegion = R1.toRegion ∩ R2.toRegion := by{
+    change (R1.inter R2).toRegion = _
+    ext x
+    simp[toRegion, inter, Interval.mem_inter_iff]
+    tauto
+  }
+theorem Rectangle.mem_inter_iff {R1 R2 : Rectangle} {x : Point}
+  : x ∈ R1 ∩ R2 ↔ x ∈ R1 ∧ x ∈ R2 := by{
+    simp only [mem_iff_toRegion, inter_toRegion, Set.mem_inter_iff]
+  }
+noncomputable def sepInterval (x1 x2 : ℝ) : Interval :=
+  let w := (x1 + x2) / 2
+  ⟨if x2 ≤ w then x2 - 1 else w, if x2 ≥ w then x2 + 1 else w⟩
+theorem right_mem_sepInterval {x1 x2 : ℝ}
+  : x2 ∈ sepInterval x1 x2 := by{
+    rcases lt_trichotomy x2 ((x1 + x2) / 2) with h | h | h
+    all_goals
+    simp[sepInterval, Interval.mem_iff]
+    try simp[le_of_lt h, not_le_of_gt h]
+    try simp[h.symm]
+    try simp[h]
+  }
+theorem left_notMem_sepInterval_of_ne {x1 x2 : ℝ}
+  (h12 : x1 ≠ x2) : x1 ∉ sepInterval x1 x2 := by{
+    rcases lt_trichotomy x2 ((x1 + x2) / 2) with h | h | h
+    · {
+      simp only [sepInterval, ge_iff_le, Interval.mem_iff, not_and, not_lt]
+      simp only [le_of_lt h, ↓reduceIte, not_le_of_gt h]
+      rw[lt_div_iff₀ (by{simp}), mul_two, add_lt_add_iff_right] at h
+      rw[div_le_iff₀ (by{simp}), mul_two, add_le_add_iff_left]
+      simp[le_of_lt h]
+    }
+    · {
+      rw[eq_div_iff (by{simp}), mul_two, add_right_cancel_iff, Eq.comm] at h
+      contradiction
+    }
+    · {
+      simp only [sepInterval, ge_iff_le, Interval.mem_iff, not_and, not_lt]
+      simp only [le_of_lt h, ↓reduceIte, not_le_of_gt h]
+      rw[div_lt_iff₀ (by{simp}), mul_two, add_lt_add_iff_right] at h
+      rw[div_lt_iff₀ (by{simp}), mul_two, add_lt_add_iff_left]
+      simp[not_lt_of_gt h]
+    }
+  }
+theorem sepInterval_antisymm' {x y t : ℝ} (htxy : t ∈ sepInterval x y)
+  (htyx : t ∈ sepInterval y x) : x = y := by{
+    apply of_not_not
+    intro h
+    wlog hxy : x < y with H
+    · exact H htyx htxy (Ne.symm h) ((lt_or_gt_of_ne h).resolve_left hxy)
+    have hxw : x < (y + x) / 2 := by{
+      rw[lt_div_iff₀ (by{simp}), mul_two, add_lt_add_iff_right]
+      exact hxy
+    }
+    have hwy : (x + y) / 2 < y := by{
+      rw[div_lt_iff₀ (by{simp}), mul_two, add_lt_add_iff_right]
+      exact hxy
+    }
+    simp only [sepInterval, not_le_of_gt hwy, ↓reduceIte, ge_iff_le, le_of_lt hwy,
+      Interval.mem_iff] at htxy
+    simp only [sepInterval, not_le_of_gt hxw, ↓reduceIte, le_of_lt hxw,
+      Interval.mem_iff] at htyx
+    rw[add_comm] at htyx
+    apply lt_asymm htyx.2 htxy.1
+  }
+noncomputable def sepRectangle : Point → Point → Rectangle
+| ⟨x0, y0⟩, ⟨x1, y1⟩ => ⟨sepInterval x0 x1, sepInterval y0 y1⟩
+theorem right_mem_sepRectangle {p1 p2 : Point}
+  : p2 ∈ sepRectangle p1 p2 := by{
+    match p1, p2 with | ⟨x1, y1⟩, ⟨x2, y2⟩ => {
+      rw[sepRectangle, Rectangle.mem_iff]
+      exact ⟨right_mem_sepInterval, right_mem_sepInterval⟩
+    }
+  }
+theorem left_notMem_sepRectangle_of_ne {p1 p2 : Point}
+  (h12 : p1 ≠ p2) : p1 ∉ sepRectangle p1 p2 := by{
+    match p1, p2 with | ⟨x1, y1⟩, ⟨x2, y2⟩ => {
+      simp only [ne_eq, Point.mk.injEq, not_and] at h12
+      rw[sepRectangle, Rectangle.mem_iff, not_and]
+      intro h
+      apply left_notMem_sepInterval_of_ne
+      apply h12
+      apply of_not_not
+      intro h'
+      have h'':=left_notMem_sepInterval_of_ne h'
+      contradiction
+    }
+  }
+theorem sepRectangle_antisymm' {p0 p1 t : Point} (htxy : t ∈ sepRectangle p0 p1)
+  (htyx : t ∈ sepRectangle p1 p0) : p0 = p1 := by{
+    match t, p0, p1 with
+    | ⟨tx, ty⟩, ⟨x0, y0⟩, ⟨x1, y1⟩ => {
+      rw[sepRectangle, Rectangle.mem_iff] at htxy htyx
+      have h0:=sepInterval_antisymm' htxy.left htyx.left
+      have h1:=sepInterval_antisymm' htxy.right htyx.right
+      rw[h0, h1]
+    }
+  }
 
 def Region.Nonempty (R : Region) : Prop := ∃ p, p ∈ R
 theorem Region.Nonempty_iff {R : Region} : R.Nonempty ↔ ∃ p, p ∈ R := by rfl
@@ -66,6 +190,14 @@ def Map.at_most_regions (m : Map) (n : ℕ) : Prop :=
   ∃ f:Fin n → Region, ∀ p, m.cover p → ∃ i, p ∈ f i
 theorem Map.at_most_regions_iff {m : Map} {n : ℕ} :
   m.at_most_regions n ↔ ∃ f:Fin n → Region, ∀ p, m.cover p → ∃ i, p ∈ f i := by rfl
+theorem sepRectangle_antisymm'_of_meet {p0 p1 : Point}
+  (htyx : Region.meet (sepRectangle p0 p1).toRegion (sepRectangle p1 p0).toRegion)
+  : p0 = p1 := by{
+    have ⟨t, ht⟩:=htyx
+    rw[Set.mem_inter_iff, ←Rectangle.mem_iff_toRegion,
+    ←Rectangle.mem_iff_toRegion] at ht
+    exact sepRectangle_antisymm' ht.left ht.right
+  }
 
 def Region.open (R : Region) : Prop :=
   ∀ p ∈ R, ∃ u:Rectangle, p ∈ u ∧ u.toRegion ⊆ R

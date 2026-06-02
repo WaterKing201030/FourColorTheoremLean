@@ -122,6 +122,33 @@ theorem mem_iff {m : Matte} {p : GPoint} : p ∈ m ↔ p ∈ m.disk := by rfl
 @[inline] instance instDecidableMem {m : Matte} {p : GPoint} : Decidable (p ∈ m)
 := Matte.Mem.instDecidable
 
+def toRegion (m : Matte) : GRegion := {p | p ∈ m}
+theorem mem_toRegion_iff_mem {m : Matte} {p : GPoint} : p ∈ m.toRegion ↔ p ∈ m := by rfl
+theorem toRegion_subset_iff_disk_subset {m1 m2 : Matte} :
+  m1.toRegion ⊆ m2.toRegion ↔ m1.disk ⊆ m2.disk := by{
+  simp only [toRegion, mem_iff]
+  constructor
+  · exact fun h1 x h2 => Set.mem_setOf.mp (h1 (Set.mem_setOf.mpr h2))
+  · exact fun h1 x h2 => Set.mem_setOf.mpr (h1 (Set.mem_setOf.mp h2))
+}
+
+theorem toRegion_disjoint_iff_disk_disjoint {m1 m2 : Matte} :
+  Disjoint m1.toRegion m2.toRegion ↔ m1.disk.Disjoint m2.disk := by{
+  simp only [toRegion, Set.disjoint_iff_forall_ne]
+  constructor
+  · {
+    intro h x h1 h2
+    have h':=h (Set.mem_setOf.mpr h1) (Set.mem_setOf.mpr h2)
+    exact h' rfl
+  }
+  · {
+    intro h a ha b hb hab
+    rw[←hab] at hb
+    rw[Set.mem_setOf] at ha hb
+    exact h ha hb
+  }
+}
+
 end Matte
 
 namespace Matte
@@ -648,6 +675,11 @@ theorem mem_zoom_iff {m : Matte} {p : GPixel} :
     }
   }
 
+theorem zoom_toRegion {m : Matte} : m.zoom.toRegion = m.toRegion.zoom := by{
+  ext x
+  rw[toRegion, Set.mem_setOf, GRegion.zoom, Set.mem_setOf, mem_zoom_iff]
+  rw[mem_toRegion_iff_mem]
+}
 section extend_matte
 def ehex (d : GDart) := chopRect d.half.touch d
 def equad (d : GDart) := chopRect (ehex d) (face d)
