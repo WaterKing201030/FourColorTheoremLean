@@ -289,4 +289,46 @@ class IsFiniteSimpleMap (m : Map) : Prop extends IsSimpleMap m where
 def Map.colorable_with (m : Map) (n : ℕ) : Prop :=
   ∃ k, IsColoringMap m k ∧ k.at_most_regions n
 
+section plain_lemmas
+
+variable {m : Map}
+variable [IsPlainMap m]
+theorem map_symm {p1 p2 : Point} : p2 ∈ m p1 → p1 ∈ m p2 := IsPlainMap.map_symm
+theorem map_trans {p1 p2 : Point} : p2 ∈ m p1 → m p2 ⊆ m p1 := IsPlainMap.map_trans
+theorem map_symm' {z1 z2 : Point} : m z1 z2 → m z2 z1 := IsPlainMap.map_symm
+@[implicit_reducible] def map_Symm : Std.Symm m :=
+  ⟨fun _ _ => map_symm'⟩
+theorem map_comm {z1 z2 : Point} : m z1 z2 = m z2 z1 := by{
+  ext
+  let := map_Symm (m:=m)
+  apply comm
+}
+theorem map_trans' {z1 z2 z3 : Point} : m z1 z2 → m z2 z3 → m z1 z3 := by{
+  intro h1 h2
+  apply map_trans h1 h2
+}
+theorem eq_of_rel {z1 z2 : Point} (h12 : m z1 z2)
+  : m z1 = m z2 := by{
+    ext z
+    change m z1 z ↔ m z2 z
+    constructor
+    · apply map_trans'; exact map_symm' h12
+    · apply map_trans' h12
+  }
+theorem congr_left_of_rel {z1 z2 : Point} (h12 : m z1 z2)
+  : ∀z, m z1 z ↔ m z2 z:=by{
+    simp[eq_of_rel h12]
+  }
+theorem congr_right_of_rel {z1 z2 : Point} (h12 : m z1 z2)
+  : ∀z, m z z1 ↔ m z z2:=by{
+    intro z
+    simp only [map_comm (z1:=z), congr_left_of_rel h12]
+  }
+theorem refl_of_rel {z1 z2 : Point} (h12 : m z1 z2)
+  : m.cover z1 ∧ m.cover z2 := by{
+    have h21 := map_symm' h12
+    exact ⟨map_trans' h12 h21, map_trans' h21 h12⟩
+  }
+end plain_lemmas
+
 end RealPlane
