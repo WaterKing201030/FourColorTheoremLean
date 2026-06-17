@@ -486,4 +486,14 @@ theorem top_atmost_one : Map.at_most_regions ⊤ 1 := by{
 --   toIsSimpleMap := by{simp}
 --   map_finite := ⟨1, top_atmost_one⟩
 
+theorem Map.adjacent_symm {m : Map} [IsPlainMap m] : Symmetric m.adjacent := by{
+  intro p0 p1 hp0
+  rw[adjacent] at *
+  change ¬m _ _ ∧ _
+  rw[map_comm (m:=m), Map.border, Set.inter_comm]
+  exact hp0
+}
+
+def finColorable (nc : ℕ) := ∀ m : Map, IsFiniteSimpleMap m → m.colorable_with nc
+
 end RealPlane

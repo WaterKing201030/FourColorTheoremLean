@@ -443,6 +443,15 @@ theorem mod2_eq_mod2_cases {p q : GPoint}
       simp[hpx, hpy, hqx, hqy]
   }
 
+theorem mod2_cases {p : GPoint}
+  : p.mod2 = ⟨0, 0⟩ ∨ p.mod2 = ⟨1, 0⟩ ∨ p.mod2 = ⟨1, 1⟩ ∨ p.mod2 = ⟨0, 1⟩ := by{
+    match p with | ⟨px, py⟩ => {
+      cases Int.emod_two_eq px with | inl hpx | inr hpx =>
+      cases Int.emod_two_eq py with | inl hpy | inr hpy =>
+        simp[GPoint.ext_iff, x_mod2, y_mod2, hpx, hpy]
+    }
+  }
+
 end GPoint
 
 open GPoint
@@ -968,6 +977,78 @@ theorem end0_eq_cases_node {d0 d1 : GDart}
       simp[h, node_end0]
     }
   }
+theorem half_eq_exists_iterate {d0 d1 : GDart} : d0.half = d1.half ↔ ∃n, face^[n] d0 = d1 := by{
+  constructor
+  · {
+    intro h
+    rw[half_eq_cases_face] at h
+    rcases h with h | h | h | h
+    · use 0; simp[h]
+    · use 3; simp[h, face_4]
+    · use 2; simp[h, face_4]
+    · use 1; simp[h, face_4]
+  }
+  · {
+    intro ⟨n, hn⟩
+    induction n generalizing d0 with
+    | zero => simp at hn; simp[hn]
+    | succ n' ih => {
+      rw[iterate_succ_apply] at hn
+      specialize ih hn
+      rw[face_half] at ih
+      exact ih
+    }
+  }
+}
+theorem end0_eq_exists_iterate {d0 d1 : GDart} : end0 d0 = end0 d1 ↔ ∃n, node^[n] d0 = d1 := by{
+  constructor
+  · {
+    intro h
+    rw[end0_eq_cases_node] at h
+    rcases h with h | h | h | h
+    · use 0; simp[h]
+    · use 3; simp[h, node_4]
+    · use 2; simp[h, node_4]
+    · use 1; simp[h, node_4]
+  }
+  · {
+    intro ⟨n, hn⟩
+    induction n generalizing d0 with
+    | zero => simp at hn; simp[hn]
+    | succ n' ih => {
+      rw[iterate_succ_apply] at hn
+      specialize ih hn
+      rw[node_end0] at ih
+      exact ih
+    }
+  }
+}
+theorem end0_eq_exists_iterate_3 {d0 d1 : GDart} :
+  end0 d0 = end0 d1 ↔ ∃n, (node ∘ node ∘ node)^[n] d0 = d1 := by{
+  constructor
+  · {
+    intro h
+    rw[end0_eq_cases_node] at h
+    rcases h with h | h | h | h
+    · use 0; simp[h]
+    · use 1; simp[h, node_4]
+    · use 2; simp[h, node_4]
+    · use 3; simp[h, node_4]
+  }
+  · {
+    intro ⟨n, hn⟩
+    rw[end0_eq_exists_iterate]
+    use n * 3
+    rw[← hn]
+    clear hn
+    induction n with
+    | zero => simp
+    | succ n' ih => {
+      rw[iterate_succ_apply', ← ih, Nat.succ_mul, add_comm, iterate_add_apply]
+      rfl
+    }
+  }
+}
 abbrev GRegion := Set GPixel
 abbrev GDartRegion:=GRegion
 structure GInterval where
@@ -1100,6 +1181,10 @@ theorem proper_of_mem {R : GRectangle} {p : GPoint} (h : p ∈ R) : R.proper := 
   rw[proper, ←enum_length]
   exact List.length_pos_of_mem h
 }
+theorem proper_iff_pos {R : GRectangle} : R.proper ↔ R.width > 0 ∧ R.height > 0 := by{
+  rw[proper, area]
+  simp
+}
 theorem empty_iff_any_empty {R : GRectangle}
   : R.toRegion = ∅ ↔ R.hspan.toSet = ∅ ∨ R.vspan.toSet = ∅
   := by{
@@ -1139,6 +1224,58 @@ theorem subset_iff_enum {R1 R2 : GRectangle}
 theorem subset.refl : ∀r : GRectangle, r ⊆ r := by{
   simp[GRectangle.subset_iff_enum]
 }
+
+theorem exists_ld_corner_of_proper {R : GRectangle} (hR : R.proper) :
+  ∃p0, (∀x y : ℤ, p0 + ⟨x, y⟩ ∈ R ↔ (0 ≤ x ∧ x < R.width) ∧ (0 ≤ y ∧ y < R.height))
+    ∧ ∀p ∈ R, ∃x y : ℕ, p = p0 + ⟨x, y⟩ ∧ x < R.width ∧ y < R.height := by{
+  rw[proper_iff_pos] at hR
+  match R with | ⟨⟨x0, x1⟩, ⟨y0, y1⟩⟩ => {
+    simp only [width, height, GInterval.width, ← Int.pos_iff_toNat_pos, Int.sub_pos] at hR
+    use ⟨x0, y0⟩
+    simp only [add_def, mem_iff, GInterval.mem_iff, le_add_iff_nonneg_right, width, GInterval.width,
+      Int.ofNat_toNat, lt_sup_iff, height, Int.lt_toNat, and_imp, GPoint.ext_iff]
+    constructor
+    · omega
+    intro p
+    match p with | ⟨px, py⟩ => {
+      simp only
+      intro h0 h1 h2 h3
+      use (px - x0).toNat, (py - y0).toNat
+      simp[h0, h1, h2, h3]
+    }
+  }
+}
+
+theorem width_eq_sub_of_proper {R : GRectangle} (hR : R.proper) :
+  R.width = R.hspan.ub - R.hspan.lb := by{
+    have h := (proper_iff_pos.mp hR).left
+    rw[width, GInterval.width]
+    rw[width, GInterval.width] at h
+    have h' := Int.pos_iff_toNat_pos.mpr h
+    simp only [Int.ofNat_toNat, sup_eq_left]
+    exact le_of_lt h'
+  }
+theorem height_eq_sub_of_proper {R : GRectangle} (hR : R.proper) :
+  R.height = R.vspan.ub - R.vspan.lb := by{
+    have h := (proper_iff_pos.mp hR).right
+    rw[height, GInterval.width]
+    rw[height, GInterval.width] at h
+    have h' := Int.pos_iff_toNat_pos.mpr h
+    simp only [Int.ofNat_toNat, sup_eq_left]
+    exact le_of_lt h'
+  }
+theorem hspan_lt_of_proper {R : GRectangle} (hR : R.proper) :
+  R.hspan.lb < R.hspan.ub := by{
+    apply Int.lt_of_sub_pos
+    rw[← width_eq_sub_of_proper hR]
+    simp[proper_iff_pos.mp hR]
+  }
+theorem vspan_lt_of_proper {R : GRectangle} (hR : R.proper) :
+  R.vspan.lb < R.vspan.ub := by{
+    apply Int.lt_of_sub_pos
+    rw[← height_eq_sub_of_proper hR]
+    simp[proper_iff_pos.mp hR]
+  }
 end GRectangle
 
 def GPoint.touch : GPixel → GRectangle
@@ -1816,6 +1953,10 @@ theorem GRectangle.zoom_toRegion {r : GRectangle}
   rw[←mem_iff_toRegion, GRegion.zoom, Set.mem_setOf, mem_zoom,
   ←mem_iff_toRegion]
 }
+theorem GRectangle.zoom_proper_iff {R : GRectangle} : R.zoom.proper ↔ R.proper := by{
+  rw[proper, proper, area_zoom]
+  simp
+}
 
 def GRectangle.inner : GRectangle → GRectangle
 | ⟨⟨x0, x1⟩, ⟨y0, y1⟩⟩ => ⟨⟨x0 + 1, x1 - 1⟩, ⟨y0 + 1, y1 - 1⟩⟩
@@ -1937,6 +2078,12 @@ theorem GRectangle.area_le_area_of_subset {r1 r2 : GRectangle}
     · apply r2.enum_nodup
     rw[←subset_iff_enum]
     exact h
+  }
+
+theorem GRectangle.proper_of_subset {R1 R2 : GRectangle} (hR12 : R1 ⊆ R2) (hR1 : R1.proper) :
+  R2.proper := by{
+    apply lt_of_lt_of_le hR1
+    exact area_le_area_of_subset hR12
   }
 
 theorem GRectangle.subset.is_trans : IsTrans GRectangle (· ⊆ ·) where
@@ -2140,6 +2287,38 @@ theorem mem_touch_iff_mem_all_chop1_half_eq {d : GDart} {p : GPixel}
   ∀d', d'.half = d.half → p ∈ chop1 d' := by{
     rw[mem_touch_iff_mem_all_chop1_face]
     simp[half_eq_cases_face]
+  }
+
+def GRectangle.extend : GRectangle → GPoint → GRectangle
+| ⟨⟨x0, x1⟩, ⟨y0, y1⟩⟩, ⟨x, y⟩ => ⟨⟨min x0 x, max x1 (x + 1)⟩, ⟨min y0 y, max y1 (y + 1)⟩⟩
+theorem GRectangle.mem_extend {R : GRectangle} {p : GPoint} : p ∈ R.extend p := by{
+  match R, p with | ⟨⟨x0, x1⟩, ⟨y0, y1⟩⟩, ⟨x, y⟩ => {
+    simp[GRectangle.mem_iff, GInterval.mem_iff, extend]
+  }
+}
+theorem GRectangle.subset_extend {R : GRectangle} {p : GPoint} : R ⊆ R.extend p := by{
+  match R, p with | ⟨⟨x0, x1⟩, ⟨y0, y1⟩⟩, ⟨x, y⟩ => {
+    simp[GRectangle.subset_iff_region_subset, GRectangle.toRegion, extend,
+    GInterval.mem_iff]
+    omega
+  }
+}
+
+theorem x_succ_end0_eq_or_half_eq {dx dy} : end0 ⟨dx, dy⟩ = end0 ⟨dx + 1, dy⟩
+  ∨ GPoint.half ⟨dx, dy⟩ = GPoint.half ⟨dx + 1, dy⟩ := by{
+    simp only [end0, half, add_def, x_mod2, y_mod2, mk.injEq, and_true,
+    Int.add_one_emod_two]
+    rcases Int.emod_two_eq dx with hdx | hdx
+    · simp[hdx, Int.add_one_ediv_two_of_mod_zero hdx]
+    · simp[hdx, Int.add_one_ediv_two_of_mod_one hdx]
+  }
+theorem y_succ_end0_eq_or_half_eq {dx dy} : end0 ⟨dx, dy⟩ = end0 ⟨dx, dy + 1⟩
+  ∨ GPoint.half ⟨dx, dy⟩ = GPoint.half ⟨dx, dy + 1⟩ := by{
+    simp only [end0, half, add_def, x_mod2, y_mod2, mk.injEq, true_and,
+    Int.add_one_emod_two]
+    rcases Int.emod_two_eq dy with hdy | hdy
+    · simp[hdy, Int.add_one_ediv_two_of_mod_zero hdy]
+    · simp[hdy, Int.add_one_ediv_two_of_mod_one hdy]
   }
 
 end GridPlane

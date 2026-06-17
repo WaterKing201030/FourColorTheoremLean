@@ -101,8 +101,6 @@ theorem partialMap_subcoloring_of_subcoloring {m : Map} {nc : ℕ} {k : Map} {n 
     · apply size_partialMap m n h
   }
 
-def finColorable (nc : ℕ) := ∀ m : Map, IsFiniteSimpleMap m → m.colorable_with nc
-
 theorem partialColoring_exists (m : Map) [IsSimpleMap m] {nc : ℕ} (n : ℕ)
   (fin_colorable : finColorable nc) : ∃ k : Map, partialColoring m nc k n := by{
     have ⟨k, ⟨kP, n_k, k_n, adj'k⟩, nc_k⟩ :=

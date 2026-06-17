@@ -136,6 +136,24 @@ theorem Nat.card_le_two_iff {α : Type _} [Finite α]
         }
     }
   }
+
+theorem List.Subtype.fintype_card_le_length {α : Type _} [DecidableEq α] {l : List α}
+  : Fintype.card {x // x ∈ l} ≤ l.length := by{
+  have h := Fintype.subtype_card (p:=(· ∈ l)) l.toFinset (by simp)
+  have h' := List.toFinset_card_le l
+  rw[← h] at h'
+  apply (Eq.mp · h')
+  congr
+  apply Subsingleton.elim
+}
+theorem List.Subtype.fintype_card_eq_length_of_nodup {α : Type _} [DecidableEq α] {l : List α}
+  (hl : l.Nodup) : Fintype.card {x // x ∈ l} = l.length := by{
+  have h := Fintype.subtype_card (p:=(· ∈ l)) l.toFinset (by simp)
+  rw[← List.toFinset_card_of_nodup hl]
+  rw[← h]
+  congr
+  apply Subsingleton.elim
+}
 section Fintype
 
 variable {α : Type _} [Fintype α]

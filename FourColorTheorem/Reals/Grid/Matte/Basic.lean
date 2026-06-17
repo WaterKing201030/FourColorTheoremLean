@@ -91,7 +91,7 @@ theorem ring_ne_nil {m : Matte} : m.ring ≠ [] := by{
 }
 
 def adj (m1 m2 : Matte) : Prop := ∃p ∈ m2.ring, edge p ∈ m1.ring
-theorem adj_symm {m1 m2 : Matte} : m1.adj m2 → m2.adj m1 := by{
+@[symm] theorem adj_symm {m1 m2 : Matte} : m1.adj m2 → m2.adj m1 := by{
   intro ⟨p, hp2, hp1⟩
   use edge p
   apply And.intro hp1
