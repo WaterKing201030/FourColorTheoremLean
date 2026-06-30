@@ -1368,6 +1368,48 @@ theorem nodup_of_simpleList {p : List α} (hp : H.simpleList p) : p.Nodup := by{
   unfold simpleList at hp
   exact List.Nodup.of_map _ hp
 }
+def simpleList.rec_def (H : Hypermap α) : List α → Prop
+| [] => True
+| x :: p => x ∉ H.fband p ∧ Hypermap.simpleList.rec_def H p
+theorem simpleList.rec_def_iff {p : List α}
+  : Hypermap.simpleList.rec_def H p ↔ H.simpleList p := by{
+    induction p with
+    | nil => simp[rec_def, simpleList]
+    | cons x p' ih => {
+      simp only [rec_def, ih, simpleList, List.map_cons, List.nodup_cons, List.mem_map, not_exists,
+        not_and, and_congr_left_iff, fband, Set.mem_setOf, List.any_eq_true, decide_eq_true_eq,
+        not_exists, not_and, Quotient.eq_iff_equiv, H.cface_equivalence.comm (a:=x)]
+      intro _
+      rfl
+    }
+  }
+theorem simpleList_nil : H.simpleList [] := by{simp[simpleList]}
+theorem simpleList_cons {x : α} {p : List α} : H.simpleList (x :: p) ↔
+  x ∉ H.fband p ∧ H.simpleList p := by{
+    rw[← simpleList.rec_def_iff]
+    unfold simpleList.rec_def
+    rw[simpleList.rec_def_iff]
+  }
+def simpleCycle (H : Hypermap α) (e : α → α → Prop) (p : List α) :=
+  p.IsCycleChain e ∧ H.simpleList p
+theorem simpleCycle.cycle {e : α → α → Prop} {p : List α} (h : H.simpleCycle e p) :
+  p.IsCycleChain e := h.left
+theorem simpleCycle.simple {e : α → α → Prop} {p : List α} (h : H.simpleCycle e p) :
+  H.simpleList p := h.right
+theorem simpleCycle.chain {e : α → α → Prop} {p : List α} (h : H.simpleCycle e p) :
+  p.IsChain e := h.cycle.isChain
+theorem simpleCycle.nodup {e : α → α → Prop} {p : List α} (h : H.simpleCycle e p) :
+  p.Nodup := nodup_of_simpleList h.simple
+
+def rlink (H : Hypermap α) : α → α → Prop := fun x y => H.cface (edge x) y
+theorem rlink_of_edge {x : α} : H.rlink x (edge x) := by{
+  simp[rlink, cface, funReflTransGen.refl]
+}
+theorem rlink_right_congr_of_cface {y1 y2 : α} (h12 : H.cface y1 y2) {x : α}
+  : H.rlink x y1 ↔ H.rlink x y2 := by{
+    simp[rlink, H.cface_equivalence.comm (a:=edge x), H.cface_pred_eq_of_cface h12]
+  }
+
 
 def plainSubset (H : Hypermap α) : Set (Set α) := {s | s ⊆ {x | minimalPeriod H.edge x = 2}}
 def plain (H : Hypermap α) := Set.univ ∈ H.plainSubset
@@ -1416,6 +1458,7 @@ structure PlanarBridgelessPlainConnected : Prop extends H.PlanarBridgelessPlain 
   connected : H.connected
 structure PlanarBridgelessPlainPrecubic : Prop extends H.PlanarBridgelessPlain where
   precubic : H.precubic
+
 
 section plain
 
@@ -1588,6 +1631,14 @@ theorem plain.ecomp_double (hP : H.plain) : Fintype.card α = H.ecomp * 2 := by{
       | isFalse hp => simp only
     }
   }
+}
+theorem plain.edge_edge (hp : H.plain) {p : α} : H.edge (H.edge p) = p := by{
+  rw[plain_iff_edge_edge] at hp
+  rw[(hp p).left]
+}
+theorem plain.edgeinv_eq_edge (hp : H.plain) : H.edgeinv = H.edge := by{
+  ext x
+  rw[← edge_inj, edgeinv_rightinv, hp.edge_edge]
 }
 end plain
 end Hypermap

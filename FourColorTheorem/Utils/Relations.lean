@@ -3,6 +3,7 @@ import Mathlib.Logic.Function.Iterate
 import Mathlib.Logic.Equiv.Defs
 import Mathlib.Data.Nat.Find
 import Mathlib.Order.Minimal
+import Mathlib.Dynamics.PeriodicPts.Lemmas
 import FourColorTheorem.Utils.Chain
 
 open Relation
@@ -771,4 +772,86 @@ theorem List.isChain_map_iterate_range_fromFun {n : ℕ} {f : α → α} {x : α
       apply And.intro isChain_map_iterate_range_fromFun
       simp[fromFun, ←iterate_succ_apply']
     }
+  }
+theorem Relation.reflTransGen_of_isCycleChain
+  {r : α → α → Prop} {x y : α} {l : List α}
+  (hl : l.IsCycleChain r) (hx : x ∈ l) (hy : y ∈ l) : ReflTransGen r x y := by{
+    have hln : l ≠ [] := List.ne_nil_of_mem hx
+    classical
+    have hl':=(hl.rotate (l.idxOf x)).isChain
+    have h' : (l.rotate (List.idxOf x l)).idxOf x = 0 := by{
+      rw[List.idxOf_eq_zero_iff_head_eq (by{simp[hln]})]
+      rw[List.head_rotate_idxOf hx]
+    }
+    apply ReflTransGen_of_isChain_of_mem_drop hl'
+    simp[h', hy]
+  }
+theorem List.isChain_fromFun_getElem {f : α → α} {l : List α} (hl : l.IsChain (fromFun f))
+  {i : ℕ} (hi : i < l.length) : l[i] = f^[i] (l.head (ne_nil_of_length_pos (Nat.zero_lt_of_lt hi)))
+  := by{
+    match i, l with
+    | 0, _::_ => simp
+    | i' + 1, _::_ => {
+      simp only [getElem_cons_succ, head_cons, iterate_succ, comp_apply]
+      simp only [length_cons, Nat.add_lt_add_iff_right] at hi
+      rw[isChain_fromFun_getElem hl.of_cons hi]
+      rw[isChain_cons_iff_of_ne_nil (ne_nil_of_length_pos (Nat.zero_lt_of_lt hi))] at hl
+      rw[hl.left]
+    }
+  }
+theorem List.period_of_IsCycleChain {f : α → α} {l : List α} (hlk : l.IsCycleChain (fromFun f))
+  {x : α} (hxl : x ∈ l) : IsPeriodicPt f l.length x := by{
+    classical
+    have hlk' := hlk.rotate (l.idxOf x)
+    simp only [← List.length_rotate l (l.idxOf x)]
+    have hln : l.rotate (idxOf x l) ≠ [] := by{simp[List.ne_nil_of_mem hxl]}
+    have hxh : List.head _ hln = _ := List.head_rotate_idxOf hxl
+    generalize hl' : l.rotate (l.idxOf x) = l'
+    simp only [hl'] at hln hxh hlk'
+    change List.head _ hln = _ at hxh
+    clear! l
+    have hlk'' := hlk'.isChain
+    have hlk''' := isChain_fromFun_getElem hlk'' (i := l'.length - 1)
+      (by{simp[length_pos_of_ne_nil hln]})
+    unfold IsCycleChain at hlk'
+    simp only [hln, ↓reduceDIte] at hlk'
+    rw[fromFun, List.getLast_eq_getElem, hlk''', ← iterate_succ_apply' f] at hlk'
+    simp only [Nat.sub_one, Nat.succ_pred (Nat.ne_zero_of_lt (length_pos_of_ne_nil hln)),
+    hxh] at hlk'
+    exact hlk'.right
+  }
+theorem List.forall_mem_of_isCycleChain {f : α → α} {l : List α} (hlk : l.IsCycleChain (fromFun f))
+  {x : α} (hxl : x ∈ l) : ∀n, f^[n] x ∈ l := by{
+    classical
+    have hlk' := hlk.rotate (l.idxOf x)
+    simp only [← List.mem_rotate (l:=l) (n:=l.idxOf x)]
+    have hln : l.rotate (idxOf x l) ≠ [] := by{simp[List.ne_nil_of_mem hxl]}
+    have hxh : List.head _ hln = _ := List.head_rotate_idxOf hxl
+    generalize hl' : l.rotate (l.idxOf x) = l'
+    simp only [hl'] at hln hxh hlk'
+    change List.head _ hln = _ at hxh
+    clear! l
+    have hlk'' := hlk'.isChain
+    intro n
+    wlog hn : n < l'.length with H
+    · {
+      have hm := period_of_IsCycleChain hlk' (hxh ▸ head_mem hln)
+      rw[← hm.iterate_mod_apply]
+      apply H l' hln hlk' hxh hlk''
+      apply Nat.mod_lt
+      apply length_pos_of_ne_nil hln
+    }
+    rw[← hxh, ← isChain_fromFun_getElem hlk'' hn]
+    simp
+  }
+theorem Relation.funReflTransGen_iff_mem_of_isCycleChain
+  {f : α → α} {x y : α} {l : List α}
+  (hl : l.IsCycleChain (fromFun f)) (hx : x ∈ l) : y ∈ l ↔ funReflTransGen f x y := by{
+    constructor
+    · apply reflTransGen_of_isCycleChain hl hx
+    intro h'
+    rw[funReflTransGen_iff_iterate] at h'
+    have ⟨n, hn⟩:=h'
+    rw[← hn]
+    apply List.forall_mem_of_isCycleChain hl hx
   }

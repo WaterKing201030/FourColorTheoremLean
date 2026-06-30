@@ -203,7 +203,10 @@ theorem List.nodup_attachWith {p : List α} {P : α → Prop} (hp : ∀ x ∈ p,
       simp[ih]
     }
   }
-
+theorem List.idxOf_getElem_of_nodup [DecidableEq α] {p : List α} (hpd : p.Nodup)
+  {i : ℕ} (hi : i < p.length) : p.idxOf p[i] = i := by{
+    apply hpd.idxOf_getElem
+  }
 theorem List.idxOf_getLast_of_nodup [DecidableEq α] {p : List α} (hp : p ≠ [])
   (hpd : p.Nodup) : p.idxOf (p.getLast hp) = p.length - 1 := by{
     rw[idxOf_getLast]

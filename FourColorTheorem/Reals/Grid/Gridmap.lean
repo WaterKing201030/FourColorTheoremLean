@@ -1,6 +1,7 @@
 import FourColorTheorem.Reals.Grid.Matte
 import Mathlib.Data.Fintype.Prod
 import FourColorTheorem.Hypermap.Basic
+import FourColorTheorem.Hypermap.Snip
 
 open Relation
 open Function
@@ -570,11 +571,11 @@ theorem GM_enf_cancel : ∀u : GMDart, GMedge (GMnode (GMface u)) = u := by{
   }
 }
 
-@[reducible] noncomputable def GMHypermap' : Hypermap GMDart :=
+@[reducible] noncomputable def GMDartHypermap' : Hypermap GMDart :=
   ⟨GMedge, GMnode, GMface, GM_enf_cancel⟩
-local notation "GMHypermap" => @GMHypermap' _ _ _ ab0P cm0P abcm0P
+local notation "GMDartHypermap" => @GMDartHypermap' _ _ _ ab0P cm0P abcm0P
 
-theorem GMHypermap_plain : (GMHypermap).plain := by{
+theorem GMDartHypermap_plain : (GMDartHypermap).plain := by{
   intro p _
   rw[Set.mem_setOf, minimalPeriod_eq_two_iff]
   change GMedge (GMedge p) = p ∧ GMedge p ≠ p
@@ -614,6 +615,12 @@ theorem funReflTransGen_GMnode_inner_closed {u0 u1 : GMDart}
     induction hu01 with
     | refl => exact hu0
     | tail hh ht ih => rw[fromFun] at ht; rw[← ht]; exact GMnode_inner_closed ih
+  }
+theorem funReflTransGen_GMnode_inner_closed_iff {u0 u1 : GMDart}
+  (hu01 : funReflTransGen GMnode u0 u1) : u0 ∈ GMInner ↔ u1 ∈ GMInner := by{
+    constructor
+    · apply funReflTransGen_GMnode_inner_closed; exact hu01
+    · apply funReflTransGen_GMnode_inner_closed; apply (GMDartHypermap).cnode_Symm.symm ; exact hu01
   }
 theorem GMface_end0 {u : GMDart} : end0 (GMface u) = end0 u := by{
   match u with | ⟨d, hd⟩ => {
@@ -1134,8 +1141,8 @@ local notation "GMInnerDartNode" => @GMInnerDartNode' _ _ _ ab0P cm0P abcm0P
 theorem GMInnerDartNode_injective : Injective GMInnerDartNode := by{
   intro ⟨u0, hu0⟩ ⟨u1, hu1⟩ hu01
   rw[GMInnerDartNode', GMInnerDartNode', Subtype.ext_iff] at hu01
-  change (GMHypermap).node u0 = (GMHypermap).node u1 at hu01
-  simp only[(GMHypermap).node_inj] at hu01
+  change (GMDartHypermap).node u0 = (GMDartHypermap).node u1 at hu01
+  simp only[(GMDartHypermap).node_inj] at hu01
   simp[hu01]
 }
 noncomputable def GMInnerDartCNodeEquivalence' :=
@@ -1199,7 +1206,7 @@ funReflTransGen GMInnerDartNode u0 u1 ↔ u0.val.val.half = u1.val.val.half := b
     }
   }
 }
-theorem GMHypermapNsetoid_iff_half_eq_of_inner {u0 u1 : GMDart} (hu0 : u0 ∈ GMInner)
+theorem GMDartHypermapNsetoid_iff_half_eq_of_inner {u0 u1 : GMDart} (hu0 : u0 ∈ GMInner)
   (hu1 : u1 ∈ GMInner) : funReflTransGen GMnode u0 u1 ↔ u0.val.half = u1.val.half := by{
     have ih := GMInnerDartNsetoid_iff_half_eq (u0:=⟨u0, hu0⟩) (u1:=⟨u1, hu1⟩)
     rw[←ih]
@@ -1237,7 +1244,7 @@ theorem GMHypermapNsetoid_iff_half_eq_of_inner {u0 u1 : GMDart} (hu0 : u0 ∈ GM
       }
     }
   }
-theorem GMHypermap_inner_ncomp : Fintype.nComp GMInnerDartNsetoid = (CMBBox).area := by{
+theorem GMDartHypermap_inner_ncomp : Fintype.nComp GMInnerDartNsetoid = (CMBBox).area := by{
   rw[← GRectangle.enum_length, ← List.Subtype.fintype_card_eq_length_of_nodup GRectangle.enum_nodup]
   apply Fintype.card_congr
   let f : Quotient GMInnerDartNsetoid → { x // x ∈ (CMBBox).enum } :=
@@ -1275,11 +1282,11 @@ theorem GMHypermap_inner_ncomp : Fintype.nComp GMInnerDartNsetoid = (CMBBox).are
   }
 }
 
-theorem GMHypermap_ncomp_ge
-  : (GMHypermap).ncomp ≥ (CMBBox).area := by{
-    rw[← GMHypermap_inner_ncomp]
+theorem GMDartHypermap_ncomp_ge
+  : (GMDartHypermap).ncomp ≥ (CMBBox).area := by{
+    rw[← GMDartHypermap_inner_ncomp]
     rw[Hypermap.ncomp, Fintype.nComp, Fintype.nComp, ge_iff_le]
-    let f : Quotient GMInnerDartNsetoid → Quotient (GMHypermap).nsetoid :=
+    let f : Quotient GMInnerDartNsetoid → Quotient (GMDartHypermap).nsetoid :=
       fun q => ⟦q.out.val⟧
     apply Fintype.card_le_of_injective f
     intro q1 q2 hq12
@@ -1308,7 +1315,7 @@ end nodecard
 
 section facecard
 
-theorem GMHypermap_fsetoid_n3_iterate {u : GMDart} {m : ℕ}
+theorem GMDartHypermap_fsetoid_n3_iterate {u : GMDart} {m : ℕ}
   (hn3u : (node ∘ node ∘ node)^[m] u ∈ GMGrid) :
   funReflTransGen GMface u ⟨_, hn3u⟩ := by{
     match u with | ⟨d, hd⟩ => {
@@ -1383,7 +1390,7 @@ theorem GMHypermap_fsetoid_n3_iterate {u : GMDart} {m : ℕ}
     }
   }
 
-theorem GMHypermap_fsetoid_iff_end0 {u0 u1 : GMDart} :
+theorem GMDartHypermap_fsetoid_iff_end0 {u0 u1 : GMDart} :
   funReflTransGen GMface u0 u1 ↔ end0 u0 = end0 u1 := by{
     constructor
     · {
@@ -1405,14 +1412,14 @@ theorem GMHypermap_fsetoid_iff_end0 {u0 u1 : GMDart} :
         induction m using Nat.strongRec generalizing d0 with
         | ind m ih => {
           simp only [← hm]
-          apply GMHypermap_fsetoid_n3_iterate
+          apply GMDartHypermap_fsetoid_n3_iterate
         }
       }
     }
   }
 
-theorem GMHypermap_fcomp
-  : (GMHypermap).fcomp = ((CMBBox).width + 1) * ((CMBBox).height + 1) := by{
+theorem GMDartHypermap_fcomp
+  : (GMDartHypermap).fcomp = ((CMBBox).width + 1) * ((CMBBox).height + 1) := by{
     let CMGridBox : GRectangle := ⟨
       ⟨(CMBBox).hspan.lb, (CMBBox).hspan.ub + 1⟩,
       ⟨(CMBBox).vspan.lb, (CMBBox).vspan.ub + 1⟩
@@ -1512,7 +1519,7 @@ theorem GMHypermap_fcomp
         }
       }
     }
-    let f : Quotient (GMHypermap).fsetoid → { x // x ∈ CMGridBox.enum } :=
+    let f : Quotient (GMDartHypermap).fsetoid → { x // x ∈ CMGridBox.enum } :=
       fun q => ⟨end0 q.out, mem_lemma⟩
     apply Equiv.ofBijective f
     constructor
@@ -1521,7 +1528,7 @@ theorem GMHypermap_fcomp
       unfold f at hq12
       rw[Subtype.ext_iff] at hq12
       simp only at hq12
-      rw[← GMHypermap_fsetoid_iff_end0] at hq12
+      rw[← GMDartHypermap_fsetoid_iff_end0] at hq12
       rw[← Quotient.out_equiv_out]
       exact hq12
     }
@@ -1531,20 +1538,20 @@ theorem GMHypermap_fcomp
       have ⟨d, hd0, hd⟩:=exists_GMGrid hp
       use ⟦⟨d, hd⟩⟧
       unfold f
-      have hout := Quotient.mk_out (s:=(GMHypermap).fsetoid) ⟨d, hd⟩
+      have hout := Quotient.mk_out (s:=(GMDartHypermap).fsetoid) ⟨d, hd⟩
       change funReflTransGen GMface _ _ at hout
-      rw[GMHypermap_fsetoid_iff_end0] at hout
+      rw[GMDartHypermap_fsetoid_iff_end0] at hout
       simp only [hout, hd0]
     }
   }
 end facecard
 
 section edgecard
-theorem GMHypermap_ecomp
-  : (GMHypermap).ecomp = (CMBBox).area * 2 + ((CMBBox).width + (CMBBox).height)
+theorem GMDartHypermap_ecomp
+  : (GMDartHypermap).ecomp = (CMBBox).area * 2 + ((CMBBox).width + (CMBBox).height)
   := by{
     have ih := @GMDart_card n ab0 cm0 ab0P cm0P abcm0P
-    rw[Hypermap.plain.ecomp_double GMHypermap_plain] at ih
+    rw[Hypermap.plain.ecomp_double GMDartHypermap_plain] at ih
     change _ = _ * (2 * 2) + _ at ih
     rw[← mul_assoc, ← add_mul] at ih
     simp only [mul_eq_mul_right_iff, OfNat.ofNat_ne_zero, or_false] at ih
@@ -1571,19 +1578,20 @@ theorem C0_mem_GInner : ⟨C0, C0_mem_GMGrid⟩ ∈ GMInner := by{
   GRectangle.hspan_lt_of_proper (@CMBBox_proper n ab0 cm0 ab0P cm0P abcm0P),
   GRectangle.vspan_lt_of_proper (@CMBBox_proper n ab0 cm0 ab0P cm0P abcm0P)]
 }
-theorem GMHypermap_gsetoid_of_gsetoid_c0
-: (∀x, (GMHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x) → (∀x y, (GMHypermap).gsetoid x y) := by{
+theorem GMDartHypermap_gsetoid_of_gsetoid_c0
+: (∀x, (GMDartHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x) → (∀x y, (GMDartHypermap).gsetoid x y) := by{
     intro h x y
     have hx := h x
     have hy := h y
     symm at hx
-    exact (GMHypermap).gsetoid.iseqv.trans hx hy
+    exact (GMDartHypermap).gsetoid.iseqv.trans hx hy
   }
-theorem GMHypermap_gsetoid_of_gsetoid_c0_inner
-: (∀x ∈ GMInner, (GMHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x) → (∀x y, (GMHypermap).gsetoid x y)
+theorem GMDartHypermap_gsetoid_of_gsetoid_c0_inner
+: (∀x ∈ GMInner, (GMDartHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x)
+→ (∀x y, (GMDartHypermap).gsetoid x y)
 := by{
     intro IH
-    apply GMHypermap_gsetoid_of_gsetoid_c0
+    apply GMDartHypermap_gsetoid_of_gsetoid_c0
     intro x
     have hx := x.prop
     rw[mem_GMGrid_iff] at hx
@@ -1592,39 +1600,41 @@ theorem GMHypermap_gsetoid_of_gsetoid_c0_inner
     rw[mem_GMInner_iff] at hx'
     apply (Or.resolve_left · hx') at hx
     have IH' := IH ⟨edge x, by{simp[mem_GMGrid_iff, hx]}⟩ (by{simp[mem_GMInner_iff, hx]})
-    apply (GMHypermap).gsetoid.iseqv.trans IH'
-    apply (GMHypermap).gsetoid.iseqv.symm
+    apply (GMDartHypermap).gsetoid.iseqv.trans IH'
+    apply (GMDartHypermap).gsetoid.iseqv.symm
     apply Hypermap.cglink_of_cedge
     apply funReflTransGen.single
   }
 
-theorem GMHypermap_gsetoid_half_eq : ∀x ∈ GMInner, ∀y ∈ GMInner, x.val.half = y.val.half
-    → ((GMHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x ↔ (GMHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ y)
+theorem GMDartHypermap_gsetoid_half_eq : ∀x ∈ GMInner, ∀y ∈ GMInner, x.val.half = y.val.half
+    → ((GMDartHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x ↔
+    (GMDartHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ y)
     := by{
       intro x hx y hy hxy
-      rw[← GMHypermapNsetoid_iff_half_eq_of_inner hx hy] at hxy
-      change (GMHypermap).cnode _ _ at hxy
-      have hxy' : (GMHypermap).gsetoid _ _ := Hypermap.cglink_of_cnode hxy
+      rw[← GMDartHypermapNsetoid_iff_half_eq_of_inner hx hy] at hxy
+      change (GMDartHypermap).cnode _ _ at hxy
+      have hxy' : (GMDartHypermap).gsetoid _ _ := Hypermap.cglink_of_cnode hxy
       constructor
       · intro h; exact h.trans hxy'
       · symm at hxy'; intro h; exact h.trans hxy'
     }
-theorem GMHypermap_gsetoid_end0_eq : ∀x y : GMDart, end0 x = end0 y
-    → ((GMHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x ↔ (GMHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ y)
+theorem GMDartHypermap_gsetoid_end0_eq : ∀x y : GMDart, end0 x = end0 y
+    → ((GMDartHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x ↔
+    (GMDartHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ y)
     := by{
       intro x y hxy
-      rw[← GMHypermap_fsetoid_iff_end0] at hxy
-      change (GMHypermap).cface _ _ at hxy
-      have hxy' : (GMHypermap).gsetoid _ _ := Hypermap.cglink_of_cface hxy
+      rw[← GMDartHypermap_fsetoid_iff_end0] at hxy
+      change (GMDartHypermap).cface _ _ at hxy
+      have hxy' : (GMDartHypermap).gsetoid _ _ := Hypermap.cglink_of_cface hxy
       constructor
       · intro h; exact h.trans hxy'
       · symm at hxy'; intro h; exact h.trans hxy'
     }
 
 section
-theorem GMHypermap_gsetoid_x
-  (IH : ∀ x ∈ GMInner, x.val.x = (C0).x → (GMHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x) :
-  ∀ x ∈ GMInner, (GMHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x := by{
+theorem GMDartHypermap_gsetoid_x
+  (IH : ∀ x ∈ GMInner, x.val.x = (C0).x → (GMDartHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x) :
+  ∀ x ∈ GMInner, (GMDartHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x := by{
   intro x hx
   have hc0x : (C0).x = CMBBox'.hspan.lb * 2 := by{
     simp[C0', two_nsmul, ← mul_two]; rfl
@@ -1633,7 +1643,7 @@ theorem GMHypermap_gsetoid_x
   rw[mem_GMInner_iff', GRectangle.zoom] at hx
   have h := Nat.recAux (motive := fun m =>
     ∀x ∈ GMInner, m = (x.val.x - (CMBBox).hspan.lb * 2).toNat
-    → GMHypermap'.gsetoid ⟨C0, C0_mem_GMGrid⟩ x)
+    → GMDartHypermap'.gsetoid ⟨C0, C0_mem_GMGrid⟩ x)
   apply h ?_ ?_ ((x.val.x - (CMBBox).hspan.lb * 2).toNat) x hx_mem rfl
   · {
     clear! x
@@ -1685,18 +1695,18 @@ theorem GMHypermap_gsetoid_x
     simp only [hx'x, hx'_eta] at hx'
     rcases hx' with hx' | hx'
     · {
-      have ih' := GMHypermap_gsetoid_end0_eq _ _ hx'
+      have ih' := GMDartHypermap_gsetoid_end0_eq _ _ hx'
       exact ih'.mp hk'
     }
     · {
-      have ih' := GMHypermap_gsetoid_half_eq _ hx'_mem _ hx hx'
+      have ih' := GMDartHypermap_gsetoid_half_eq _ hx'_mem _ hx hx'
       exact ih'.mp hk'
     }
   }
 }
 
-theorem GMHypermap_gsetoid_C0_y :
-  ∀ x ∈ GMInner, x.val.x = (C0).x → (GMHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x := by{
+theorem GMDartHypermap_gsetoid_C0_y :
+  ∀ x ∈ GMInner, x.val.x = (C0).x → (GMDartHypermap).gsetoid ⟨C0, C0_mem_GMGrid⟩ x := by{
   intro x hx hxc0
   have hc0x : (C0).y = CMBBox'.vspan.lb * 2 := by{
     simp[C0', two_nsmul, ← mul_two]; rfl
@@ -1705,7 +1715,7 @@ theorem GMHypermap_gsetoid_C0_y :
   rw[mem_GMInner_iff', GRectangle.zoom] at hx
   have h := Nat.recAux (motive := fun m =>
     ∀x ∈ GMInner, x.val.x = (C0).x → m = (x.val.y - (CMBBox).vspan.lb * 2).toNat
-    → GMHypermap'.gsetoid ⟨C0, C0_mem_GMGrid⟩ x)
+    → GMDartHypermap'.gsetoid ⟨C0, C0_mem_GMGrid⟩ x)
   apply h ?_ ?_ ((x.val.y - (CMBBox).vspan.lb * 2).toNat) x hx_mem hxc0 rfl
   · {
     clear! x
@@ -1759,43 +1769,275 @@ theorem GMHypermap_gsetoid_C0_y :
     simp only [hx'x, hx'_eta] at hx'
     rcases hx' with hx' | hx'
     · {
-      have ih' := GMHypermap_gsetoid_end0_eq _ _ hx'
+      have ih' := GMDartHypermap_gsetoid_end0_eq _ _ hx'
       exact ih'.mp hk'
     }
     · {
-      have ih' := GMHypermap_gsetoid_half_eq _ hx'_mem _ hx hx'
+      have ih' := GMDartHypermap_gsetoid_half_eq _ hx'_mem _ hx hx'
       exact ih'.mp hk'
     }
   }
 }
 end
 
-theorem GMHypermap_connected : (GMHypermap).connected := by{
+theorem GMDartHypermap_connected : (GMDartHypermap).connected := by{
   unfold Hypermap.connected
   unfold Hypermap.gcomp
   rw[Fintype.nComp_eq_one_iff_nonempty_all]
   apply And.intro GMDart_nonempty
   have hh := GRectangle.hspan_lt_of_proper (@CMBBox_proper n ab0 cm0 ab0P cm0P abcm0P)
   have hv := GRectangle.vspan_lt_of_proper (@CMBBox_proper n ab0 cm0 ab0P cm0P abcm0P)
-  apply GMHypermap_gsetoid_of_gsetoid_c0_inner
-  apply GMHypermap_gsetoid_x
-  apply GMHypermap_gsetoid_C0_y
+  apply GMDartHypermap_gsetoid_of_gsetoid_c0_inner
+  apply GMDartHypermap_gsetoid_x
+  apply GMDartHypermap_gsetoid_C0_y
 }
 end connected
 
-theorem GMHypermap_planar : (GMHypermap).planar := by{
+theorem GMDartHypermap_planar : (GMDartHypermap).planar := by{
   rw[Hypermap.planar, Hypermap.genus, Hypermap.euler_rhs, Hypermap.euler_lhs]
-  have hg : (GMHypermap).gcomp = 1 := GMHypermap_connected
-  rw[hg, Hypermap.plain.ecomp_double GMHypermap_plain]
+  have hg : (GMDartHypermap).gcomp = 1 := GMDartHypermap_connected
+  rw[hg, Hypermap.plain.ecomp_double GMDartHypermap_plain]
   simp only [one_mul, Nat.div_eq_zero_iff, OfNat.ofNat_ne_zero, false_or, gt_iff_lt]
   rw[mul_two, ← add_assoc, ← Nat.sub_sub, Nat.add_sub_cancel]
   rw[add_comm (Hypermap.ncomp _), ← Nat.sub_sub]
-  apply Nat.lt_of_le_of_lt (Nat.sub_le_sub_left GMHypermap_ncomp_ge _)
-  rw[GMHypermap_ecomp, mul_two, add_right_comm, ← add_assoc, Nat.sub_right_comm]
-  rw[Nat.add_sub_cancel, GMHypermap_fcomp, GRectangle.area]
+  apply Nat.lt_of_le_of_lt (Nat.sub_le_sub_left GMDartHypermap_ncomp_ge _)
+  rw[GMDartHypermap_ecomp, mul_two, add_right_comm, ← add_assoc, Nat.sub_right_comm]
+  rw[Nat.add_sub_cancel, GMDartHypermap_fcomp, GRectangle.area]
   ring_nf
   omega
 }
+
+theorem GMDartHypermap_nodeinv_val_eq_face_of_mem_GMInner {u : GMDart} (hu : u ∈ GMInner)
+  : ((GMDartHypermap).nodeinv u).val = face u.val := by{
+    nth_rw 2 [← Hypermap.nodeinv_rightinv (H:=GMDartHypermap) u]
+    change _ = face (GMnode _)
+    have hu' : (GMDartHypermap).nodeinv u ∈ GMInner := by{
+      apply funReflTransGen_GMnode_inner_closed ?_ hu
+      apply (GMDartHypermap).cnode_equivalence.symm
+      apply ReflTransGen.single
+      rw[fromFun, (GMDartHypermap).nodeinv_rightinv]
+    }
+    rw[GMnode_val_of_mem_GMInner hu', fen_cancel]
+  }
+theorem GMDartHypermap_node_val_eq_en_of_mem_GMInner {u : GMDart} (hu : u ∈ GMInner)
+  : ((GMDartHypermap).node u).val = edge (node u.val) := by{
+    change (GMnode _).val = _
+    rw[GMnode_val_of_mem_GMInner hu]
+  }
+theorem GMDartHypermap_edge_val_eq {u : GMDart}
+  : ((GMDartHypermap).edge u).val = edge u.val := by{
+    change (GMedge _).val = _
+    rw[GMedge']
+  }
+theorem GMDartHypermap_faceinv_val_eq_node_of_mem_GMInner {u : GMDart} (hu : u ∈ GMInner)
+  : ((GMDartHypermap).faceinv u).val = node u.val := by{
+    rw[Hypermap.faceinv_eq, comp_apply, GMDartHypermap_edge_val_eq,
+    GMDartHypermap_node_val_eq_en_of_mem_GMInner hu, edge_2]
+  }
+
+noncomputable def GMring' (i : Fin n) : List GMDart :=
+  (CM i).ring.filterMap (fun d =>
+    if hd : d ∈ GMGrid then some ⟨d, hd⟩ else none
+  )
+local notation "GMring" => @GMring' _ _ _ ab0P cm0P abcm0P
+theorem GMring_map_val {i : Fin n} : (GMring i).map Subtype.val = (CM i).ring := by{
+  unfold GMring'
+  rw[List.map_filterMap]
+  simp only [apply_dite, Option.map_none, Option.map_some]
+  nth_rw 2 [← List.filterMap_some (l:=(CM i).ring)]
+  apply List.filterMap_congr
+  intro x hx
+  rw[dite_eq_left_iff]
+  simp only [reduceCtorEq, imp_false, Decidable.not_not]
+  rw[Matte.mem_ring_iff_mem_disk_border, border, Set.mem_setOf] at hx
+  rw[mem_GMGrid_iff]
+  left
+  exact CM_subset_CMBBox hx.left
+}
+theorem GMring_length {i : Fin n} : (GMring i).length = (CM i).ring.length := by{
+  rw[← GMring_map_val, List.length_map]
+}
+theorem mem_GMring_iff_val_mem_ring {i : Fin n} {u : GMDart}
+  : u ∈ GMring i ↔ u.val ∈ (CM i).ring := by{
+    rw[GMring', List.mem_filterMap]
+    constructor
+    · {
+      intro ⟨a, h0, h1⟩
+      simp only [Option.dite_none_right_eq_some, Option.some.injEq, exists_subtype_mk_eq_iff] at h1
+      exact h1 ▸ h0
+    }
+    · {
+      intro h
+      refine ⟨_, h, ?_⟩
+      simp only [Subtype.coe_eta, dite_eq_ite, ite_eq_left_iff, reduceCtorEq, imp_false,
+        Decidable.not_not]
+      rw[Matte.mem_ring_iff_mem_disk_border, border, Set.mem_setOf] at h
+      rw[mem_GMGrid_iff]
+      left
+      exact CM_subset_CMBBox h.left
+    }
+  }
+theorem GMring_ne_nil {i : Fin n} : GMring i ≠ [] := by{
+  intro h
+  have ih := @GMring_map_val _ _ _ ab0P cm0P abcm0P i
+  rw[h] at ih
+  have ih' := (CM i).ring_ne_nil
+  simp at ih
+  simp[ih] at ih'
+}
+theorem GMring_subset_GMInner {i : Fin n} {u : GMDart} (hu : u ∈ GMring i)
+  : u ∈ GMInner := by{
+    rw[mem_GMInner_iff]
+    rw[mem_GMring_iff_val_mem_ring, Matte.mem_ring_iff_mem_disk_border] at hu
+    exact CM_subset_CMBBox hu.left
+  }
+theorem GMring_simpleCycle {i : Fin n} : (GMDartHypermap).simpleCycle
+  (GMDartHypermap).rlink (GMring i)
+  := by{
+    unfold Hypermap.simpleCycle Hypermap.rlink List.IsCycleChain
+    simp only [GMring_ne_nil, ↓ reduceDIte]
+    change (_ ∧ funReflTransGen GMface _ _) ∧ _
+    rw[GMDartHypermap_fsetoid_iff_end0, GMDartHypermap_edge_val_eq, edge_end0]
+    rw[← List.getLast_map (l:=GMring i) (f := Subtype.val) (by{
+      rw[List.ne_nil_iff_length_pos]
+      simp[List.length_pos_iff_ne_nil, GMring_ne_nil]
+    }), ← List.head_map (l:=GMring i) (f := Subtype.val) (by{
+      rw[List.ne_nil_iff_length_pos]
+      simp[List.length_pos_iff_ne_nil, GMring_ne_nil]
+    })]
+    have hc := (CM i).ring_cycle
+    unfold List.IsCycleChain at hc
+    simp only [(CM i).ring_ne_nil, ↓ reduceDIte, mrlink] at hc
+    simp only [GMring_map_val, hc.right, and_true]
+    constructor
+    · {
+      nth_rw 1 [← GMring_map_val, List.isChain_map] at hc
+      apply (Eq.mp · hc.left)
+      congr
+      ext ⟨a, ha⟩ ⟨b, hb⟩
+      rw[mrlink]
+      change _ ↔ funReflTransGen GMface _ _
+      rw[GMDartHypermap_fsetoid_iff_end0, GMDartHypermap_edge_val_eq, edge_end0]
+    }
+    · {
+      have hs := (CM i).ring_simple
+      rw[Hypermap.simpleList]
+      rw[List.nodup_iff_getElem_ne_getElem] at hs
+      rw[List.nodup_iff_getElem_ne_getElem]
+      intro i j hij hjl
+      simp only [List.length_map, GMring_length] at hjl
+      specialize hs i j hij (by{simp[hjl]})
+      simp only [List.getElem_map, ne_eq]
+      simp only [List.getElem_map, ne_eq] at hs
+      rw[Quotient.eq_iff_equiv]
+      change ¬funReflTransGen GMface _ _
+      simp only [← GMring_map_val, List.getElem_map] at hs
+      rw[GMDartHypermap_fsetoid_iff_end0]
+      exact hs
+    }
+  }
+
+noncomputable def GMdisk' (i : Fin n) : Set GMDart :=
+  (GMDartHypermap).diskN (GMring i)
+local notation "GMdisk" => @GMdisk' _ _ _ ab0P cm0P abcm0P
+theorem GMRing_subset_GMDisk {i : Fin n} {d : GMDart} (hd : d ∈ GMring i) : d ∈ GMdisk i := by{
+  apply Hypermap.subset_diskN
+  exact hd
+}
+theorem GMdisk_def {i : Fin n} : GMdisk i ⊆ {d | d.val.half ∈ CM i} := by{
+  intro u ⟨nv, ri_nv, h⟩
+  rw[Set.mem_setOf]
+  rw[Hypermap.dconnect, ReflTransGen_iff_isChain_option] at h
+  have ⟨s', vDs, shh, shl⟩:=h
+  clear h
+  match s' with
+  | [] => simp at shh
+  | v::s => {
+    clear s'
+    simp only [List.head?_cons, Option.some.injEq] at shh
+    rw[List.getLast?_eq_some_getLast (by{simp}), Option.some_inj] at shl
+    rw[← shl]
+    clear! u
+    have mi_u : v.val.half ∈ CM i := by{
+      rw[shh, GMDartHypermap_nodeinv_val_eq_face_of_mem_GMInner (by{
+        exact GMring_subset_GMInner ri_nv
+      }), face_half]
+      rw[mem_GMring_iff_val_mem_ring, Matte.mem_ring_iff_mem_disk_border] at ri_nv
+      exact ri_nv.left
+    }
+    clear! nv
+    generalize hvu : v = u
+    simp only[hvu] at *
+    clear hvu v
+    revert vDs; intro uDs
+    induction s generalizing u with
+    | nil => simp[mi_u]
+    | cons v s IHs => {
+      rw[List.getLast_cons_cons]
+      rw[List.isChain_cons_cons] at uDs
+      have ⟨⟨r'u, uCv⟩, vDs⟩:=uDs
+      clear uDs
+      apply IHs
+      · {
+        clear IHs
+        unfold Hypermap.clink at uCv
+        simp only [union_iff, fromFun] at uCv
+        rcases uCv with Du | Du
+        · {
+          rw[← Du, GMDartHypermap_nodeinv_val_eq_face_of_mem_GMInner, face_half]
+          · exact mi_u
+          rw[mem_GMInner_iff]
+          apply CM_subset_CMBBox mi_u
+        }
+        rw[← Du]
+        clear Du
+        rw[mem_GMring_iff_val_mem_ring, Matte.mem_ring_iff_mem_disk_border, border,
+        Set.mem_setOf, not_and, not_not] at r'u
+        specialize r'u mi_u
+        rw[← fen_cancel (Subtype.val _), face_half,
+          ← GMDartHypermap_node_val_eq_en_of_mem_GMInner]
+        · {
+          rw[← comp_apply (f:= (GMDartHypermap).node), ← Hypermap.edgeinv_eq,
+          Hypermap.plain.edgeinv_eq_edge GMDartHypermap_plain, GMDartHypermap_edge_val_eq]
+          exact r'u
+        }
+        · {
+          rw[
+            funReflTransGen_GMnode_inner_closed_iff
+              (funReflTransGen.single GMnode ((GMDartHypermap).face u))
+          ]
+          change (GMDartHypermap).node _ ∈ _
+          rw[← comp_apply (f:=(GMDartHypermap).node), ← Hypermap.edgeinv_eq,
+          Hypermap.plain.edgeinv_eq_edge GMDartHypermap_plain, mem_GMInner_iff,
+          GMDartHypermap_edge_val_eq]
+          exact CM_subset_CMBBox r'u
+        }
+      }
+      · exact vDs
+    }
+  }
+}
+theorem GMdisk_disjoint {i j : Fin n} (hij : i ≠ j) : Disjoint (GMdisk i) (GMdisk j) := by{
+  rw[Set.disjoint_iff_forall_ne]
+  intro x hxi y hxj hxy
+  rw[hxy.symm] at hxj
+  clear! y
+  have hxi' := GMdisk_def hxi
+  have hxj' := GMdisk_def hxj
+  rw[Set.mem_setOf] at hxi' hxj'
+  have h := @CMP _ _ _ ab0P cm0P abcm0P i j ⟨x.val.half, hxi', hxj'⟩
+  exact hij h
+}
+
+structure GMcutout' (E : Fin n → Prop) {α : Type _} [Fintype α] [DecidableEq α]
+  (G : Hypermap α) (h : α → GMDart) (r : Fin n → List α) : Prop where
+  map_planar : G.planar
+  enc_injective : Injective h
+  enc_morph_edge : ∀x, h (G.edge x) = (GMDartHypermap).edge (h x)
+  enc_morph_cface : ∀x y, G.cface x y ↔ (GMDartHypermap).cface (h x) (h y)
+  enc_morph_node : ∀x, (∀i, E i → x ∉ r i) → h (G.node x) = (GMDartHypermap).node (h x)
+  ring_def : ∀i, ((r i).map h).reverse = GMring i
+  ring_proper : ∀i, E i → List.IsCycleChain (fromFun G.node) (r i) ∧ (r i).Nodup
 
 end
 

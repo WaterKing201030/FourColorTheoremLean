@@ -1,5 +1,6 @@
 import Mathlib.Data.List.Induction
 import Mathlib.Data.List.Chain
+import Mathlib.Data.List.Cycle
 import FourColorTheorem.Utils.List
 
 open Relation
@@ -507,5 +508,28 @@ theorem List.IsCycleChain.rotate {r : α → α → Prop} {l : List α} (hlk : l
         apply And.intro hlk.1.2
         exact hlk.right
       }
+    }
+  }
+theorem List.isCycleChain_iff_next_of_nodup [DecidableEq α] {r : α → α → Prop} {l : List α}
+  (hl : l.Nodup) : l.IsCycleChain r ↔ ∀x, (hxl : x ∈ l) → r x (l.next x hxl) := by{
+    rcases eq_or_ne l [] with hln | hln
+    · simp[hln]
+    rw[List.isCycleChain_iff_getElem hln]
+    simp only [List.next_eq_getElem]
+    constructor
+    · {
+      intro ih x hxl
+      rw[mem_iff_getElem] at hxl
+      have ⟨i, hi, hlix⟩:=hxl
+      simp only [←hlix, hl.idxOf_getElem]
+      specialize ih i
+      simp only [Nat.mod_eq_of_lt hi] at ih
+      exact ih
+    }
+    · {
+      intro ih i
+      specialize ih (l[i % l.length]'(Nat.mod_lt _ (length_pos_of_ne_nil hln))) (by{simp})
+      simp[hl.idxOf_getElem] at ih
+      simp[ih]
     }
   }
