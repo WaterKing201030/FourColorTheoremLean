@@ -1,7 +1,7 @@
 import FourColorTheorem.Reals.Grid.Matte
 import Mathlib.Data.Fintype.Prod
 import FourColorTheorem.Hypermap.Basic
-import FourColorTheorem.Hypermap.Snip
+import FourColorTheorem.Hypermap.Actions.Snip
 
 open Relation
 open Function

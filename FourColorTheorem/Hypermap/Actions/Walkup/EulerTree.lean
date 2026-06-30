@@ -1,8 +1,8 @@
 import Init.Data.Nat.Lemmas
-import FourColorTheorem.Hypermap.Walkup.Skip
-import FourColorTheorem.Hypermap.Walkup.Gcomp
-import FourColorTheorem.Hypermap.Walkup.Ecomp
-import FourColorTheorem.Hypermap.Walkup.Jordan
+import FourColorTheorem.Hypermap.Actions.Walkup.Skip
+import FourColorTheorem.Hypermap.Actions.Walkup.Gcomp
+import FourColorTheorem.Hypermap.Actions.Walkup.Ecomp
+import FourColorTheorem.Hypermap.Actions.Walkup.Jordan
 
 namespace Hypermap
 

@@ -1,4 +1,4 @@
-import FourColorTheorem.Hypermap.Walkup.Skip
+import FourColorTheorem.Hypermap.Actions.Walkup.Skip
 
 namespace Hypermap
 

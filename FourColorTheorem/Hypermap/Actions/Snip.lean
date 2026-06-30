@@ -1,4 +1,4 @@
-import FourColorTheorem.Hypermap.Walkup
+import FourColorTheorem.Hypermap.Actions.Walkup
 
 open Relation
 open Function
@@ -82,44 +82,44 @@ theorem mem_diskN_iff {x : α} : x ∈ H.diskN r ↔ x ∈ r ∨ x ∈ H.diskE r
   · intro h; simp only [h, true_and]; apply em
   · intro h; apply h.elim subset_diskN And.left
 }
-theorem diskF_cface_close : ∀x ∈ H.diskF r, ∀y, H.cface x y → y ∈ H.diskF r := by{
+-- theorem diskF_cface_close : ∀x ∈ H.diskF r, ∀y, H.cface x y → y ∈ H.diskF r := by{
 
-}
-theorem diskF_cface_close_iff {x y : α} (hxy : H.cface x y)
-: x ∈ H.diskF r ↔ y ∈ H.diskF r := by{
-  constructor
-  · intro h; exact diskF_cface_close _ h _ hxy
-  · {
-    intro h
-    apply H.cface_Symm.symm at hxy
-    exact diskF_cface_close _ h _ hxy
-  }
-}
-theorem diskFC_cface_close : ∀x ∈ H.diskFC r, ∀y, H.cface x y → y ∈ H.diskFC r := by{
+-- }
+-- theorem diskF_cface_close_iff {x y : α} (hxy : H.cface x y)
+-- : x ∈ H.diskF r ↔ y ∈ H.diskF r := by{
+--   constructor
+--   · intro h; exact diskF_cface_close _ h _ hxy
+--   · {
+--     intro h
+--     apply H.cface_Symm.symm at hxy
+--     exact diskF_cface_close _ h _ hxy
+--   }
+-- }
+-- theorem diskFC_cface_close : ∀x ∈ H.diskFC r, ∀y, H.cface x y → y ∈ H.diskFC r := by{
 
-}
-theorem diskFC_cface_close_iff {x y : α} (hxy : H.cface x y)
-: x ∈ H.diskFC r ↔ y ∈ H.diskFC r := by{
-  constructor
-  · intro h; exact diskFC_cface_close _ h _ hxy
-  · {
-    intro h
-    apply H.cface_Symm.symm at hxy
-    exact diskFC_cface_close _ h _ hxy
-  }
-}
-theorem diskE_cedge_close : ∀x ∈ H.diskE r, ∀y, H.cedge x y → y ∈ H.diskE r := by{
+-- }
+-- theorem diskFC_cface_close_iff {x y : α} (hxy : H.cface x y)
+-- : x ∈ H.diskFC r ↔ y ∈ H.diskFC r := by{
+--   constructor
+--   · intro h; exact diskFC_cface_close _ h _ hxy
+--   · {
+--     intro h
+--     apply H.cface_Symm.symm at hxy
+--     exact diskFC_cface_close _ h _ hxy
+--   }
+-- }
+-- theorem diskE_cedge_close : ∀x ∈ H.diskE r, ∀y, H.cedge x y → y ∈ H.diskE r := by{
 
-}
-theorem diskE_cedge_close_iff {x y : α} (hxy : H.cedge x y)
-: x ∈ H.diskE r ↔ y ∈ H.diskE r := by{
-  constructor
-  · intro h; exact diskE_cedge_close _ h _ hxy
-  · {
-    intro h
-    apply H.cedge_Symm.symm at hxy
-    exact diskE_cedge_close _ h _ hxy
-  }
-}
+-- }
+-- theorem diskE_cedge_close_iff {x y : α} (hxy : H.cedge x y)
+-- : x ∈ H.diskE r ↔ y ∈ H.diskE r := by{
+--   constructor
+--   · intro h; exact diskE_cedge_close _ h _ hxy
+--   · {
+--     intro h
+--     apply H.cedge_Symm.symm at hxy
+--     exact diskE_cedge_close _ h _ hxy
+--   }
+-- }
 
 end Hypermap

@@ -1,4 +1,4 @@
-import FourColorTheorem.Hypermap.Walkup.Skip
+import FourColorTheorem.Hypermap.Actions.Walkup.Skip
 
 namespace Hypermap
 
@@ -1435,3 +1435,5 @@ theorem walkupe_jordan {x : α} (h : H.jordan) : (H.WalkupE x).jordan := by{
     }
   }
 }
+
+end Hypermap

@@ -1,10 +1,5 @@
 import Init.Data.Nat.Lemmas
-import FourColorTheorem.Hypermap.Walkup.Skip
-import FourColorTheorem.Hypermap.Walkup.Gcomp
-import FourColorTheorem.Hypermap.Walkup.Ecomp
-import FourColorTheorem.Hypermap.Walkup.Jordan
-import FourColorTheorem.Hypermap.Walkup.PathLift
-import FourColorTheorem.Hypermap.Walkup.EulerTree
+import FourColorTheorem.Hypermap.Actions.Walkup
 
 namespace Hypermap
 

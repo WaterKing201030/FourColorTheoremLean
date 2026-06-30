@@ -1,4 +1,4 @@
-import FourColorTheorem.Hypermap.Walkup
+import FourColorTheorem.Hypermap.Actions.Walkup
 
 open Function
 open Relation
@@ -254,63 +254,63 @@ theorem card_inex : Fintype.card αd + Fintype.card αr = Fintype.card α + patc
   }
 }
 
-theorem galois_connect {xd : αd} {xr : αr}
-  : hd (Gd.edge xd) = hr xr ↔ hd xd = hr (Gr.node xr) := by{
-    rcases em (xd ∈ bGd) with b_xd | b_xd
-    · {
-      rcases em (xr ∈ bGr) with b_xr | b_xr
-      · {
-        
-      }
-      · {
-        constructor
-        · {
-          intro h
-          exfalso
-          apply b_xr
-          have b_xr' := patchG.border_antisymm_rem.mp ⟨_, h⟩
-          exact b_xr'
-        }
-        · {
-          intro h
-          exfalso
-          apply b_xr
-          have b_xr' := patchG.border_antisymm_rem.mp ⟨_, h⟩
-          have h' := patchG.rem_border_cnode_close b_xr' (yr:=xr)
-          rw[← h', Hypermap.cnode_equivalence.comm]
-          apply funReflTransGen.single
-        }
-      }
-    }
-    · {
-      constructor
-      · {
-        intro h
-        exfalso
-        apply b_xd
-        have b_xd' := patchG.border_antisymm_disk.mp ⟨_, h.symm⟩
-        have h' := patchG.disk_border_cedge_close b_xd' (yd:=xd)
-        rw[← h', Hypermap.cedge_equivalence.comm]
-        apply funReflTransGen.single
-      }
-      · {
-        intro h
-        exfalso
-        apply b_xd
-        have b_xd' := patchG.border_antisymm_disk.mp ⟨_, h.symm⟩
-        exact b_xd'
-      }
-    }
-  }
-theorem exists_galois_of_mem_bGd {xd : αd} (hxd : xd ∈ bGd) :
-  ∃xr, hd (Gd.edge xd) = hr xr ∧ hd xd = hr (Gr.node xr) := by{
-    simp only [patchG.galois_connect, and_self]
-  }
-theorem exists_galois_of_mem_bGr {xr : αr} (hxr : xr ∈ bGr) :
-  ∃xd, hd (Gd.edge xd) = hr xr ∧ hd xd = hr (Gr.node xr) := by{
-    simp only [patchG.galois_connect, and_self]
+-- theorem galois_connect {xd : αd} {xr : αr}
+--   : hd (Gd.edge xd) = hr xr ↔ hd xd = hr (Gr.node xr) := by{
+--     rcases em (xd ∈ bGd) with b_xd | b_xd
+--     · {
+--       rcases em (xr ∈ bGr) with b_xr | b_xr
+--       · {
 
-  }
+--       }
+--       · {
+--         constructor
+--         · {
+--           intro h
+--           exfalso
+--           apply b_xr
+--           have b_xr' := patchG.border_antisymm_rem.mp ⟨_, h⟩
+--           exact b_xr'
+--         }
+--         · {
+--           intro h
+--           exfalso
+--           apply b_xr
+--           have b_xr' := patchG.border_antisymm_rem.mp ⟨_, h⟩
+--           have h' := patchG.rem_border_cnode_close b_xr' (yr:=xr)
+--           rw[← h', Hypermap.cnode_equivalence.comm]
+--           apply funReflTransGen.single
+--         }
+--       }
+--     }
+--     · {
+--       constructor
+--       · {
+--         intro h
+--         exfalso
+--         apply b_xd
+--         have b_xd' := patchG.border_antisymm_disk.mp ⟨_, h.symm⟩
+--         have h' := patchG.disk_border_cedge_close b_xd' (yd:=xd)
+--         rw[← h', Hypermap.cedge_equivalence.comm]
+--         apply funReflTransGen.single
+--       }
+--       · {
+--         intro h
+--         exfalso
+--         apply b_xd
+--         have b_xd' := patchG.border_antisymm_disk.mp ⟨_, h.symm⟩
+--         exact b_xd'
+--       }
+--     }
+--   }
+-- theorem exists_galois_of_mem_bGd {xd : αd} (hxd : xd ∈ bGd) :
+--   ∃xr, hd (Gd.edge xd) = hr xr ∧ hd xd = hr (Gr.node xr) := by{
+--     simp only [patchG.galois_connect, and_self]
+--   }
+-- theorem exists_galois_of_mem_bGr {xr : αr} (hxr : xr ∈ bGr) :
+--   ∃xd, hd (Gd.edge xd) = hr xr ∧ hd xd = hr (Gr.node xr) := by{
+--     simp only [patchG.galois_connect, and_self]
+
+--   }
 
 end Patch
 
