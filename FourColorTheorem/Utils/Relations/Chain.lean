@@ -297,6 +297,95 @@ theorem Relation.ReflTransGen_iff_isChain_minimal_nodup_option {r : α → α �
       exact ⟨l, h0⟩
     }
   }
+theorem Relation.ReflTransGen_iff_isChain_minimal_nodup {r : α → α → Prop} {a b : α}
+  : ReflTransGen r a b ↔ ∃ l : List α, (a::l).Nodup ∧ List.IsChain r (a::l)
+  ∧ l.getLastD a = b ∧ ∀l':List α, List.IsChain r (a::l') ∧ l'.getLastD a = b
+  → l'.length ≥ l.length:=by{
+    constructor
+    · {
+      rw[ReflTransGen_iff_isChain_minimal_nodup_option]
+      intro ⟨l, h0, h1, h2, h3, h4⟩
+      have h5 : l ≠ [] := by{intro h5; simp[h5] at h2}
+      match l with
+      | a' :: l' => {
+        simp only [List.head?_cons, Option.some.injEq] at h2
+        rw[List.getLast?_cons_eq_getLastD, Option.some.injEq, h2] at h3
+        rw[h2] at h1 h0
+        refine ⟨l', h0, h1, h3, ?_⟩
+        intro l1'
+        specialize h4 (a::l1')
+        simp only [List.head?_cons, true_and, List.length_cons, ge_iff_le,
+        add_le_add_iff_right] at h4
+        rw[List.getLast?_cons_eq_getLastD, Option.some.injEq] at h4
+        exact h4
+      }
+    }
+    · {
+      intro ⟨l, _, h0, h1, _⟩
+      rw[ReflTransGen_iff_isChain]
+      use l
+    }
+  }
+theorem Relation.ReflTransGen_iff_isChain_minimal_nodup_last {r : α → α → Prop} {a b : α}
+  : ReflTransGen r a b ↔ ∃ l : List α, (l ++ [b]).Nodup ∧ List.IsChain r (l ++ [b])
+  ∧ l.headD b = a ∧ ∀l':List α, List.IsChain r (l' ++ [b]) ∧ l'.headD b = a
+  → l'.length ≥ l.length:=by{
+    constructor
+    · {
+      rw[ReflTransGen_iff_isChain_minimal_nodup_option]
+      intro ⟨l, h0, h1, h2, h3, h4⟩
+      have h5 : l ≠ [] := by{intro h5; simp[h5] at h2}
+      have ⟨l', b', h6⟩:=List.ne_nil_iff_exists_concat.mp h5
+      use l'
+      simp only [← h6, List.getLast?_append, List.getLast?_singleton, Option.some_or,
+        Option.some.injEq] at h3
+      simp only [← h3, h6]
+      rw[← h6, List.head?_concat_eq_headD, Option.some.injEq] at h2
+      refine ⟨h0, h1, h2, ?_⟩
+      intro l1'
+      specialize h4 (l1' ++ [b])
+      simp only [List.getLast?_append, List.getLast?_singleton, Option.some_or, and_true,
+      List.length_append, List.length_cons, List.length_nil, zero_add, ge_iff_le] at h4
+      rw[List.head?_concat_eq_headD, Option.some_inj, ← h6, ← h3] at h4
+      simp only [List.length_append, List.length_cons, List.length_nil,
+        zero_add, add_le_add_iff_right] at h4
+      exact h4
+    }
+    · {
+      intro ⟨l, _, h0, h1, _⟩
+      match l with
+      | [] => simp at h1; simp[h1]; rfl
+      | a' :: l' => {
+        rw[ReflTransGen_iff_isChain]
+        use l' ++ [b]
+        rw[List.cons_append] at h0
+        simp at h1
+        simp[h1] at h0
+        simp[h0]
+      }
+    }
+  }
+theorem Relation.ReflTransGen_iff_isChain_last {r : α → α → Prop} {a b : α}
+  : ReflTransGen r a b ↔ ∃ l : List α, List.IsChain r (l ++ [b]) ∧ l.headD b = a:=by{
+    constructor
+    · {
+      rw[ReflTransGen_iff_isChain_minimal_nodup_last]
+      intro ⟨l, _, h0, h1, _⟩
+      use l
+    }
+    · {
+      intro ⟨l, hl0, hl1⟩
+      match l with
+      | [] => simp at hl1; simp[hl1]; rfl
+      | a' :: l' => {
+        rw[ReflTransGen_iff_isChain]
+        use l' ++ [b]
+        simp at hl1
+        simp[hl1] at hl0
+        simp[hl0]
+      }
+    }
+  }
 theorem Relation.ReflTransGen_of_isChain_of_mem_drop [DecidableEq α]
   {r : α → α → Prop} {x y : α} {l : List α}
   (hl : l.IsChain r) (hxy : y ∈ l.drop (l.idxOf x)) : ReflTransGen r x y :=by{

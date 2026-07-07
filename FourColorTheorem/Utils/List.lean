@@ -4,6 +4,7 @@ import Mathlib.Data.List.Nodup
 import Mathlib.Order.Minimal
 import Mathlib.Data.List.Rotate
 import Mathlib.Data.List.Lattice
+import Mathlib.Data.List.Cycle
 
 open Relation
 open Function
@@ -49,6 +50,12 @@ theorem List.getLast?_cons_eq_getLastD {a : α} {l : List α}
   induction l generalizing a with
   | nil => rfl
   | cons b bs ih => simp[ih]
+}
+theorem List.head?_concat_eq_headD {a : α} {l : List α}
+  : (l ++ [a]).head? = some (l.headD a):=by{
+  induction l generalizing a with
+  | nil => rfl
+  | cons b bs ih => simp
 }
 theorem List.getLast?_cons_of_ne_nil {a : α} {l : List α} (hl : l ≠ [])
   : (a::l).getLast? = l.getLast? := by{
@@ -607,3 +614,41 @@ theorem List.perm_of_nodup_subset_length_eq {l1 l2 : List α}
     }
   }
 termination_by l1.length
+
+theorem List.map_next_apply {β : Type _} [DecidableEq α] [DecidableEq β] {l : List α} {x : α}
+  {f : α → β} (hf : Injective f) (hxl : x ∈ l)
+  : (l.map f).next _ (mem_map.mpr ⟨x, hxl, rfl⟩) = f (l.next x hxl) := by{
+    rw[next_eq_getElem, next_eq_getElem, idxOf_map_eq_of_inj hf, List.getElem_map]
+    simp
+  }
+
+theorem List.map_prev_apply {β : Type _} [DecidableEq α] [DecidableEq β] {l : List α} {x : α}
+  {f : α → β} (hf : Injective f) (hxl : x ∈ l)
+  : (l.map f).prev _ (mem_map.mpr ⟨x, hxl, rfl⟩) = f (l.prev x hxl) := by{
+    rw[prev_eq_getElem, prev_eq_getElem, idxOf_map_eq_of_inj hf, List.getElem_map]
+    simp
+  }
+
+theorem List.eq_next_of_prev_eq [DecidableEq α] {l : List α} {x y : α}
+  (hl : l.Nodup) (hxl : x ∈ l) (hxy : l.prev x hxl = y) :
+  x = l.next y (by{rw[← hxy]; apply l.prev_mem}) := by{
+    simp only [← hxy, List.next_prev _ hl]
+  }
+theorem List.eq_prev_of_next_eq [DecidableEq α] {l : List α} {x y : α}
+  (hl : l.Nodup) (hxl : x ∈ l) (hxy : l.next x hxl = y) :
+  x = l.prev y (by{rw[← hxy]; apply l.next_mem}) := by{
+    simp only [← hxy, List.prev_next _ hl]
+  }
+theorem List.prev_eq_iff_eq_next [DecidableEq α] {l : List α} {x y : α}
+  (hl : l.Nodup) (hxl : x ∈ l) (hyl : y ∈ l) :
+  l.prev x hxl = y ↔ x = l.next y hyl := by{
+    constructor
+    · apply eq_next_of_prev_eq; exact hl
+    rw[Eq.comm (a:=x), Eq.comm (b:=y)]
+    apply eq_prev_of_next_eq; exact hl
+  }
+theorem List.eq_prev_iff_next_eq [DecidableEq α] {l : List α} {x y : α}
+  (hl : l.Nodup) (hxl : x ∈ l) (hyl : y ∈ l) :
+  x = l.prev y hyl ↔ l.next x hxl = y := by{
+    rw[Eq.comm (a:=x), prev_eq_iff_eq_next hl hyl hxl, Eq.comm]
+  }

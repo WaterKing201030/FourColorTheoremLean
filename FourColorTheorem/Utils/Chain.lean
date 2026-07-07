@@ -533,3 +533,18 @@ theorem List.isCycleChain_iff_next_of_nodup [DecidableEq α] {r : α → α → 
       simp[ih]
     }
   }
+theorem List.isCycleChain_iff_prev_of_nodup [DecidableEq α] {r : α → α → Prop} {l : List α}
+  (hl : l.Nodup) : l.IsCycleChain r ↔ ∀x, (hxl : x ∈ l) → r (l.prev x hxl) x := by{
+    rw[isCycleChain_iff_next_of_nodup hl]
+    constructor
+    · {
+      intro ih x hxl
+      nth_rw 2 [← List.next_prev l hl x hxl]
+      apply ih
+    }
+    · {
+      intro ih x hxl
+      nth_rw 1 [← List.prev_next l hl x hxl]
+      apply ih
+    }
+  }

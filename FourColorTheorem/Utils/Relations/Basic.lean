@@ -12,14 +12,14 @@ open Function
 
 variable {α : Type _}
 
-def Relation.fromFun (f : α → α) : α → α → Prop := fun a b => f a = b
+abbrev Relation.fromFun (f : α → α) : α → α → Prop := fun a b => f a = b
 theorem Relation.fromFun_iff {f : α → α} {a b : α} : fromFun f a b ↔ f a = b := by rfl
 theorem Relation.fromFun_of_fun (f : α → α) (a : α) : fromFun f a (f a) := by rfl
 @[inline] instance Relation.fromFun.dec [DecidableEq α] {f : α → α} : DecidableRel (fromFun f) :=
   let inst : DecidableEq α := inferInstance
   fun a b => inst (f a) b
 
-def Relation.union (r1 r2 : α → α → Prop) : α → α → Prop := fun a b => r1 a b ∨ r2 a b
+abbrev Relation.union (r1 r2 : α → α → Prop) : α → α → Prop := fun a b => r1 a b ∨ r2 a b
 @[inline] instance Relation.instUnion : Union (α → α → Prop) where union := union
 theorem Relation.union_iff {r1 r2 : α → α → Prop} {a b : α}
   : (r1 ∪ r2) a b ↔ r1 a b ∨ r2 a b := by rfl

@@ -115,13 +115,15 @@ theorem cglink_of_cnode : H.cnode ⊆ H.cglink := by{
   unfold cnode cglink glink
   apply ReflTransGen_subset
   intro x y h
-  simp[union_iff, h]
+  simp only [union_iff]
+  right; left; assumption
 }
 theorem cglink_of_cface : H.cface ⊆ H.cglink := by{
   unfold cface cglink glink
   apply ReflTransGen_subset
   intro x y h
-  simp[union_iff, h]
+  simp only [union_iff]
+  right; right; assumption
 }
 
 @[reducible] def esetoid (H : Hypermap α) : Setoid α := Setoid.mk _ H.cedge_equivalence
@@ -1298,6 +1300,14 @@ def fband (H : Hypermap α) (p : List α) : Set α :=
   /- x is in the face closure of p -/
   /- can be used for configuration -/
   {x | p.any (H.cface x) }
+@[inline] instance instMemFbandDecidable {p : List α} : DecidablePred (· ∈ H.fband p) :=
+  fun x => by{
+    simp only [fband, Set.mem_setOf]
+    infer_instance
+  }
+theorem mem_fband_iff {p : List α} {x : α} : x ∈ H.fband p ↔ ∃y ∈ p, H.cface x y := by{
+  simp[fband]
+}
 theorem subset_fband {p : List α} {x : α} : x ∈ p → x ∈ H.fband p :=by{
   intro h
   unfold fband
@@ -1641,4 +1651,27 @@ theorem plain.edgeinv_eq_edge (hp : H.plain) : H.edgeinv = H.edge := by{
   rw[← edge_inj, edgeinv_rightinv, hp.edge_edge]
 }
 end plain
+
+section cubic
+theorem cubic_iff_period_three : H.cubic ↔ ∀x, H.node (H.node (H.node x)) = x ∧ H.node x ≠ x := by{
+  unfold cubic cubicSubset
+  simp[Set.eq_univ_iff_forall]
+  simp[minimalPeriod_eq_three_iff]
+}
+theorem not_idemp_of_cubic (hc : H.cubic) {x : α} : H.node x ≠ x := by{
+  rw[cubic_iff_period_three] at hc
+  exact (hc x).right
+}
+theorem period_three_of_cubic (hc : H.cubic) {x : α} : H.node (H.node (H.node x)) = x := by{
+  rw[cubic_iff_period_three] at hc
+  exact (hc x).left
+}
+theorem not_invol_of_cubic (hc : H.cubic) {x : α} : H.node (H.node x) ≠ x := by{
+  rw[cubic_iff_period_three] at hc
+  intro h
+  have h' := (hc x).left
+  rw[h] at h'
+  exact (hc x).right h'
+}
+end cubic
 end Hypermap
