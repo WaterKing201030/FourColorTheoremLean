@@ -251,6 +251,67 @@ theorem Fintype.nComp_gt_one_iff {s : Setoid α} [DecidableRel s]
     rw[card_gt_one_iff]
     simp[Quotient.exists, Quotient.eq_iff_equiv]
   }
+theorem Fintype.nComp_adjunctionOn {β : Type _} [Fintype β] {h : β → α}
+  {e : α → α → Prop} {e' : β → β → Prop}
+  {D : Set α} (A : AdjunctionOn h e e' D) :
+  @nComp {x // x ∈ D} (by{
+    classical
+    apply Subtype.fintype
+  }) A.subtype_setoid_e (by{
+    classical
+    infer_instance
+  })
+  = @nComp {x // h x ∈ D} (by{
+    classical
+    apply Subtype.fintype
+  }) A.subtype_setoid_e' (by{
+    classical
+    infer_instance
+  }):= by{
+    unfold nComp
+    simp only
+    have ih := A.subtype_quotient_equiv
+    unfold AdjunctionOn.subtype_quotient AdjunctionOn.subtype_quotient' at ih
+    have ih' := @ofEquiv_card _ _ (by{
+      classical
+      apply Quotient.fintype
+    }) ih
+    symm
+    apply Eq.mp ?_ ih'
+    congr
+    apply Subsingleton.elim
+  }
+
+theorem Fintype.nComp_ext {r1 : Setoid α} [DecidableRel r1]
+  {r2 : Setoid α} [DecidableRel r2] (hr12 : r1 = r2)
+  : Fintype.nComp r1 = Fintype.nComp r2 := by{
+    congr
+  }
+
+noncomputable def Fintype.nComp' (r : Setoid α) : ℕ :=
+  let q := Quotient r
+  @Fintype.card q (by{
+    classical
+    infer_instance
+  })
+theorem Fintype.nComp_eq_nComp' {r : Setoid α} [DecidableRel r] :
+  Fintype.nComp r = Fintype.nComp' r := by{
+    unfold nComp nComp'
+    simp only
+    congr
+    apply Subsingleton.elim
+  }
+theorem Fintype.nComp_eq_nComp'' {r : Setoid α} :
+  @Fintype.nComp _ _ r (by{
+    classical
+    infer_instance
+  }) = Fintype.nComp' r := by{
+    rw[@nComp_eq_nComp']
+  }
+theorem Fintype.nComp'_ext {r1 r2 : Setoid α} (hr12 : r1 = r2)
+  : Fintype.nComp' r1 = Fintype.nComp' r2 := by{
+    congr
+  }
 
 end Fintype
 

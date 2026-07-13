@@ -1,4 +1,5 @@
 import FourColorTheorem.Hypermap.Basic
+import FourColorTheorem.Hypermap.Actions.Perm
 
 namespace Hypermap
 

@@ -272,7 +272,8 @@ theorem nodup_clink_path_from_isChain_edge {p : List α} (hpn : p ≠ [])
       apply And.intro (by{
         apply hl.right.left.imp
         intro a b hab
-        simp[clink, union_iff, hab]
+        simp only [clink, union_iff]
+        right; assumption
       })
       rw[and_comm]
       constructor

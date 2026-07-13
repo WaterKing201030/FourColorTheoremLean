@@ -13,7 +13,7 @@ open Function
 
 variable {α : Type _}
 
-theorem Relation.ReflTranGen_Symm_of_Symm {r : α → α → Prop} (hr : Std.Symm r) :
+theorem Relation.ReflTransGen_Symm_of_Symm {r : α → α → Prop} (hr : Std.Symm r) :
   Std.Symm (ReflTransGen r) := by{
   apply Std.Symm.mk
   intro a b h
@@ -24,6 +24,14 @@ theorem Relation.ReflTranGen_Symm_of_Symm {r : α → α → Prop} (hr : Std.Sym
     exact ReflTransGen.head hba ih
   }
   }
+theorem Relation.ReflTransGen_equivalence_of_Symm {r : α → α → Prop} (hr : Std.Symm r)
+  : Equivalence (ReflTransGen r) where
+  refl := fun _ => ReflTransGen.refl
+  trans := ReflTransGen.trans
+  symm := fun {_ _} => (Relation.ReflTransGen_Symm_of_Symm hr).symm _ _
+theorem Relation.ReflTransGen_equivalence_of_symm {r : α → α → Prop}
+  (hr : ∀ {x y}, r x y → r y x)
+  : Equivalence (ReflTransGen r) := ReflTransGen_equivalence_of_Symm ⟨fun _ _ => hr⟩
 theorem Relation.ReflTransGen_subset {r1 r2 : α → α → Prop} (h : r1 ⊆ r2)
 : ReflTransGen r1 ⊆ ReflTransGen r2 := by{
   intro a b h'
@@ -563,6 +571,31 @@ theorem Relation.ReflTransGen_InvImage_Equiv {β : Type _} {r : α → α → Pr
       }
     }
   }
+
+theorem Relation.ReflTransGen_iff_of_surjOn_of_injective {β : Type _} {r : α → α → Prop} {f : β → α}
+{D : Set α} (hfInj : Injective f) (hf : ∀ y ∈ D, ∃ x, f x = y)
+(hClo : ∀ x ∈ D, ∀ y, ReflTransGen r x y → y ∈ D) {x y : β}
+(hx : f x ∈ D) :
+ReflTransGen (InvImage r f) x y ↔ InvImage (ReflTransGen r) f x y := by{
+  constructor
+  · apply ReflTransGen_InvImage_subset
+  intro hfxy
+  change ReflTransGen _ _ _ at hfxy
+  generalize hfy : f y = fy at hfxy
+  revert y
+  induction hfxy with
+  | refl => simp[hfInj.eq_iff]; rfl
+  | tail hh ht ih => {
+    have hClo' := hClo _ hx _ hh
+    have ⟨y, hy⟩:=hf _ hClo'
+    specialize ih hy
+    intro z hz
+    apply ih.tail
+    change r _ _
+    rw[hz, hy]
+    exact ht
+  }
+}
 
 theorem List.tail_eq_dropLast_map_of_isChain_fromFun {p : List α}
   {f : α → α} (hp : p.IsChain (fromFun f))

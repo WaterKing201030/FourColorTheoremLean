@@ -95,7 +95,7 @@ theorem cglink_iff_refltransgen_union_refltransgen
 }
 theorem cglink_Symm : Std.Symm H.cglink := by{
   rw[cglink_iff_refltransgen_union_refltransgen]
-  apply ReflTranGen_Symm_of_Symm
+  apply Relation.ReflTransGen_Symm_of_Symm
   apply union_Symm_of_Symm cedge_Symm
   apply union_Symm_of_Symm cnode_Symm
   exact cface_Symm
@@ -374,6 +374,49 @@ theorem cclink_of_cnode : H.cnode ⊆ H.cclink := by{
 }
 theorem cclink_of_cface : H.cface ⊆ H.cclink := by{
   simp[cclink_iff_cglink, cglink_of_cface]
+}
+theorem cglink_iff_cef : H.cglink = ReflTransGen (H.cedge ∪ H.cface) := by{
+  ext x y
+  constructor
+  · {
+    intro h
+    induction h with
+    | refl => rfl
+    | @tail _ c hh ht ih => {
+      apply ih.trans
+      rcases ht with ht | ht | ht
+      · exact ReflTransGen.single (Or.inl (ReflTransGen.single ht))
+      · {
+        rw[fromFun, ← eq_nodeinv_iff_node_eq, nodeinv_eq, comp_apply] at ht
+        rw[ht]
+        apply ReflTransGen.trans (b:=edge c)
+        · {
+          apply ReflTransGen.single
+          right
+          apply H.cface_equivalence.symm
+          apply funReflTransGen.single
+        }
+        · {
+          apply ReflTransGen.single
+          left
+          apply H.cedge_equivalence.symm
+          apply funReflTransGen.single
+        }
+      }
+      · exact ReflTransGen.single (Or.inr (ReflTransGen.single ht))
+    }
+  }
+  · {
+    intro h
+    induction h with
+    | refl => unfold cglink; rfl
+    | tail hh ht ih => {
+      apply ih.trans
+      rcases ht with ht | ht
+      · exact H.cglink_of_cedge ht
+      · exact H.cglink_of_cface ht
+    }
+  }
 }
 theorem cclink_equivalence : Equivalence H.cclink := by{
   rw[cclink_iff_cglink]
@@ -694,577 +737,9 @@ theorem moebius_path_cross_nlink {p : List α} (hp : H.moebius_path p)
     simp[moebius_path, moebius_path_ne_nil hp] at hp
     simp[hp]
   }
-@[reducible] def permN (H : Hypermap α) : Hypermap α := ⟨H.node, H.face, H.edge, H.nfe_cancel⟩
-@[reducible] def permF (H : Hypermap α) : Hypermap α := ⟨H.face, H.edge, H.node, H.fen_cancel⟩
-
-theorem permF_eq_permN_permN : H.permF = H.permN.permN := rfl
-theorem permN_eq_permF_permF : H.permN = H.permF.permF := rfl
-theorem permN_triple : H.permN.permN.permN = H := rfl
-theorem permF_triple : H.permF.permF.permF = H := rfl
-
-theorem permN_edge : H.permN.edge = H.node := rfl
-theorem permN_node : H.permN.node = H.face := rfl
-theorem permN_face : H.permN.face = H.edge := rfl
-theorem permN_edgeinv : H.permN.edgeinv = H.nodeinv := by{
-  rw[edgeinv_eq, nodeinv_eq, permN_node, permN_face]
-}
-theorem permN_nodeinv : H.permN.nodeinv = H.faceinv := by{
-  rw[nodeinv_eq, faceinv_eq, permN_face, permN_edge]
-}
-theorem permN_faceinv : H.permN.faceinv = H.edgeinv := by{
-  rw[faceinv_eq, edgeinv_eq, permN_edge, permN_node]
-}
-theorem permN_cedge : H.permN.cedge = H.cnode := rfl
-theorem permN_cnode : H.permN.cnode = H.cface := rfl
-theorem permN_cface : H.permN.cface = H.cedge := rfl
-theorem permN_ecomp : H.permN.ecomp = H.ncomp := rfl
-theorem permN_ncomp : H.permN.ncomp = H.fcomp := rfl
-theorem permN_fcomp : H.permN.fcomp = H.ecomp := rfl
-theorem permN_glink : H.permN.glink = H.glink:=by{
-  ext a b
-  unfold glink
-  unfold permN
-  simp only
-  rw[union_comm, union_comm (r1:=fromFun face), union_assoc, union_comm (r1:=fromFun face)]
-}
-theorem permN_cglink : H.permN.cglink = H.cglink := congrArg ReflTransGen H.permN_glink
-theorem permN_gcomp : H.permN.gcomp = H.gcomp
-  := by{
-  unfold gcomp gsetoid
-  simp[permN_cglink]
-}
-theorem permN_connected : H.permN.connected ↔ H.connected := by{
-  unfold connected
-  simp[permN_gcomp]
-}
-theorem permN_euler_lhs : H.permN.euler_lhs = H.euler_lhs := by{
-  unfold euler_lhs
-  simp[permN_gcomp]
-}
-theorem permN_euler_rhs : H.permN.euler_rhs = H.euler_rhs := by{
-  unfold euler_rhs
-  simp[permN_ecomp, permN_ncomp, permN_fcomp]
-  simp[Nat.add_assoc, Nat.add_comm]
-}
-theorem permN_genus : H.permN.genus = H.genus := by{
-  unfold genus
-  simp[H.permN_euler_rhs, H.permN_euler_lhs]
-}
-theorem permN_planar : H.permN.planar ↔ H.planar := by{
-  unfold planar
-  simp[H.permN_genus]
-}
-
-theorem permF_edge : H.permF.edge = H.face := rfl
-theorem permF_node : H.permF.node = H.edge := rfl
-theorem permF_face : H.permF.face = H.node := rfl
-theorem permF_edgeinv : H.permF.edgeinv = H.faceinv := by{
-  rw[edgeinv_eq, faceinv_eq, permF_node, permF_face]
-}
-theorem permF_nodeinv : H.permF.nodeinv = H.edgeinv := by{
-  rw[nodeinv_eq, edgeinv_eq, permF_face, permF_edge]
-}
-theorem permF_faceinv : H.permF.faceinv = H.nodeinv := by{
-  rw[faceinv_eq, nodeinv_eq, permF_edge, permF_node]
-}
-theorem permF_cedge : H.permF.cedge = H.cface := rfl
-theorem permF_cnode : H.permF.cnode = H.cedge := rfl
-theorem permF_cface : H.permF.cface = H.cnode := rfl
-theorem permF_ecomp : H.permF.ecomp = H.fcomp := rfl
-theorem permF_ncomp : H.permF.ncomp = H.ecomp := rfl
-theorem permF_fcomp : H.permF.fcomp = H.ncomp := rfl
-theorem permF_glink : H.permF.glink = H.glink:=by{
-  rw[permF_eq_permN_permN]
-  rw[permN_glink, permN_glink]
-}
-theorem permF_cglink : H.permF.cglink = H.cglink := congrArg ReflTransGen H.permF_glink
-theorem permF_gcomp : H.permF.gcomp = H.gcomp
-  := by{
-  unfold gcomp gsetoid
-  simp[permF_cglink]
-}
-theorem permF_connected : H.permF.connected ↔ H.connected := by{
-  unfold connected
-  simp[permF_gcomp]
-}
-theorem permF_euler_lhs : H.permF.euler_lhs = H.euler_lhs := by{
-  unfold euler_lhs
-  simp[permF_gcomp]
-}
-theorem permF_euler_rhs : H.permF.euler_rhs = H.euler_rhs := by{
-  unfold euler_rhs
-  simp[permF_ecomp, permF_ncomp, permF_fcomp]
-  simp[Nat.add_comm H.fcomp, Nat.add_assoc]
-}
-theorem permF_genus : H.permF.genus = H.genus := by{
-  unfold genus
-  simp[H.permF_euler_rhs, H.permF_euler_lhs]
-}
-theorem permF_planar : H.permF.planar ↔ H.planar := by{
-  unfold planar
-  simp[H.permF_genus]
-}
-
-lemma dual_enf_cancel : ∀ x, H.edgeinv (H.faceinv (H.nodeinv x)) = x := by{
-  intro x
-  rw[edgeinv_eq, faceinv_eq, nodeinv_eq]
-  simp[nfe_cancel]
-}
-@[reducible] def dual (H : Hypermap α) : Hypermap α :=
-  ⟨H.edgeinv, H.faceinv, H.nodeinv, dual_enf_cancel⟩
-
-theorem dual_edge : H.dual.edge = H.edgeinv := rfl
-theorem dual_node : H.dual.node = H.faceinv := rfl
-theorem dual_face : H.dual.face = H.nodeinv := rfl
-theorem dual_cedge : H.dual.cedge = H.cedge := by{
-  unfold cedge
-  rw[dual_edge]
-  exact funReflTransGen_bijInv_iff H.edge_bijective
-}
-theorem dual_cnode : H.dual.cnode = H.cface := by{
-  unfold cnode cface
-  rw[dual_node]
-  exact funReflTransGen_bijInv_iff H.face_bijective
-}
-theorem dual_cface : H.dual.cface = H.cnode := by{
-  unfold cnode cface
-  rw[dual_face]
-  exact funReflTransGen_bijInv_iff H.node_bijective
-}
-theorem dual_ecomp : H.dual.ecomp = H.ecomp := by{unfold ecomp esetoid; simp[dual_cedge]}
-theorem dual_ncomp : H.dual.ncomp = H.fcomp := by{unfold ncomp fcomp nsetoid; simp[dual_cnode]}
-theorem dual_fcomp : H.dual.fcomp = H.ncomp := by{unfold fcomp ncomp fsetoid; simp[dual_cface]}
-theorem dual_edgeinv : H.dual.edgeinv = H.edge := by{
-  unfold edgeinv
-  simp only [dual_edge]
-  exact Fintype.bijInv_bijInv H.edge_bijective
-}
-theorem dual_nodeinv : H.dual.nodeinv = H.face := by{
-  unfold nodeinv
-  simp only [dual_node]
-  exact Fintype.bijInv_bijInv H.face_bijective
-}
-theorem dual_faceinv : H.dual.faceinv = H.node := by{
-  unfold faceinv
-  simp only [dual_face]
-  exact Fintype.bijInv_bijInv H.node_bijective
-}
-theorem dual_clink : H.dual.clink = H.clink := by{
-  unfold clink
-  simp[dual_nodeinv, dual_face, union_comm]
-}
-theorem dual_cclink : H.dual.cclink = H.cclink := congrArg ReflTransGen H.dual_clink
-theorem dual_cglink : H.dual.cglink = H.cglink := by{
-  rw[←cclink_iff_cglink, ←cclink_iff_cglink]
-  exact dual_cclink
-}
-theorem dual_gcomp : H.dual.gcomp = H.gcomp := by{unfold gcomp gsetoid;simp[dual_cglink]}
-theorem dual_connected : H.dual.connected = H.connected := by{unfold connected;simp[dual_gcomp]}
-theorem dual_euler_lhs : H.dual.euler_lhs = H.euler_lhs := by{unfold euler_lhs;simp[dual_gcomp]}
-theorem dual_euler_rhs : H.dual.euler_rhs = H.euler_rhs := by{
-  unfold euler_rhs
-  simp[dual_ecomp, dual_ncomp, dual_fcomp, Nat.add_comm]
-}
-theorem dual_genus : H.dual.genus = H.genus := by{unfold genus;simp[dual_euler_lhs, dual_euler_rhs]}
-theorem dual_planar : H.dual.planar ↔ H.planar := by{unfold planar;simp[dual_genus]}
-theorem dual_dual : H.dual.dual = H := by{
-  unfold dual
-  simp[dual_edgeinv, dual_nodeinv, dual_faceinv]
-}
-theorem dual_jordan_imp (hJ : H.jordan) : H.dual.jordan := by{
-  intro q hq
-  have hq':q ≠ []:=moebius_path_ne_nil hq
-  match q with
-  | x::q' => {
-    have hfy:=last_nodeinv_mem_moebius_path_tail_cons hq
-    have hqn0 := moebius_path_not_eq_cons hq
-    have hqn1 := moebius_path_not_eq'_cons hq
-    rw[dual_nodeinv] at hqn0 hfy
-    rw[dual_node] at hqn1
-    unfold moebius_path at hq
-    simp only [reduceCtorEq, ↓reduceDIte, List.tail_cons, List.getLast_cons_eq_getLastD] at hq
-    rw[dual_nodeinv, dual_node, dual_clink] at hq
-    let y:=q'.getLastD x
-    let k:=(List.idxOf (face y) q')
-    let q1:=q'.take k
-    let q23:=q'.drop k
-    have q1_append_q23:q' = q1 ++ q23:=by{
-      unfold q1 q23
-      rw[List.take_append_drop]
-    }
-    have hx'q23:H.faceinv x ∈ q23:=hq.right.right
-    have ⟨q2, q3, hq23⟩:=List.mem_iff_append.mp hx'q23
-    have hq3:q3 ≠ []:=by{
-      intro hq3
-      simp[hq3] at hq23
-      simp only [hq23] at q1_append_q23
-      rw[q1_append_q23, ←List.append_assoc, List.getLastD_concat] at hqn1
-      contradiction
-    }
-    have hy:y ∈ q3:=by{
-      unfold y
-      rw[q1_append_q23, hq23, ←List.append_assoc, List.getLastD_append_cons]
-      have hy:=List.getLastD_mem_cons (l:=q3) (a:=H.faceinv x)
-      rw[List.mem_cons] at hy
-      apply hy.resolve_left
-      rw[q1_append_q23, hq23, ←List.append_assoc, List.getLastD_append_cons] at hqn1
-      exact hqn1.symm
-    }
-    have hq23':q23 ≠ []:=List.ne_nil_of_mem hq.right.right
-    have hq23'':q23.head hq23' = H.face y:=by{
-      unfold q23
-      unfold k
-      rw[List.drop_idxOf_head]
-      exact hfy
-    }
-    let q2':= q2 ++ [H.faceinv x]
-    have hq2':q2' ≠ []:=by{unfold q2'; simp}
-    have hq23''':q23 = q2' ++ q3:=by{unfold q2'; simp[hq23]}
-    have hq2:q2'.head hq2' = H.face y:=by{
-      simp[hq23'''] at hq23''
-      simp[hq2'] at hq23''
-      simp[hq23'']
-    }
-    have hq1':q1.getLastD x ≠ y:=by{
-      have hqn:=hq.left
-      rw[q1_append_q23, hq23'''] at hqn
-      rw[←List.cons_append] at hqn
-      rw[List.nodup_append] at hqn
-      exact hqn.right.right (q1.getLastD x) List.getLastD_mem_cons y (List.mem_append_right _ hy)
-    }
-    have hq1:q1.getLastD x = H.node (H.face y):=by{
-      match q2' with
-      | w::q2'' => {
-        rw[List.head_cons] at hq2
-        have hq'':=And.intro hq.left hq.right.left
-        rw[q1_append_q23, hq23'''] at hq''
-        simp only [List.cons_append, List.nodup_cons,
-          List.mem_append, List.mem_cons, not_or] at hq''
-        rw[List.nodup_append] at hq''
-        simp only [List.nodup_cons, List.mem_append, not_or,
-          List.mem_cons, ne_eq, forall_eq_or_imp] at hq''
-        rw[←List.cons_append] at hq''
-        have hq''':=List.isChain_append.mp hq''.right
-        rw[List.getLast?_cons_eq_getLastD, List.head?_cons] at hq'''
-        simp only [Option.mem_def, Option.some.injEq, forall_eq'] at hq'''
-        have hqc:=hq'''.right.right
-        unfold clink fromFun at hqc
-        rw[union_iff, hq2] at hqc
-        cases hqc with
-        | inl hqc => {
-          rw[nodeinv_eq] at hqc
-          have hqc':=congrArg H.node hqc
-          simp[nfe_cancel] at hqc'
-          simp[hqc']
-        }
-        | inr hqc => {
-          rw[H.face_injective.eq_iff] at hqc
-          contradiction
-        }
-      }
-    }
-    match hq2'':q2', q3 with
-    | y'::q2'', z::q3' => {
-      have hq3z:q3'.getLastD z = y:=by{
-        unfold y
-        rw[q1_append_q23, hq23''', ←List.append_assoc, List.getLastD_append_cons]
-      }
-      have hq2y':q2''.getLastD y' = H.faceinv x:=by{
-        rw[←List.getLast_cons_eq_getLastD]
-        simp only[←hq2'']
-        unfold q2'
-        simp
-      }
-      have hz:z = H.nodeinv (H.faceinv x):=by{
-        have hqn:=hq.left
-        have hqc:=hq.right.left
-        rw[q1_append_q23, hq23''', ←List.cons_append] at hqc hqn
-        have hqc':=(List.isChain_append.mp (List.isChain_append.mp hqc).right.left).right.right
-        simp only [List.getLast?_cons_eq_getLastD, Option.mem_def,
-          Option.some.injEq, List.head?_cons, forall_eq', hq2y'] at hqc'
-        unfold clink fromFun at hqc'
-        simp only [union_iff, Eq.comm] at hqc'
-        apply hqc'.resolve_right
-        rw[faceinv_eq, comp_apply, fen_cancel]
-        intro hzx
-        simp[hzx] at hqn
-      }
-      rw[List.head_cons] at hq2
-      apply hJ (z::q3' ++ (y'::q2'') ++ x::q1)
-      simp only [List.cons_append]
-      unfold moebius_path
-      constructor
-      · {
-        have hqn:=hq.left
-        rw[q1_append_q23, hq23'''] at hqn
-        simp only [←List.cons_append, List.nodup_append, List.mem_append] at hqn
-        simp only [←List.cons_append, List.nodup_append, List.mem_append]
-        simp only [ne_eq]
-        simp only [ne_eq] at hqn
-        simp only [hqn, true_and]
-        constructor
-        · {
-          intro z' hz'
-          intro y' hy'
-          have hqn':=hqn.right.left.right.right y' hy' z' hz'
-          rw[Eq.comm] at hqn'
-          exact hqn'
-        }
-        · {
-          intro a ha b hb
-          rw[or_comm] at ha
-          have hqn':=hqn.right.right b hb a ha
-          rw[Eq.comm] at hqn'
-          exact hqn'
-        }
-      }
-      constructor
-      · {
-        have hqc:=hq.right.left
-        simp only [←List.cons_append, List.isChain_append,
-          List.head?_cons, Option.mem_def, Option.some_inj, forall_eq']
-        simp only [List.getLast?_cons_eq_getLastD, Option.some_inj]
-        rw[List.cons_append, List.getLast?_cons_eq_getLastD, List.getLastD_append_cons]
-        simp only [Option.some_inj, forall_eq']
-        rw[q1_append_q23, hq23'''] at hqc
-        simp only [←List.cons_append, List.isChain_append, List.head?_cons,
-          Option.mem_def, Option.some_inj, forall_eq'] at hqc
-        simp only [List.getLast?_cons_eq_getLastD, Option.some_inj, forall_eq'] at hqc
-        rw[List.cons_append, List.head?_cons] at hqc
-        simp only [Option.some_inj, forall_eq'] at hqc
-        simp only [hqc, true_and]
-        rw[hq3z, hq2y', hq2]
-        unfold clink fromFun
-        simp[union_iff, faceinv_eq, nodeinv_eq, fen_cancel]
-      }
-      · {
-        have hqn:=hq.left
-        rw[q1_append_q23, hq23'''] at hqn
-        simp only [←List.cons_append, List.nodup_append, List.mem_append] at hqn
-        simp only [ne_eq] at hqn
-        have hqn':=hqn.right.left.right.right y' (by{simp}) y'
-        simp only [List.mem_cons, not_true_eq_false, imp_false, not_or] at hqn'
-        rw[hq2] at hqn'
-        rw[List.head_cons, List.tail_cons, List.getLast_cons_eq_getLastD]
-        rw[List.getLastD_append_cons, hq1, nodeinv_eq, comp_apply, fen_cancel, hq2]
-        rw[List.append_assoc, List.cons_append]
-        have hd:List.drop (List.idxOf (face y) (q3' ++ face y::(q2'' ++ x :: q1)))
-          (q3' ++ face y::(q2'' ++ x :: q1)) = face y::(q2'' ++ x :: q1):=by{
-          apply (Eq.trans · (List.drop_append_length (l₁:=q3')))
-          congr
-          rw[List.idxOf_append_of_notMem hqn'.right]
-          simp
-        }
-        rw[hd, hz, nodeinv_eq, comp_apply, nfe_cancel]
-        rw[←List.cons_append, ←hq2, ←hq2'']
-        unfold q2'
-        simp
-      }
-    }
-  }
-}
-theorem dual_jordan : H.dual.jordan ↔ H.jordan := by{
-  constructor
-  · {
-    intro h
-    have h':=dual_jordan_imp h
-    have h'': H.dual.dual.jordan ↔ H.jordan:=by{rw[dual_dual]}
-    exact h''.mp h'
-  }
-  · exact dual_jordan_imp
-}
-
-lemma mirror_enf_cancel : ∀x, (H.face ∘ H.node) (H.nodeinv (H.faceinv x)) = x:=by{
-  rw[nodeinv_eq, faceinv_eq]
-  intro _
-  simp only [comp_apply, nfe_cancel, fen_cancel]
-}
-@[reducible] def mirror (H : Hypermap α) : Hypermap α :=
-  ⟨H.face ∘ H.node, H.nodeinv, H.faceinv, H.mirror_enf_cancel⟩
-theorem mirror_edge : H.mirror.edge = H.face ∘ H.node := rfl
-theorem mirror_node : H.mirror.node = H.nodeinv := rfl
-theorem mirror_face : H.mirror.face = H.faceinv := rfl
-
-theorem mirror_cnode : H.mirror.cnode = H.cnode := by{
-  unfold cnode
-  rw[mirror_node]
-  exact funReflTransGen_bijInv_iff H.node_bijective
-}
-theorem mirror_cface : H.mirror.cface = H.cface := by{
-  unfold cface
-  rw[mirror_face]
-  exact funReflTransGen_bijInv_iff H.face_bijective
-}
-
-theorem mirror_ncomp : H.mirror.ncomp = H.ncomp := by{unfold ncomp nsetoid; simp[mirror_cnode]}
-theorem mirror_fcomp : H.mirror.fcomp = H.fcomp := by{unfold fcomp fsetoid; simp[mirror_cface]}
-theorem mirror_edgeinv : H.mirror.edgeinv = H.face ∘ H.edge ∘ H.edge ∘ H.node := by{
-  unfold edgeinv
-  simp only [mirror_edge]
-  rw[Fintype.comp_bijInv H.face_bijective H.node_bijective]
-  rw[←H.faceinv_eq, ←Function.comp_assoc, ←H.nodeinv_eq]
-  rfl
-}
-theorem mirror_nodeinv : H.mirror.nodeinv = H.node := by{
-  unfold nodeinv
-  simp only [mirror_node]
-  exact Fintype.bijInv_bijInv H.node_bijective
-}
-theorem mirror_faceinv : H.mirror.faceinv = H.face := by{
-  unfold faceinv
-  simp only [mirror_face]
-  exact Fintype.bijInv_bijInv H.face_bijective
-}
-
-theorem mirror_cclink : H.mirror.cclink = H.cclink := by{
-  rw[cclink_iff_refltransgen_union_refltransgen]
-  rw[mirror_cnode, mirror_cface]
-  rw[cclink_iff_refltransgen_union_refltransgen]
-}
-theorem mirror_cglink : H.mirror.cglink = H.cglink := by{
-  rw[←cclink_iff_cglink, ←cclink_iff_cglink, mirror_cclink]
-}
-theorem mirror_gcomp : H.mirror.gcomp = H.gcomp := by{
-  unfold gcomp gsetoid
-  simp[mirror_cglink]
-}
-theorem mirror_euler_lhs : H.mirror.euler_lhs = H.euler_lhs := by{
-  unfold euler_lhs
-  simp[mirror_gcomp]
-}
-theorem mirror_edge_adj_edgeinv : H.mirror.edge = H.nodeinv ∘ H.edgeinv ∘ H.node :=by{
-  rw[mirror_edge, nodeinv_eq, edgeinv_eq]
-  ext x
-  simp[enf_cancel]
-}
-theorem mirror_cedge : H.mirror.cedge = InvImage H.cedge H.node := by{
-  ext a b
-  unfold cedge
-  rw[mirror_edge_adj_edgeinv]
-  have h:=ReflTransGen_InvImage_Equiv (r:=fromFun H.edgeinv)
-    (f:=Equiv.ofBijective _ H.node_bijective)
-  unfold funReflTransGen
-  rw[Equiv.ofBijective_coe] at h
-  have h':ReflTransGen (fromFun H.edgeinv) = ReflTransGen (fromFun H.edge):=by{
-    unfold edgeinv
-    exact funReflTransGen_bijInv_iff H.edge_bijective
-  }
-  rw[←h', ←h]
-  rw[←funReflTransGen_conj H.node_bijective]
-  rfl
-}
-
-theorem mirror_esetoid : H.mirror.esetoid = Setoid.mk (InvImage H.esetoid H.node)
-  (InvImage.equivalence _ _ H.esetoid.iseqv) := by{
-  unfold esetoid
-  ext a b
-  simp only
-  rw[mirror_cedge]
-}
-theorem mirror_ecomp : H.mirror.ecomp = H.ecomp := by{
-  unfold ecomp
-  let nconjs := Setoid.mk _ (InvImage.equivalence H.esetoid H.node H.esetoid.iseqv)
-  have h1:Fintype.nComp H.mirror.esetoid = @Fintype.nComp α inferInstance
-    nconjs (InvImage.instDecidableRel H.node)
-    :=by {
-      congr 1
-      exact mirror_esetoid
-    }
-  rw[h1]
-  let neqv := (Equiv.ofBijective _ H.node_bijective)
-  have h':=@Fintype.nComp_equiv _ _ _ nconjs H.esetoid (by{
-    unfold nconjs
-    simp only
-    apply InvImage.instDecidableRel
-  }) neqv (by{unfold nconjs neqv; simp[InvImage]})
-  apply h'.trans
-  congr
-  · apply Subsingleton.elim
-  · apply Subsingleton.elim
-}
-theorem mirror_euler_rhs : H.mirror.euler_rhs = H.euler_rhs := by{
-  unfold euler_rhs
-  simp[mirror_ecomp, mirror_ncomp, mirror_fcomp]
-}
-theorem mirror_genus : H.mirror.genus = H.genus := by{
-  unfold genus
-  simp[mirror_euler_lhs, mirror_euler_rhs]
-}
-theorem mirror_planar : H.mirror.planar ↔ H.planar := by{
-  unfold planar
-  simp[mirror_genus]
-}
-
-theorem mirror_mirror : H.mirror.mirror = H := by{
-  unfold mirror
-  simp[faceinv_eq, nodeinv_eq, Function.comp_assoc, nfe_id]
-  simp[←Function.comp_assoc (h:=H.node), enf_id]
-}
-theorem mirror_dual : H.mirror.dual = H.dual.mirror := by{
-  unfold dual
-  unfold mirror
-  simp [faceinv_eq, nodeinv_eq, edgeinv_eq]
-  simp [Function.comp_assoc, fen_id, enf_id, nfe_id]
-  simp[←Function.comp_assoc (h:=H.node), enf_id]
-}
 
 def bridgeless (H : Hypermap α) := ∀x, ¬H.cface x (H.edge x)
 def loopless (H : Hypermap α) := ∀x, ¬H.cnode x (H.edge x)
-theorem dual_bridgeless : H.dual.bridgeless = H.loopless := by{
-  unfold bridgeless loopless
-  rw[dual_cface, dual_edge]
-  ext
-  constructor
-  · {
-    intro h x hn
-    apply H.cnode_Symm.symm at hn
-    apply h (H.edge x)
-    rw[edgeinv_eq, comp_apply, nfe_cancel]
-    exact hn
-  }
-  · {
-    intro h x hn
-    apply H.cnode_Symm.symm at hn
-    apply h (H.edgeinv x)
-    rw[edgeinv_eq, comp_apply, enf_cancel]
-    rw[edgeinv_eq] at hn
-    exact hn
-  }
-}
-theorem dual_loopless : H.dual.loopless = H.bridgeless := by{
-  rw[←dual_bridgeless, dual_dual]
-}
-theorem mirror_bridgeless : H.mirror.bridgeless = H.bridgeless := by{
-  unfold bridgeless
-  rw[mirror_cface, mirror_edge]
-  ext
-  constructor
-  · {
-    intro h x hx
-    apply h (H.face (H.edge x))
-    rw[comp_apply, nfe_cancel]
-    apply H.cface_Symm.symm
-    apply (H.cface_equivalence.symm (funReflTransGen.single H.face x)).trans
-    apply hx.trans
-    exact funReflTransGen.single H.face (H.edge x)
-  }
-  · {
-    intro h x hx
-    apply h (H.node x)
-    apply H.cface_equivalence.symm
-    apply (funReflTransGen.single H.face _).trans
-    rw[fen_cancel]
-    apply hx.trans
-    apply H.cface_equivalence.symm
-    rw[comp_apply]
-    apply funReflTransGen.single
-  }
-}
-theorem mirror_loopless : H.mirror.loopless = H.loopless := by{
-  rw[←dual_bridgeless, ←dual_bridgeless]
-  rw[mirror_dual]
-  apply mirror_bridgeless
-}
 
 def arity (H : Hypermap α) (x : α) := minimalPeriod' H.face x
 def pentagonal (H : Hypermap α) := ∀x, 4 < H.arity x
@@ -1288,12 +763,6 @@ theorem iter_face_arity {x : α} : H.face^[H.arity x] x = x:=by{
   unfold arity
   rw[minimalPeriod'_eq_minimalPeriod]
   exact isPeriodicPt_minimalPeriod H.face x
-}
-theorem mirror_arity : H.mirror.arity = H.arity :=by{
-  unfold arity
-  rw[mirror_face]
-  unfold faceinv
-  rw[Fintype.bijInv_minimalPeriod' H.face_bijective]
 }
 
 def fband (H : Hypermap α) (p : List α) : Set α :=
@@ -1412,7 +881,7 @@ theorem simpleCycle.nodup {e : α → α → Prop} {p : List α} (h : H.simpleCy
   p.Nodup := nodup_of_simpleList h.simple
 
 def rlink (H : Hypermap α) : α → α → Prop := fun x y => H.cface (edge x) y
-theorem rlink_of_edge {x : α} : H.rlink x (edge x) := by{
+theorem rlink_edge {x : α} : H.rlink x (edge x) := by{
   simp[rlink, cface, funReflTransGen.refl]
 }
 theorem rlink_right_congr_of_cface {y1 y2 : α} (h12 : H.cface y1 y2) {x : α}
@@ -1420,6 +889,95 @@ theorem rlink_right_congr_of_cface {y1 y2 : α} (h12 : H.cface y1 y2) {x : α}
     simp[rlink, H.cface_equivalence.comm (a:=edge x), H.cface_pred_eq_of_cface h12]
   }
 
+def adj (H : Hypermap α) := fun x y => ∃z, H.cface x z ∧ H.rlink z y
+theorem adj_of_rlink {x y : α} (hxy : H.rlink x y) : H.adj x y :=
+  ⟨x, ReflTransGen.refl, hxy⟩
+theorem adj_edge {x : α} : H.adj x (edge x) :=
+  H.adj_of_rlink H.rlink_edge
+theorem adj_left_congr_of_cface {x y : α} (hxy : H.cface x y) : H.adj x = H.adj y := by{
+  ext z
+  simp only [adj]
+  constructor
+  all_goals
+  intro ⟨z, hz0, hz1⟩
+  refine ⟨z, ?_, hz1⟩
+  try exact (H.cface_equivalence.symm hxy).trans hz0
+  try exact hxy.trans hz0
+}
+theorem adj_right_congr_of_cface {x y : α} (hxy : H.cface x y) {z : α} : H.adj z x = H.adj z y
+:= by{
+  simp only [adj]
+  ext
+  constructor
+  all_goals
+  intro ⟨z, hz0, hz1⟩
+  refine ⟨z, hz0, ?_⟩
+  try rw[H.rlink_right_congr_of_cface hxy]; exact hz1
+  try rw[H.rlink_right_congr_of_cface (H.cface_equivalence.symm hxy)]; exact hz1
+}
+theorem face_adj_iff {x y : α} : H.adj (face x) y ↔ H.adj x y := by{
+  symm
+  rw[adj_left_congr_of_cface]
+  apply funReflTransGen.single
+}
+theorem adj_face_iff {x y : α} : H.adj x (face y) ↔ H.adj x y := by{
+  symm
+  rw[adj_right_congr_of_cface]
+  apply funReflTransGen.single
+}
+theorem node_adj {x : α} : H.adj (node x) x := by{
+  nth_rw 2 [← H.fen_cancel x]
+  rw[H.adj_face_iff]
+  apply adj_edge
+}
+
+def chordless (H : Hypermap α) (r : List α) :=
+  let non_adj_r := fun x y => ∃(h : x ∈ r), y ≠ r.prev x h ∧ y ≠ r.next x h
+  ∀x ∈ r, Disjoint {y | H.adj x y} {y | non_adj_r x y}
+@[simp] theorem chordless_nil : H.chordless [] := by{simp[chordless]}
+theorem chordless_rotate {r : List α} {n : ℕ} (hr : r.Nodup)
+: H.chordless (r.rotate n) ↔ H.chordless r := by{
+  suffices H : ∀r n, r.Nodup → H.chordless (r.rotate n) → H.chordless r by{
+    constructor
+    · apply H; exact hr
+    nth_rw 1 [← List.rotate_length r]
+    rw[← List.rotate_mod r n]
+    rcases eq_or_ne r [] with hrn | hrn
+    · simp[hrn]
+    nth_rw 1 [← Nat.sub_add_cancel (le_of_lt (Nat.mod_lt n (List.length_pos_of_ne_nil hrn)))]
+    rw[Nat.add_comm, ← List.rotate_rotate]
+    apply H
+    rw[List.nodup_rotate]
+    exact hr
+  }
+  intro r n hr hrc
+  unfold chordless at *
+  simp only [Set.disjoint_iff, Set.subset_empty_iff, Set.eq_empty_iff_forall_notMem,
+  Set.mem_inter_iff, Set.mem_setOf]; push_neg
+  simp only[Set.disjoint_iff, Set.subset_empty_iff, Set.eq_empty_iff_forall_notMem,
+  Set.mem_inter_iff, Set.mem_setOf] at hrc; push_neg at hrc
+  intro x hx
+  have ihp := List.isRotated_prev_eq (l := r) (l' := r.rotate n)
+    (List.IsRotated.symm (List.IsRotated.forall _ _)) hr hx
+  have ihn := List.isRotated_next_eq (l := r) (l' := r.rotate n)
+    (List.IsRotated.symm (List.IsRotated.forall _ _)) hr hx
+  simp only [List.mem_rotate] at hrc
+  specialize hrc x hx
+  simp only [hx, ne_eq, forall_true_left, ← ihp, ← ihn] at hrc
+  simp only [hx, forall_true_left]
+  exact hrc
+}
+theorem chordless_def {r : List α} :
+  H.chordless r ↔
+  ∀x, (h: x ∈ r) → ∀y, H.adj x y → y ≠ r.prev x h → y = r.next x h
+  := by{
+  unfold chordless
+  simp only [Set.disjoint_iff, Set.subset_empty_iff, Set.eq_empty_iff_forall_notMem,
+  Set.mem_inter_iff, Set.mem_setOf]; push_neg
+  constructor
+  · intro ih x h y hxy; exact ih x h y hxy h
+  · intro ih x h y hxy _; exact ih x h y hxy
+}
 
 def plainSubset (H : Hypermap α) : Set (Set α) := {s | s ⊆ {x | minimalPeriod H.edge x = 2}}
 def plain (H : Hypermap α) := Set.univ ∈ H.plainSubset

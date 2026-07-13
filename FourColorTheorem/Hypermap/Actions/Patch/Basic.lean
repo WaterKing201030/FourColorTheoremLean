@@ -1,4 +1,5 @@
 import FourColorTheorem.Hypermap.Basic
+import FourColorTheorem.Hypermap.Actions.Walkup
 
 open Function
 open Relation
@@ -53,6 +54,16 @@ theorem disk_mem_border_iff {xd : αd} : hd xd ∈ patchG.border ↔ xd ∈ bGd 
 }
 theorem rem_mem_border_iff {xr : αr} : hr xr ∈ patchG.border ↔ xr ∈ bGr := by{
   rw[mem_border_iff_rem, List.mem_map_of_injective patchG.rem_hom_injective]
+}
+theorem disk_border_length : patchG.diskBorder.length = bGd.length := by{simp}
+theorem rem_border_length : patchG.remBorder.length = bGr.length := by{simp}
+theorem disk_rem_border_length_eq : patchG.diskBorder.length = patchG.remBorder.length := by{
+  unfold diskBorder remBorder
+  rw[patchG.rem_border_order, List.length_reverse]
+}
+theorem disk_rem_border_length_eq' : bGd.length = bGr.length := by{
+  rw[← patchG.disk_border_length, ← patchG.rem_border_length]
+  rw[patchG.disk_rem_border_length_eq]
 }
 theorem disk_hom_codom : ∀x, (∃y, hd y = x) ↔ (∀y, hr y ≠ x) ∨ x ∈ bGr.map hr := by{
   intro x
@@ -118,12 +129,22 @@ theorem disk_border_cedge_close {xd : αd} (hxd : xd ∈ bGd) {yd : αd}
     · exact patchG.disk_border_cycle.cycle
     · exact hxd
   }
+theorem disk_cedge_of_mem_border {xd yd : αd} (hxd : xd ∈ bGd) (hyd : yd ∈ bGd)
+  : Gd.cedge xd yd := by{
+    rw[patchG.disk_border_cedge_close hxd]
+    exact hyd
+  }
 theorem rem_border_cnode_close {xr : αr} (hxr : xr ∈ bGr) {yr : αr}
   : Gr.cnode xr yr ↔ yr ∈ bGr := by{
     symm
     apply Relation.funReflTransGen_iff_mem_of_isCycleChain
     · exact patchG.rem_border_cycle.left
     · exact hxr
+  }
+theorem rem_cnode_of_mem_border {xr yr : αr} (hxr : xr ∈ bGr) (hyr : yr ∈ bGr)
+  : Gr.cnode xr yr := by{
+    rw[patchG.rem_border_cnode_close hxr]
+    exact hyr
   }
 theorem disk_edge_mem {xd : αd} : edge xd ∈ bGd ↔ xd ∈ bGd := by{
   constructor
@@ -745,6 +766,136 @@ theorem disk_cnode_close : ∀x ∈ patchG.disk, ∀y, G.cnode x y → y ∈ pat
   }
 }
 
+theorem rem_cedge_iff {xr yr : αr} : Gr.cedge xr yr ↔ G.cedge (hr xr) (hr yr) := by{
+  have h : AdjunctionOn hr (fromFun edge) (fromFun edge) patchG.rem := by{
+    apply adjunctionOn_of_strict
+    · apply patchG.rem_cedge_close
+    · exact ⟨fun _ _ => G.cedge_equivalence.symm⟩
+    · exact ⟨fun _ _ => Gr.cedge_equivalence.symm⟩
+    · exact patchG.rem_hom_injective
+    · intro y hy; exact hy
+    simp[fromFun, ← patchG.rem_edge_morph, patchG.rem_hom_injective.eq_iff]
+  }
+  have h' := h.functor xr yr
+  simp only [Set.mem_setOf_eq, exists_apply_eq_apply, forall_const] at h'
+  exact h'
+}
+
+theorem rem_border_node_closure : Closure (fromFun Gr.node) {x | x ∈ bGr} := by{
+  unfold Closure
+  intro x (hx : _ ∈ bGr) y
+  have ih := patchG.rem_border_cnode_close hx (yr:=y)
+  exact ih.mp
+}
+theorem rem_node_closure : Closure (fromFun Gr.node) {x | x ∉ bGr} := by{
+  have hset : {x | x ∉ bGr} = {x | x ∈ bGr}ᶜ :=by{
+    ext x
+    simp
+  }
+  rw[hset, compl_closure_of_equivalence']
+  · exact patchG.rem_border_node_closure
+  · exact Gr.cnode_equivalence
+}
+theorem disk_border_edge_closure : Closure (fromFun Gd.edge) {x | x ∈ bGd} := by{
+  unfold Closure
+  intro x (hx : _ ∈ bGd) y
+  have ih := patchG.disk_border_cedge_close hx (yd:=y)
+  exact ih.mp
+}
+theorem disk_edge_closure : Closure (fromFun Gd.edge) {x | x ∉ bGd} := by{
+  have hset : {x | x ∉ bGd} = {x | x ∈ bGd}ᶜ :=by{
+    ext x
+    simp
+  }
+  rw[hset, compl_closure_of_equivalence']
+  · exact patchG.disk_border_edge_closure
+  · exact Gd.cedge_equivalence
+}
+
+theorem rem_cnode_iff {xr yr : αr} (hxr : xr ∉ bGr) : Gr.cnode xr yr ↔ G.cnode (hr xr) (hr yr)
+:= by{
+  constructor
+  · {
+    intro h
+    induction h with
+    | refl => change ReflTransGen _ _ _; rfl
+    | tail hh ht ih => {
+      have ih' : _ ∉ _ := patchG.rem_node_closure _ hxr _ hh
+      rw[fromFun] at ht
+      rw[← ht, patchG.rem_node_morph _ ih']
+      apply ih.tail rfl
+    }
+  }
+  · {
+    intro h
+    rw[cnode, funReflTransGen_iff_iterate] at h
+    have IH : ∀n, node^[n] (hr xr) = hr (node^[n] xr) := by{
+      suffices IH : ∀n, node^[n] (hr xr) = hr (node^[n] xr) ∧ node^[n] xr ∉ bGr by{
+        intro n; exact (IH n).left
+      }
+      intro n
+      induction n with
+      | zero => simp[hxr]
+      | succ n' ih => {
+        rw[iterate_succ_apply', ih.left, ← patchG.rem_node_morph _ ih.right,
+          ← iterate_succ_apply' node]
+        apply And.intro rfl
+        have ihr := ih.right
+        contrapose ihr
+        have ihr' := patchG.rem_border_node_closure _ ihr
+        apply ihr'
+        apply Gr.cnode_equivalence.symm
+        rw[iterate_succ_apply']
+        apply funReflTransGen.single
+      }
+    }
+    simp only [IH, patchG.rem_hom_injective.eq_iff] at h
+    exact funReflTransGen_iff_iterate.mpr h
+  }
+}
+
+theorem disk_cedge_iff {xd yd : αd} (hxd : xd ∉ bGd) : Gd.cedge xd yd ↔ G.cedge (hd xd) (hd yd)
+:= by{
+  constructor
+  · {
+    intro h
+    induction h with
+    | refl => change ReflTransGen _ _ _; rfl
+    | tail hh ht ih => {
+      have ih' : _ ∉ _ := patchG.disk_edge_closure _ hxd _ hh
+      rw[fromFun] at ht
+      rw[← ht, patchG.disk_edge_morph _ ih']
+      apply ih.tail rfl
+    }
+  }
+  · {
+    intro h
+    rw[cedge, funReflTransGen_iff_iterate] at h
+    have IH : ∀n, edge^[n] (hd xd) = hd (edge^[n] xd) := by{
+      suffices IH : ∀n, edge^[n] (hd xd) = hd (edge^[n] xd) ∧ edge^[n] xd ∉ bGd by{
+        intro n; exact (IH n).left
+      }
+      intro n
+      induction n with
+      | zero => simp[hxd]
+      | succ n' ih => {
+        rw[iterate_succ_apply', ih.left, ← patchG.disk_edge_morph _ ih.right,
+          ← iterate_succ_apply' edge]
+        apply And.intro rfl
+        have ihr := ih.right
+        contrapose ihr
+        have ihr' := patchG.disk_border_edge_closure _ ihr
+        apply ihr'
+        apply Gd.cedge_equivalence.symm
+        rw[iterate_succ_apply']
+        apply funReflTransGen.single
+      }
+    }
+    simp only [IH, patchG.disk_hom_injective.eq_iff] at h
+    exact funReflTransGen_iff_iterate.mpr h
+  }
+}
+
 abbrev outer := {x : α | ∃y ∈ patchG.rem, G.cface y x}
 theorem outer_cface_close : ∀x ∈ patchG.outer, ∀y, G.cface x y → y ∈ patchG.outer := by{
   intro x ⟨z, hz, hzx⟩ y hxy
@@ -759,6 +910,10 @@ theorem outerC_cface_close : ∀x ∉ patchG.outer, ∀y, G.cface x y → y ∉ 
   apply G.cface_equivalence.symm
   exact hxy
 }
+theorem outer_face_closure : Closure (fromFun G.face) patchG.outer :=
+  patchG.outer_cface_close
+theorem outerC_face_closure : Closure (fromFun G.face) patchG.outerᶜ :=
+  patchG.outerC_cface_close
 theorem rem_subset_outer : patchG.rem ⊆ patchG.outer := by{
   intro x hx
   rw[rem, Set.mem_setOf] at hx
@@ -785,6 +940,60 @@ theorem outerC_subset_disk_diff_border : patchG.outerᶜ ⊆ patchG.disk \ patch
   apply And.intro (patchG.outerC_subset_disk hx)
   revert hx; rw[Set.mem_compl_iff, not_imp_not]
   apply border_subset_outer
+}
+theorem disk_outerC_face_closure : Closure (fromFun Gd.face) {x | hd x ∈ patchG.outerᶜ} := by{
+  intro x (hx : _ ∉ _) y (hxy : Gd.cface _ _)
+  rw[Set.mem_setOf, Set.mem_compl_iff]
+  have hxy' := patchG.cface_of_disk_cface hxy
+  contrapose hx
+  have ih := patchG.outer_cface_close _ hx _ (G.cface_equivalence.symm hxy')
+  exact ih
+}
+theorem disk_outerC_cface_iff {xd yd : αd} (hxd : hd xd ∉ patchG.outer)
+  : Gd.cface xd yd ↔ G.cface (hd xd) (hd yd) := by{
+  constructor
+  · {
+    intro h
+    induction h with
+    | refl => change ReflTransGen _ _ _; rfl
+    | tail hh ht ih => {
+      have ih' : _ ∉ _ := patchG.disk_outerC_face_closure _ hxd _ hh
+      rw[fromFun] at ht
+      apply ih.tail
+      rw[← ht, patchG.disk_face_morph]
+      contrapose ih'
+      apply patchG.border_subset_outer
+      exact patchG.disk_mem_border_iff.mpr ih'
+    }
+  }
+  · {
+    intro h
+    rw[cface, funReflTransGen_iff_iterate] at h
+    have IH : ∀n, face^[n] (hd xd) = hd (face^[n] xd) := by{
+      suffices IH : ∀n, face^[n] (hd xd) = hd (face^[n] xd) ∧ hd (face^[n] xd) ∉ patchG.outer by{
+        intro n; exact (IH n).left
+      }
+      intro n
+      induction n with
+      | zero => simp[hxd]
+      | succ n' ih => {
+        have ihr := ih.right
+        have ihr' : face^[n'] xd ∉ bGd := by{
+          contrapose ihr
+          apply patchG.border_subset_outer
+          exact patchG.disk_mem_border_iff.mpr ihr
+        }
+        rw[iterate_succ_apply', ih.left, ← patchG.disk_face_morph _ ihr',
+          ← iterate_succ_apply' face]
+        apply And.intro rfl
+        apply patchG.disk_outerC_face_closure _ ihr
+        rw[iterate_succ_apply']
+        apply funReflTransGen.single
+      }
+    }
+    simp only [IH, patchG.disk_hom_injective.eq_iff] at h
+    exact funReflTransGen_iff_iterate.mpr h
+  }
 }
 
 abbrev borderFband (_ : Patch G Gd Gr hd hr bGd bGr) := Gd.fband bGd
@@ -856,20 +1065,25 @@ theorem outerC_face_morph : ∀xd, hd xd ∉ patchG.outer → hd (face xd) = fac
   apply patchG.disk_face_morph _ hxb
 }
 
+theorem disk_cface_adjunctionOn_outerC
+: AdjunctionOn hd (fromFun face) (fromFun face) patchG.outerᶜ
+:= by{
+  apply adjunctionOn_of_strict
+  · exact patchG.outerC_cface_close
+  · exact ⟨fun _ _ => G.cface_equivalence.symm⟩
+  · exact ⟨fun _ _ => Gd.cface_equivalence.symm⟩
+  · exact patchG.disk_hom_injective
+  · intro y; apply patchG.outerC_subset_disk
+  · {
+    intro x y hx
+    simp only [fromFun, ← patchG.outerC_face_morph _ hx, patchG.disk_hom_injective.eq_iff]
+  }
+}
+
 theorem disk_cface_iff_of_mem_outerC {xd yd : αd} (hxdoc : hd xd ∉ patchG.outer)
   : Gd.cface xd yd ↔ G.cface (hd xd) (hd yd) := by{
-    have ih : AdjunctionOn hd (fromFun face) (fromFun face) patchG.outerᶜ := by{
-      apply adjunctionOn_of_strict
-      · exact patchG.outerC_cface_close
-      · exact ⟨fun _ _ => G.cface_equivalence.symm⟩
-      · exact ⟨fun _ _ => Gd.cface_equivalence.symm⟩
-      · exact patchG.disk_hom_injective
-      · intro y; apply patchG.outerC_subset_disk
-      · {
-        intro x y hx
-        simp only [fromFun, ← patchG.outerC_face_morph _ hx, patchG.disk_hom_injective.eq_iff]
-      }
-    }
+    have ih : AdjunctionOn hd (fromFun face) (fromFun face) patchG.outerᶜ :=
+      patchG.disk_cface_adjunctionOn_outerC
     exact ih.functor xd yd hxdoc
   }
 
@@ -1041,6 +1255,1122 @@ theorem of_bridgeless (br'G : G.bridgeless) : Gd.bridgeless ∧ Gr.bridgeless :=
     congr
     rw[patchG.rem_edge_morph]
   }
+}
+
+theorem bridgeless_of (bridge'Gd : Gd.bridgeless) (bridge'Gr : Gr.bridgeless)
+  (chord'Gd : Gd.chordless bGd) : G.bridgeless := by{
+  intro x xFex
+  have x'R : x ∉ patchG.rem := by{
+    intro xR
+    have ⟨xr, hxr⟩:=xR
+    rw[← hxr, ← patchG.rem_edge_morph, ← patchG.rem_cface_iff] at xFex
+    exact bridge'Gr _ xFex
+  }
+  have ⟨xD, x'B⟩ := not_or.mp (x'R ∘ patchG.mem_rem_iff.mpr)
+  rw[not_not] at xD
+  rcases xD with ⟨xd, hxd⟩
+  rw[← hxd] at x'B xFex
+  rw[disk_mem_border_iff] at x'B
+  rw[← patchG.disk_edge_morph _ x'B] at xFex
+  have xO : hd xd ∈ patchG.outer := by{
+    by_contra x'O
+    rw[← patchG.disk_cface_iff_of_mem_outerC x'O] at xFex
+    exact bridge'Gd _ xFex
+  }
+  have hemxd : hd (edge xd) = edge (hd xd) :=
+    patchG.disk_edge_morph _ x'B
+  have exO : hd (edge xd) ∈ patchG.outer :=
+    patchG.outer_cface_close _ xO _ xFex
+  rw[← patchG.mem_borderFband_iff, mem_fband_iff] at xO exO
+  rcases xO with ⟨yd, ydB, Fxdyd⟩
+  rcases exO with ⟨zd, zdB, Fexdzd⟩
+  have Aydzd : Gd.adj yd zd :=
+    ⟨xd, Gd.cface_equivalence.symm Fxdyd, Fexdzd⟩
+  rw[chordless_def] at chord'Gd
+  have hyc := chord'Gd yd ydB _ Aydzd
+  have hc := patchG.disk_border_cycle.cycle
+  have ⟨yr, hyre, hyrn⟩ := patchG.exists_galois_en_of_mem_bGd ydB
+  have ⟨zr, hzre, hzrn⟩ := patchG.exists_galois_en_of_mem_bGd zdB
+  have Fxdyd' := patchG.cface_of_disk_cface Fxdyd
+  have Fexdzd' := patchG.cface_of_disk_cface Fexdzd
+  have Fydzd' : G.cface _ _ := (G.cface_equivalence.symm Fxdyd').trans (xFex.trans Fexdzd')
+  have hzdn : zd ≠ bGd.next yd ydB := by{
+    intro hzdn
+    have hcn : _ = _ :=
+      (List.isCycleChain_iff_next_of_nodup patchG.disk_border_cycle.nodup).mp hc
+      yd ydB
+    rw[← hzdn] at hcn
+    rw[hcn] at hyre
+    rw[hyrn, hyre, ← patchG.rem_cface_iff] at Fydzd'
+    nth_rw 2 [← Gr.fen_cancel yr] at Fydzd'
+    apply bridge'Gr (node yr)
+    apply Fydzd'.trans
+    apply Gr.cface_equivalence.symm
+    apply funReflTransGen.single
+  }
+  have hzdp : zd ≠ bGd.prev yd ydB := by{
+    intro hzdn
+    rw[List.eq_prev_iff_next_eq patchG.disk_border_cycle.nodup zdB] at hzdn
+    symm at hzdn
+    have hcn : _ = _ :=
+      (List.isCycleChain_iff_next_of_nodup patchG.disk_border_cycle.nodup).mp hc
+      zd zdB
+    rw[← hzdn] at hcn
+    rw[hcn] at hzre
+    rw[hzrn, hzre, ← patchG.rem_cface_iff] at Fydzd'
+    nth_rw 1 [← Gr.fen_cancel zr] at Fydzd'
+    apply Gr.cface_equivalence.symm at Fydzd'
+    apply bridge'Gr (node zr)
+    apply Fydzd'.trans
+    apply Gr.cface_equivalence.symm
+    apply funReflTransGen.single
+  }
+  exact hzdn (hyc hzdp)
+}
+
+abbrev remGClosure (_ : Patch G Gd Gr hd hr bGd bGr) := {x | ∃yr, G.cglink (hr yr) x}
+theorem remGClosure_glink_close
+: ∀x ∈ patchG.remGClosure, ∀y, G.cglink x y → y ∈ patchG.remGClosure
+:= by{
+  intro x hx y hy
+  have ⟨zr, hzr⟩:=hx
+  use zr
+  exact hzr.trans hy
+}
+theorem remGClosure_glink_closure : Closure G.glink patchG.remGClosure :=
+  patchG.remGClosure_glink_close
+theorem remGClosureC_glink_closure : Closure G.glink patchG.remGClosureᶜ := by{
+  rw[compl_closure_of_equivalence']
+  · exact patchG.remGClosure_glink_closure
+  exact G.cglink_equivalence
+}
+theorem rem_subset_remGClosure : patchG.rem ⊆ patchG.remGClosure := by{
+  intro x hx
+  change ∃_, _
+  have ⟨xr, hxr⟩:=hx
+  use xr
+  rw[hxr]
+  apply ReflTransGen.refl
+}
+theorem remGClosureC_subset_disk : patchG.remGClosureᶜ ⊆ patchG.disk := by{
+  intro x hx
+  rw[mem_disk_iff]
+  left
+  contrapose hx
+  rw[Set.mem_compl_iff, not_not]
+  exact patchG.rem_subset_remGClosure hx
+}
+theorem cglink_of_disk_cglink {xd yd : αd} (hxyd : Gd.cglink xd yd) : G.cglink (hd xd) (hd yd)
+:= by{
+  rw[← Gd.cclink_iff_cglink] at hxyd
+  induction hxyd with
+  | refl => change ReflTransGen _ _ _; rfl
+  | @tail b c hh ht ih => {
+    apply G.cglink_equivalence.trans ih
+    rcases ht with ht | ht
+    · {
+      unfold fromFun at ht
+      rw[nodeinv_eq_iff_eq_node] at ht
+      rw[ht, patchG.disk_node_morph]
+      apply G.cglink_of_cnode
+      apply G.cnode_equivalence.symm
+      apply funReflTransGen.single
+    }
+    · {
+      unfold fromFun at ht
+      rw[← ht]
+      apply cglink_of_cface
+      apply patchG.cface_of_disk_cface
+      apply funReflTransGen.single
+    }
+  }
+}
+
+theorem glink_of_not_mem_bGd {xd yd : αd} (hxd : xd ∉ bGd)
+: Gd.glink xd yd ↔ G.glink (hd xd) (hd yd):= by{
+  change _ = _ ∨ _ = _ ∨ _ = _ ↔ _ = _ ∨ _ = _ ∨ _ = _
+  rw[← patchG.disk_edge_morph _ hxd, ← patchG.disk_node_morph, ← patchG.disk_face_morph _ hxd]
+  simp[patchG.disk_hom_injective.eq_iff]
+}
+
+theorem disk_remGClosureC_glink_closure : Closure Gd.glink {x | hd x ∈ patchG.remGClosureᶜ} := by{
+  intro x (hx : _ ∉ _) y (hy : Gd.cglink _ _)
+  change hd y ∉ _
+  contrapose hx
+  have ih := patchG.remGClosure_glink_closure _ hx _
+    (G.cglink_equivalence.symm (patchG.cglink_of_disk_cglink hy))
+  exact ih
+}
+theorem disk_remGClosureC_cglink_iff {xd yd : αd} (hxd : hd xd ∉ patchG.remGClosure) :
+  Gd.cglink xd yd ↔ G.cglink (hd xd) (hd yd) := by{
+  constructor
+  · apply patchG.cglink_of_disk_cglink
+  intro hxyd
+  have hyd : hd yd ∉ patchG.remGClosure :=
+    patchG.remGClosureC_glink_closure _ hxd _ hxyd
+  generalize hdyd : hd yd = y at *
+  have hy : y ∈ patchG.disk := by{simp[← hdyd]}
+  have hCho : Classical.choose hy = yd := by{
+    have ih := Classical.choose_spec hy
+    exact patchG.disk_hom_injective (ih.trans hdyd.symm)
+  }
+  clear hdyd
+  rw[← hCho]
+  clear! yd
+  rw[← G.cclink_iff_cglink] at hxyd
+  induction hxyd with
+  | refl => {
+    have hcho := Classical.choose_spec hy
+    rw[patchG.disk_hom_injective hcho]
+    apply ReflTransGen.refl
+  }
+  | @tail b c hh ht ih => {
+    change G.cclink _ _ at hh
+    rw[G.cclink_iff_cglink] at hh
+    have hh' := patchG.remGClosureC_glink_closure _ hxd _ hh
+    specialize ih hh' (patchG.remGClosureC_subset_disk hh')
+    apply ih.trans
+    have h0 := Classical.choose_spec (patchG.remGClosureC_subset_disk hh')
+    have h1 := Classical.choose_spec hy
+    rcases ht with (ht : _ = _) | (ht : _ = _)
+    · {
+      nth_rw 2 [← ht] at h1
+      rw[eq_nodeinv_iff_node_eq, ← h0, ← patchG.disk_node_morph,
+        patchG.disk_hom_injective.eq_iff] at h1
+      rw[←h1]
+      apply Gd.cglink_of_cnode
+      apply Gd.cnode_equivalence.symm
+      apply funReflTransGen.single
+    }
+    · {
+      rw[← h1, ← h0] at ht
+      rw[← patchG.disk_face_morph _ (by{
+        rw[Set.mem_compl_iff] at hh'
+        contrapose hh'
+        rw[← h0]
+        apply patchG.rem_subset_remGClosure
+        apply patchG.border_subset_rem
+        rw[patchG.disk_mem_border_iff]
+        exact hh'
+      }), patchG.disk_hom_injective.eq_iff] at ht
+      rw[← ht]
+      apply Gd.cglink_of_cface
+      apply funReflTransGen.single
+    }
+  }
+}
+
+theorem rem_glink_adjunctionOn_remGClosure :
+  AdjunctionOn hr G.glink Gr.glink patchG.remGClosure
+:= by{
+  have hsurj : ∀ x ∈ patchG.remGClosure, ∃ x', ReflTransGen G.glink x (hr x')
+  := by{
+    rintro x (hx : ∃_, _)
+    simp only [G.cglink_equivalence.comm] at hx
+    exact hx
+  }
+  apply AdjunctionOn.mk
+  · exact hsurj
+  · {
+    intro xr yr hx
+    change Gr.cglink _ _ ↔ G.cglink _ _
+    constructor
+    · {
+      intro h
+      induction h with
+      | refl => apply ReflTransGen.refl
+      | @tail b c hh ht ih => {
+        apply ih.trans
+        unfold glink at ht
+        change _ = _ ∨ _ = _ ∨ _ = _ at ht
+        rcases ht with ht | ht | ht
+        · rw[← ht, patchG.rem_edge_morph]; apply ReflTransGen.single; simp[glink, union_iff]
+        · {
+          rw[← ht]
+          rcases em' (b ∈ bGr) with hbB | hbB
+          · {
+            rw[patchG.rem_node_morph _ hbB]
+            apply ReflTransGen.single
+            simp[glink, union_iff]
+          }
+          have ⟨b', hb'e, hb'n⟩ := patchG.exists_galois_en_of_mem_bGr hbB
+          rw[← hb'e, ← hb'n]
+          have h0 : G.cglink (hd (Gd.nodeinv b')) (hd b') := by{
+            rw[patchG.disk_nodeinv_morph]
+            apply ReflTransGen.single
+            unfold glink
+            change _ ∨ _ = _ ∨ _
+            simp[nodeinv_rightinv]
+          }
+          refine ReflTransGen.trans ?_ h0
+          apply G.cglink_of_cface
+          apply patchG.cface_of_disk_cface
+          rw[nodeinv_eq, comp_apply]
+          apply funReflTransGen.single
+        }
+        · {
+          rw[← ht]
+          apply G.cglink_of_cface
+          rw[← patchG.rem_cface_iff]
+          apply funReflTransGen.single
+        }
+      }
+    }
+    · {
+      intro h
+      generalize x_def : hr xr = x at *
+      have hx_ind : if x ∈ patchG.rem then x = hr xr else xr ∈ bGr := by{simp[← x_def]}
+      clear x_def
+      rw[← cclink_iff_cglink] at h
+      induction h using ReflTransGen.head_induction_on generalizing xr with
+      | refl => {
+        simp only [Set.mem_setOf_eq, exists_apply_eq_apply, ↓reduceIte,
+        patchG.rem_hom_injective.eq_iff] at hx_ind
+        rw[hx_ind]
+        apply ReflTransGen.refl
+      }
+      | @head x' z hh ht ih => {
+        have hz : z ∈ patchG.remGClosure := by{
+          apply patchG.remGClosure_glink_close _ hx
+          rw[← cclink_iff_cglink]
+          apply ReflTransGen.single hh
+        }
+        simp only [hz, forall_const] at ih
+        change _ = _ ∨ _ = _ at hh
+        rw[nodeinv_eq_iff_eq_node] at hh
+        rcases em (z ∈ patchG.rem) with hzR | hzR
+        · {
+          obtain ⟨zr, hzr⟩:=hzR
+          simp only [← hzr, Set.mem_setOf_eq, patchG.rem_hom_injective.eq_iff, exists_eq,
+            ↓reduceIte, forall_eq'] at ih
+          refine Gr.cglink_equivalence.trans ?_ ih
+          rw[← hzr] at hh
+          clear hz
+          rcases em (x' ∈ patchG.rem) with hx'R | hx'R
+          · {
+            simp only [hx'R, ↓reduceIte] at hx_ind
+            rw[hx_ind] at hh
+            clear hx hx'R hx_ind
+            rcases em' (zr ∈ bGr) with hzrB | hzrB
+            · {
+              rw[← patchG.rem_node_morph _ hzrB, patchG.rem_hom_injective.eq_iff] at hh
+              rcases hh with hh | hh
+              · {
+                rw[hh]
+                apply Gr.cglink_of_cnode
+                apply Gr.cnode_equivalence.symm
+                apply funReflTransGen.single
+              }
+              rw[← eq_faceinv_iff_face_eq, ← patchG.rem_faceinv_morph _ hzrB,
+              patchG.rem_hom_injective.eq_iff, eq_faceinv_iff_face_eq] at hh
+              rw[← hh]
+              apply Gr.cglink_of_cface
+              apply funReflTransGen.single
+            }
+            have ⟨zd, hzde, hzdn⟩ := patchG.exists_galois_en_of_mem_bGr hzrB
+            rw[← hzde, ← patchG.disk_node_morph] at hh
+            rcases hh with hh | hh
+            · {
+              have hxrB : xr ∈ bGr := patchG.border_antisymm_rem.mp ⟨_, hh.symm⟩
+              apply Gr.cglink_of_cnode
+              exact (patchG.rem_border_cnode_close hxrB).mpr hzrB
+            }
+            have hfxrB : face xr ∈ bGr := by{
+              by_contra hfxrB
+              rw[← patchG.rem_face_morph' _ hfxrB] at hh
+              have hfxrB' := patchG.border_antisymm_rem.mp ⟨_, hh.symm⟩
+              contradiction
+            }
+            apply Gr.cglink_equivalence.trans (y := face xr)
+            · apply Gr.cglink_of_cface; apply funReflTransGen.single
+            apply Gr.cglink_of_cnode
+            exact (patchG.rem_border_cnode_close hfxrB).mpr hzrB
+          }
+          · {
+            simp only [hx'R, ↓reduceIte] at hx_ind
+            have hzrB : zr ∈ bGr := by{
+              by_contra hzrB
+              rw[← patchG.rem_node_morph _ hzrB, ← eq_faceinv_iff_face_eq,
+              ← patchG.rem_faceinv_morph _ hzrB] at hh
+              apply hx'R
+              change ∃_, _
+              simp only [Eq.comm (a:=x')] at hh
+              exact hh.elim (fun h => ⟨_, h⟩) (fun h => ⟨_, h⟩)
+            }
+            apply Gr.cglink_of_cnode
+            exact (patchG.rem_border_cnode_close hx_ind).mpr hzrB
+          }
+        }
+        · {
+          simp only [hzR, ↓reduceIte] at ih
+          rcases em (xr ∈ bGr) with hxrB | hxrB
+          · exact ih _ hxrB
+          simp only [hxrB, if_false_right] at hx_ind
+          rcases hx_ind with ⟨tmp, hx_ind⟩; clear tmp
+          rw[hx_ind] at hh
+          have ⟨hzD, hzB⟩ := not_or.mp (hzR ∘ patchG.mem_rem_iff.mpr)
+          rw[not_not] at hzD
+          obtain ⟨zd, hzd⟩ := hzD
+          rcases hh with hh | hh
+          · {
+            rw[← hzd, ← patchG.disk_node_morph] at hh
+            have hh' := patchG.border_antisymm_rem.mp ⟨_, hh.symm⟩
+            contradiction
+          }
+          rw[← hzd, ← Gd.faceinv_rightinv zd, Eq.comm, patchG.disk_face_eq_face_rem_iff] at hh
+          have hh' := patchG.border_antisymm_rem.mp ⟨_, hh⟩
+          apply ReflTransGen.head ?_ (ih _ hh')
+          simp[glink, union_iff]
+        }
+      }
+    }
+  }
+  · exact patchG.remGClosure_glink_close
+  · exact ⟨fun _ _ => G.cglink_equivalence.symm⟩
+  · exact ⟨fun _ _ => Gr.cglink_equivalence.symm⟩
+}
+
+theorem rem_cglink_iff {xr yr : αr} :
+  Gr.cglink xr yr ↔ G.cglink (hr xr) (hr yr) := by{
+    have ih := patchG.rem_glink_adjunctionOn_remGClosure.functor xr yr
+      (patchG.rem_subset_remGClosure (by{simp}))
+    exact ih
+  }
+
+theorem exists_border_of_cglink_rem_disk' {xr : αr} {yd : αd} (hxy : G.cglink (hr xr) (hd yd)) :
+  ∃zr zd, hr zr = hd zd ∧ Gr.cglink xr zr ∧ Gd.cglink zd yd := by{
+  rw[← cclink_iff_cglink] at hxy
+  generalize hdyd : hd yd = y
+  rw[hdyd] at hxy
+  have hy : y ∈ patchG.disk := by{simp[← hdyd]}
+  have hCho := (Classical.choose_spec hy).trans hdyd.symm
+  rw[patchG.disk_hom_injective.eq_iff] at hCho
+  rw[← hCho]
+  clear! yd
+  induction hxy with
+  | refl => {
+    have hCho := Classical.choose_spec hy
+    refine ⟨xr, Classical.choose hy, hCho.symm, ReflTransGen.refl, ReflTransGen.refl⟩
+  }
+  | @tail b c hh ht ih => {
+    rcases em (b ∈ patchG.disk) with hbD | hbD
+    · {
+      have ih' := ih hbD
+      have ⟨bd, hbd⟩ := hbD
+      have ⟨cd, hcd⟩ := hy
+      have hChob := (Classical.choose_spec hbD).trans hbd.symm
+      have hChoc := (Classical.choose_spec hy).trans hcd.symm
+      apply patchG.disk_hom_injective at hChob
+      apply patchG.disk_hom_injective at hChoc
+      rw[hChoc]
+      rw[hChob] at ih'
+      have ⟨zr, zd, h0, h1, h2⟩ := ih'
+      refine ⟨zr, zd, h0, h1, h2.trans ?_⟩
+      rcases ht with (ht : _ = _) | (ht : _ = _)
+      · {
+        rw[← hbd, ← hcd, ← patchG.disk_nodeinv_morph, patchG.disk_hom_injective.eq_iff] at ht
+        rw[← ht]
+        apply cglink_of_cnode
+        apply cnode_equivalence.symm
+        apply ReflTransGen.single
+        exact nodeinv_rightinv _
+      }
+      · {
+        rw[← hbd, ← hcd] at ht
+        rcases em' (bd ∈ bGd) with hbdB | hbdB
+        · {
+          rw[← patchG.disk_face_morph _ hbdB, patchG.disk_hom_injective.eq_iff] at ht
+          rw[← ht]
+          apply cglink_of_cface
+          apply funReflTransGen.single
+        }
+        have ⟨br, hbrbd⟩ := patchG.border_subset_rem (patchG.disk_mem_border_iff.mpr hbdB)
+        have hbrB : br ∈ bGr := by{
+          rw[← patchG.rem_mem_border_iff, patchG.mem_border_iff_disk]
+          unfold diskBorder
+          rw[List.mem_map]
+          refine ⟨bd, hbdB, hbrbd.symm⟩
+        }
+        rw[← hbrbd, ← Gd.faceinv_rightinv cd, Eq.comm, patchG.disk_face_eq_face_rem_iff] at ht
+        have hf'cdB := patchG.border_antisymm_disk.mp ⟨_, ht.symm⟩
+        have hbdf'cd := patchG.disk_cedge_of_mem_border hbdB hf'cdB
+        apply (cglink_of_cedge hbdf'cd).trans
+        apply cglink_of_cface
+        apply ReflTransGen.single
+        exact faceinv_rightinv _
+      }
+    }
+    have ⟨cd, hcd⟩ := hy
+    have hChoc := (Classical.choose_spec hy).trans hcd.symm
+    apply patchG.disk_hom_injective at hChoc
+    rw[hChoc]
+    clear ih
+    rw[patchG.mem_disk_iff, not_or, not_not] at hbD
+    have ⟨br, hbr⟩ := hbD.left
+    rw[← hbr, ← hcd] at ht
+    rcases ht with (ht : _ = _) | (ht : _ = _)
+    · {
+      rw[G.nodeinv_eq_iff_eq_node, ← patchG.disk_node_morph] at ht
+      exfalso
+      apply hbD.right
+      rw[← hbr, patchG.rem_mem_border_iff, ← patchG.border_antisymm_rem]
+      exact ⟨_, ht.symm⟩
+    }
+    rw[← Gd.faceinv_rightinv cd, Eq.comm, patchG.disk_face_eq_face_rem_iff] at ht
+    refine ⟨face br, Gd.faceinv cd, ht.symm, ?_⟩
+    constructor
+    · {
+      change G.cclink _ _ at hh
+      rw[cclink_iff_cglink, ← hbr, ← patchG.rem_cglink_iff] at hh
+      apply hh.trans
+      apply cglink_of_cface
+      apply funReflTransGen.single
+    }
+    apply cglink_of_cface
+    apply ReflTransGen.single
+    exact faceinv_rightinv _
+  }
+}
+
+theorem disk_cglink_iff {xd yd : αd} : Gd.cglink xd yd ↔ G.cglink (hd xd) (hd yd) := by{
+  apply Iff.intro patchG.cglink_of_disk_cglink
+  intro h
+  rw[← cclink_iff_cglink] at h
+  generalize hdyd : hd yd = y
+  rw[hdyd] at h
+  have hy : y ∈ patchG.disk := by{simp[← hdyd]}
+  have hCho := Classical.choose_spec hy
+  apply (Eq.trans · hdyd.symm) at hCho
+  rw[patchG.disk_hom_injective.eq_iff] at hCho
+  rw[← hCho]
+  clear! yd
+  induction h with
+  | refl => {
+    have hCho := Classical.choose_spec hy
+    apply patchG.disk_hom_injective at hCho
+    rw[hCho]
+    apply ReflTransGen.refl
+  }
+  | @tail b c hh ht ih => {
+    rcases em (b ∈ patchG.disk) with hbD | hbD
+    · {
+      have ih' := ih hbD
+      have ⟨bd, hbd⟩ := hbD
+      have ⟨cd, hcd⟩ := hy
+      have hChob := (Classical.choose_spec hbD).trans hbd.symm
+      have hChoc := (Classical.choose_spec hy).trans hcd.symm
+      apply patchG.disk_hom_injective at hChob
+      apply patchG.disk_hom_injective at hChoc
+      rw[hChoc]
+      rw[hChob] at ih'
+      apply ih'.trans
+      rcases ht with (ht : _ = _) | (ht : _ = _)
+      · {
+        rw[← hbd, ← hcd, ← patchG.disk_nodeinv_morph, patchG.disk_hom_injective.eq_iff] at ht
+        rw[← ht]
+        apply cglink_of_cnode
+        apply cnode_equivalence.symm
+        apply ReflTransGen.single
+        exact nodeinv_rightinv _
+      }
+      · {
+        rw[← hbd, ← hcd] at ht
+        rcases em' (bd ∈ bGd) with hbdB | hbdB
+        · {
+          rw[← patchG.disk_face_morph _ hbdB, patchG.disk_hom_injective.eq_iff] at ht
+          rw[← ht]
+          apply cglink_of_cface
+          apply funReflTransGen.single
+        }
+        have ⟨br, hbrbd⟩ := patchG.border_subset_rem (patchG.disk_mem_border_iff.mpr hbdB)
+        have hbrB : br ∈ bGr := by{
+          rw[← patchG.rem_mem_border_iff, patchG.mem_border_iff_disk]
+          unfold diskBorder
+          rw[List.mem_map]
+          refine ⟨bd, hbdB, hbrbd.symm⟩
+        }
+        rw[← hbrbd, ← Gd.faceinv_rightinv cd, Eq.comm, patchG.disk_face_eq_face_rem_iff] at ht
+        have hf'cdB := patchG.border_antisymm_disk.mp ⟨_, ht.symm⟩
+        have hbdf'cd := patchG.disk_cedge_of_mem_border hbdB hf'cdB
+        apply (cglink_of_cedge hbdf'cd).trans
+        apply cglink_of_cface
+        apply ReflTransGen.single
+        exact faceinv_rightinv _
+      }
+    }
+    have ⟨cd, hcd⟩ := hy
+    have hChoc := (Classical.choose_spec hy).trans hcd.symm
+    apply patchG.disk_hom_injective at hChoc
+    rw[hChoc]
+    clear ih
+    rw[patchG.mem_disk_iff, not_or, not_not] at hbD
+    have ⟨br, hbr⟩ := hbD.left
+    rw[← hbr, ← hcd] at ht
+    rw[← hbr] at hh
+    rcases ht with (ht : _ = _) | (ht : _ = _)
+    · {
+      rw[G.nodeinv_eq_iff_eq_node, ← patchG.disk_node_morph] at ht
+      exfalso
+      apply hbD.right
+      rw[← hbr, patchG.rem_mem_border_iff, ← patchG.border_antisymm_rem]
+      exact ⟨_, ht.symm⟩
+    }
+    rw[← Gd.faceinv_rightinv cd, Eq.comm, patchG.disk_face_eq_face_rem_iff] at ht
+    change G.cclink _ _ at hh
+    rw[cclink_iff_cglink, G.cglink_equivalence.comm] at hh
+    have ⟨zr, zd, h0, h1, h2⟩ := patchG.exists_border_of_cglink_rem_disk' hh
+    apply Gd.cglink_equivalence.symm at h2
+    apply Gd.cglink_equivalence.trans h2
+    have hzdB : zd ∈ bGd := patchG.border_antisymm_disk.mp ⟨_, h0⟩
+    have hf'cdB := patchG.border_antisymm_disk.mp ⟨_, ht.symm⟩
+    apply Gd.cglink_equivalence.trans
+      (cglink_of_cedge (patchG.disk_cedge_of_mem_border hzdB hf'cdB))
+    apply Gd.cglink_of_cface
+    apply ReflTransGen.single
+    exact faceinv_rightinv _
+  }
+}
+
+theorem rem_gcomp' : Gr.gcomp =
+  @Fintype.nComp _ _ patchG.rem_glink_adjunctionOn_remGClosure.subtype_setoid_e (by{
+    classical
+    infer_instance
+  }) := by{
+  let inst : Fintype patchG.rem_glink_adjunctionOn_remGClosure.subtype_quotient := by{
+    unfold AdjunctionOn.subtype_quotient
+    classical
+    infer_instance
+  }
+  let e := patchG.rem_glink_adjunctionOn_remGClosure.subtype_quotient_equiv
+  unfold gcomp Fintype.nComp
+  simp only
+  change _ = Fintype.card patchG.rem_glink_adjunctionOn_remGClosure.subtype_quotient
+  have he := Fintype.ofEquiv_card e
+  apply Eq.trans ?_ he
+  let e' : Quotient Gr.gsetoid ≃ patchG.rem_glink_adjunctionOn_remGClosure.subtype_quotient' := by{
+    let f : Quotient Gr.gsetoid → patchG.rem_glink_adjunctionOn_remGClosure.subtype_quotient' :=
+      fun q => ⟦⟨q.out, patchG.rem_subset_remGClosure (by{simp})⟩⟧
+    apply Equiv.ofBijective f
+    constructor
+    · {
+      intro qx qy hqxy
+      unfold f at hqxy
+      apply Quotient.eq.mp at hqxy
+      unfold AdjunctionOn.subtype_setoid_e' at hqxy
+      simp only[InvImage] at hqxy
+      rw[← Quotient.out_eq qx, ← Quotient.out_eq qy]
+      apply Quotient.eq.mpr
+      change Gr.cglink qx.out qy.out
+      exact hqxy
+    }
+    · {
+      intro qy
+      use ⟦qy.out.val⟧
+      unfold f
+      nth_rw 5 [← Quotient.out_eq qy]
+      apply Quotient.eq.mpr
+      unfold AdjunctionOn.subtype_setoid_e'
+      simp only[InvImage]
+      have hqyp' := Quotient.mk_out (s := Gr.gsetoid) qy.out.val
+      exact hqyp'
+    }
+  }
+  have he' := Fintype.ofEquiv_card e'
+  apply he'.symm.trans
+  congr
+  apply Subsingleton.elim
+}
+theorem rem_gcomp : Gr.gcomp = Fintype.nCompSet G.gsetoid patchG.remGClosure := by{
+  rw[patchG.rem_gcomp']
+  unfold Fintype.nCompSet Fintype.nComp
+  simp only
+  congr 1
+  congr 1
+  apply Subsingleton.elim
+}
+theorem rem_fcomp : Gr.fcomp = Fintype.nCompSet G.fsetoid patchG.outer := by{
+  unfold Fintype.nCompSet fcomp Fintype.nComp
+  simp only
+  let e : Quotient Gr.fsetoid
+    ≃ Quotient ⟨_, LiftOn_equivalence_of_equivalence patchG.outer G.fsetoid.iseqv⟩ := by{
+    let f : Quotient Gr.fsetoid →
+      Quotient ⟨_, LiftOn_equivalence_of_equivalence patchG.outer G.fsetoid.iseqv⟩ := fun q =>
+        ⟦⟨hr q.out, patchG.rem_subset_outer (by{simp})⟩⟧
+    apply Equiv.ofBijective f; constructor
+    · {
+      intro qx qy h
+      unfold f at h
+      rw[Quotient.eq] at h
+      simp only[LiftOn] at h
+      change G.cface _ _ at h
+      rw[← patchG.rem_cface_iff] at h
+      rw[← Quotient.out_equiv_out]
+      exact h
+    }
+    · {
+      intro qy
+      have hqy := qy.out.prop
+      have ⟨qx, hqx0, hqx1⟩:=hqy
+      have ⟨qx', hqx'⟩:=hqx0
+      use ⟦qx'⟧
+      unfold f
+      rw[Quotient.mk_eq_iff_out]
+      change G.cface _ _
+      simp only
+      apply G.cface_equivalence.trans ?_ hqx1
+      rw[← hqx', ← patchG.rem_cface_iff]
+      exact Quotient.mk_out qx' (s:=Gr.fsetoid)
+    }
+  }
+  have he := Fintype.ofEquiv_card e
+  rw[← he]
+  congr
+  apply Subsingleton.elim
+}
+theorem rem_ecomp : Gr.ecomp = Fintype.nCompSet G.esetoid patchG.rem := by{
+  apply Fintype.nComp_adjunctionOn_partial_of_full (h:=hr) ?_ (by{simp})
+  apply adjunctionOn_of_strict
+  · apply patchG.rem_cedge_close
+  · exact ⟨fun _ _ => G.cedge_equivalence.symm⟩
+  · exact ⟨fun _ _ => Gr.cedge_equivalence.symm⟩
+  · exact patchG.rem_hom_injective
+  · exact fun _ => id
+  intro x y _
+  simp [fromFun, ← patchG.rem_edge_morph, patchG.rem_hom_injective.eq_iff]
+}
+theorem rem_ncomp : Gr.ncomp = Fintype.nCompSet G.nsetoid patchG.diskᶜ + if bGr = [] then 0 else 1
+:= by{
+  have hClo : Closure (fromFun Gr.node) {x | x ∈ bGr} := by{
+    intro x (hx : _ ∈ _)
+    exact fun _ => (patchG.rem_border_cnode_close hx).mp
+  }
+  have hCloR : Closure Gr.nsetoid {x | x ∈ bGr} := by{
+    rw[← reflTransGen_closure_iff] at hClo
+    exact hClo
+  }
+  have ih := Fintype.nCompSet_inex_of_closure (D:={x | x ∈ bGr}) hCloR
+  unfold ncomp
+  rw[ih]
+  rw[add_comm]
+  congr
+  · {
+    have hset : {x | x ∈ bGr}ᶜ = {x | hr x ∈ patchG.diskᶜ} := by{
+      ext x
+      rw[Set.mem_compl_iff]
+      simp only [Set.mem_compl_iff, patchG.mem_disk_iff, not_or, not_not]
+      simp only [Set.mem_setOf]
+      have h : ∃xr, hr xr = hr x := ⟨x, rfl⟩
+      rw[eq_true h, true_and, not_iff_not, ← patchG.mem_border_iff_disk, patchG.rem_mem_border_iff]
+    }
+    simp only [hset]
+    apply Fintype.nComp_adjunctionOn_partial
+    rw[← adjunctionOn_reflTransGen_left_iff, ← adjunctionOn_reflTransGen_right_iff]
+    change AdjunctionOn hr G.cnode Gr.cnode patchG.diskᶜ
+    apply adjunctionOn_of_strict
+    · {
+      rw[compl_closure_of_equivalence G.cnode_equivalence]
+      unfold Closure cnode funReflTransGen
+      simp only [reflTransGen_idem]
+      apply patchG.disk_cnode_close
+    }
+    · unfold cnode funReflTransGen
+      simp only [reflTransGen_idem]
+      exact ⟨fun _ _ => G.cnode_equivalence.symm⟩
+    · unfold cnode funReflTransGen
+      simp only [reflTransGen_idem]
+      exact ⟨fun _ _ => Gr.cnode_equivalence.symm⟩
+    · exact patchG.rem_hom_injective
+    · {
+      intro y hy
+      rw[Set.mem_compl_iff, patchG.mem_disk_iff, not_or, not_not] at hy
+      exact hy.left
+    }
+    intro x y hxr
+    rw[Set.mem_compl_iff, patchG.mem_disk_iff, not_or, not_not, patchG.rem_mem_border_iff] at hxr
+    rw[patchG.rem_cnode_iff hxr.right]
+  }
+  · {
+    rcases eq_or_ne bGr [] with hbn | hbn
+    · simp[hbn]
+    simp only [hbn, ↓ reduceIte]
+    unfold Fintype.nCompSet
+    simp only [Fintype.nComp_eq_one_iff_exists_all]
+    simp only [Set.mem_setOf_eq, Subtype.forall, Subtype.exists]
+    have ⟨a, l, ha⟩:=List.exists_cons_of_ne_nil hbn
+    refine ⟨a, (by{simp[ha]}), ?_⟩
+    simp only [LiftOn]
+    intro b hb
+    have ih' := (patchG.rem_border_cnode_close (xr:=a) (by{simp[ha]})).mpr hb
+    exact ih'
+  }
+}
+theorem disk_ecomp : Gd.ecomp = Fintype.nCompSet G.esetoid patchG.remᶜ + if bGd = [] then 0 else 1
+:= by{
+  have hClo : Closure (fromFun Gd.edge) {x | x ∈ bGd} := by{
+    intro x (hx : _ ∈ _)
+    exact fun _ => (patchG.disk_border_cedge_close hx).mp
+  }
+  have hCloR : Closure Gd.esetoid {x | x ∈ bGd} := by{
+    rw[← reflTransGen_closure_iff] at hClo
+    exact hClo
+  }
+  have ih := Fintype.nCompSet_inex_of_closure (D:={x | x ∈ bGd}) hCloR
+  unfold ecomp
+  rw[ih]
+  rw[add_comm]
+  congr
+  · {
+    have hset : {x | x ∈ bGd}ᶜ = {x | hd x ∈ patchG.remᶜ} := by{
+      ext x
+      rw[Set.mem_compl_iff]
+      simp only [Set.mem_compl_iff, patchG.mem_rem_iff, not_or, not_not]
+      simp only [Set.mem_setOf]
+      have h : ∃xd, hd xd = hd x := ⟨x, rfl⟩
+      rw[eq_true h, true_and, not_iff_not, ← patchG.mem_border_iff_disk, patchG.disk_mem_border_iff]
+    }
+    simp only [hset]
+    apply Fintype.nComp_adjunctionOn_partial
+    rw[← adjunctionOn_reflTransGen_left_iff, ← adjunctionOn_reflTransGen_right_iff]
+    change AdjunctionOn hd G.cedge Gd.cedge patchG.remᶜ
+    apply adjunctionOn_of_strict
+    · {
+      rw[compl_closure_of_equivalence G.cedge_equivalence]
+      unfold Closure cedge funReflTransGen
+      simp only [reflTransGen_idem]
+      apply patchG.rem_cedge_close
+    }
+    · unfold cedge funReflTransGen
+      simp only [reflTransGen_idem]
+      exact ⟨fun _ _ => G.cedge_equivalence.symm⟩
+    · unfold cedge funReflTransGen
+      simp only [reflTransGen_idem]
+      exact ⟨fun _ _ => Gd.cedge_equivalence.symm⟩
+    · exact patchG.disk_hom_injective
+    · {
+      intro y hy
+      rw[Set.mem_compl_iff, patchG.mem_rem_iff, not_or, not_not] at hy
+      exact hy.left
+    }
+    intro x y hxr
+    rw[Set.mem_compl_iff, patchG.mem_rem_iff, not_or, not_not, patchG.disk_mem_border_iff] at hxr
+    rw[patchG.disk_cedge_iff hxr.right]
+  }
+  · {
+    rcases eq_or_ne bGd [] with hbn | hbn
+    · simp[hbn]
+    simp only [hbn, ↓ reduceIte]
+    unfold Fintype.nCompSet
+    simp only [Fintype.nComp_eq_one_iff_exists_all]
+    simp only [Set.mem_setOf_eq, Subtype.forall, Subtype.exists]
+    have ⟨a, l, ha⟩:=List.exists_cons_of_ne_nil hbn
+    refine ⟨a, (by{simp[ha]}), ?_⟩
+    simp only [LiftOn]
+    intro b hb
+    have ih' := (patchG.disk_border_cedge_close (xd:=a) (by{simp[ha]})).mpr hb
+    exact ih'
+  }
+}
+theorem disk_ncomp : Gd.ncomp = Fintype.nCompSet G.nsetoid patchG.disk := by{
+  apply Fintype.nComp_adjunctionOn_partial_of_full (h:=hd) ?_ (by{simp})
+  apply adjunctionOn_of_strict
+  · apply patchG.disk_cnode_close
+  · exact ⟨fun _ _ => G.cnode_equivalence.symm⟩
+  · exact ⟨fun _ _ => Gd.cnode_equivalence.symm⟩
+  · exact patchG.disk_hom_injective
+  · exact fun _ => id
+  intro x y _
+  simp [fromFun, ← patchG.disk_node_morph, patchG.disk_hom_injective.eq_iff]
+}
+theorem disk_fcomp : Gd.fcomp = Fintype.nCompSet G.fsetoid patchG.outerᶜ + bGd.length := by{
+  have hClo := patchG.disk_outerC_face_closure
+  have hCloR : Closure Gd.fsetoid _ := reflTransGen_closure_iff.mpr hClo
+  have ih := Fintype.nCompSet_inex_of_closure (D:={x | hd x ∈ patchG.outerᶜ}) hCloR
+  unfold fcomp
+  rw[ih]
+  congr
+  · {
+    apply Fintype.nComp_adjunctionOn_partial
+    apply adjunctionOn_of_strict
+    · exact patchG.outerC_face_closure
+    · exact ⟨fun _ _ => G.cface_equivalence.symm⟩
+    · exact ⟨fun _ _ => Gd.cface_equivalence.symm⟩
+    · exact patchG.disk_hom_injective
+    · intro y hy; exact patchG.outerC_subset_disk hy
+    intro x y (hx : _ ∉ _)
+    unfold fromFun
+    have hx' : x ∉ bGd := by{
+      contrapose hx
+      apply patchG.border_subset_outer
+      exact patchG.disk_mem_border_iff.mpr hx
+    }
+    rw[← patchG.disk_face_morph _ hx', patchG.disk_hom_injective.eq_iff]
+  }
+  · {
+    have hset : {x | hd x ∈ patchG.outerᶜ}ᶜ = {x | hd x ∈ patchG.outer} := by{
+      ext x
+      simp
+    }
+    simp only [hset, ← patchG.mem_borderFband_iff, mem_fband_iff]
+    rw[← List.Subtype.fintype_card_eq_length_of_nodup patchG.disk_border_cycle.nodup]
+    unfold Fintype.nCompSet Fintype.nComp
+    simp only
+    let e : {x // x ∈ bGd} ≃
+      Quotient ⟨_, LiftOn_equivalence_of_equivalence {x | ∃y ∈ bGd, Gd.cface x y} Gd.fsetoid.iseqv⟩
+    := by{
+      let f : {x // x ∈ bGd} →
+        Quotient ⟨_, LiftOn_equivalence_of_equivalence
+        {x | ∃y ∈ bGd, Gd.cface x y} Gd.fsetoid.iseqv⟩
+      :=
+        fun x => ⟦⟨x.val, ⟨x.val, x.prop, ReflTransGen.refl⟩⟩⟧
+      apply Equiv.ofBijective f; constructor
+      · {
+        intro x y hxy
+        unfold f at hxy
+        rw[Quotient.eq] at hxy
+        simp only [LiftOn] at hxy
+        change Gd.cface _ _ at hxy
+        have hxy' := (patchG.disk_border_cface_unique x.prop hxy).mp y.prop
+        exact Subtype.ext hxy'.symm
+      }
+      · {
+        intro y
+        have ⟨x, hx, hxy⟩:=y.out.prop
+        use ⟨x, hx⟩
+        unfold f
+        simp only
+        rw[Quotient.mk_eq_iff_out]
+        change LiftOn _ _ _ _
+        simp only [LiftOn]
+        change Gd.cface _ _
+        exact Gd.cface_equivalence.symm hxy
+      }
+    }
+    have he := Fintype.ofEquiv_card e
+    rw[← he]
+    congr
+    apply Subsingleton.elim
+  }
+}
+
+theorem exists_border_of_cglink_rem_disk {x y : α} (hx : x ∈ patchG.rem) (hy : y ∈ patchG.disk)
+  (hxy : G.cglink x y) : ∃z ∈ patchG.border, G.cglink x z ∧ G.cglink z y := by{
+    rw[← G.cclink_iff_cglink] at hxy
+    induction hxy with
+    | refl => {
+      refine ⟨x, by{rw[← patchG.disk_inter_rem, Set.mem_inter_iff]; exact ⟨hy, hx⟩}, ?_⟩
+      exact ⟨ReflTransGen.refl, ReflTransGen.refl⟩
+    }
+    | @tail b c hh ht ih => {
+      rcases em (b ∈ patchG.disk) with hbD | hbD
+      · {
+        have ⟨z, hz0, hz1, hz2⟩:=ih hbD
+        refine ⟨z, hz0, hz1, ?_⟩
+        apply hz2.trans
+        rcases ht with ht | ht
+        · {
+          rw[← ht]
+          apply G.cglink_of_cnode
+          apply G.cnode_equivalence.symm
+          nth_rw 2 [← G.nodeinv_rightinv b]
+          apply funReflTransGen.single
+        }
+        · {
+          rw[← ht]
+          apply G.cglink_of_cface
+          apply funReflTransGen.single
+        }
+      }
+      rcases ht with (ht : _ = _) | (ht : _ = _)
+      · {
+        have ⟨cd, hcd⟩:=hy
+        rw[← hcd, nodeinv_eq_iff_eq_node, ← patchG.disk_node_morph] at ht
+        simp[ht] at hbD
+      }
+      · {
+        rw[patchG.mem_disk_iff, not_or, not_not] at hbD
+        have ⟨br, hbr⟩:=hbD.left
+        have ⟨cd, hcd⟩:=hy
+        rw[← hcd, ← hbr, ← Gd.faceinv_rightinv cd] at ht
+        symm at ht
+        rw[patchG.disk_face_eq_face_rem_iff] at ht
+        use hr (Gr.face br)
+        constructor
+        · {
+          have h0 := patchG.border_antisymm_rem.mp ⟨_, ht⟩
+          rw[patchG.rem_mem_border_iff]
+          exact h0
+        }
+        constructor
+        · {
+          change G.cclink _ _ at hh
+          rw[G.cclink_iff_cglink] at hh
+          apply hh.trans
+          rw[← hbr]
+          apply G.cglink_of_cface
+          apply patchG.cface_of_rem_cface
+          apply funReflTransGen.single
+        }
+        · {
+          rw[← ht, ← hcd]
+          apply G.cglink_of_cface
+          apply patchG.cface_of_disk_cface
+          apply ReflTransGen.single
+          exact Gd.faceinv_rightinv _
+        }
+      }
+    }
+  }
+
+theorem disk_gcomp : Gd.gcomp = Fintype.nCompSet G.gsetoid patchG.remGClosureᶜ
+  + if bGr = [] then 0 else 1 := by{
+  have hClo := patchG.disk_remGClosureC_glink_closure
+  have hCloR : Closure Gd.gsetoid _ := reflTransGen_closure_iff.mpr hClo
+  have ih := Fintype.nCompSet_inex_of_closure (D:={x | hd x ∈ patchG.remGClosureᶜ}) hCloR
+  unfold gcomp
+  rw[ih]
+  congr
+  · {
+    apply Fintype.nComp_adjunctionOn_partial
+    rw[← adjunctionOn_reflTransGen_left_iff, ← adjunctionOn_reflTransGen_right_iff]
+    apply adjunctionOn_of_strict
+    · rw[reflTransGen_closure_iff]; exact patchG.remGClosureC_glink_closure
+    · simp only [reflTransGen_idem]
+      exact ⟨fun _ _ => G.cglink_equivalence.symm⟩
+    · simp only [reflTransGen_idem]
+      exact ⟨fun _ _ => Gd.cglink_equivalence.symm⟩
+    · exact patchG.disk_hom_injective
+    · intro y hy; exact patchG.remGClosureC_subset_disk hy
+    intro x y (hx : _ ∉ _)
+    apply patchG.disk_remGClosureC_cglink_iff hx
+  }
+  · {
+    have hset : {x | hd x ∈ patchG.remGClosureᶜ}ᶜ = {x | hd x ∈ patchG.remGClosure} := by{
+      ext x
+      simp
+    }
+    simp only [hset, remGClosure, Set.mem_setOf]
+    rcases eq_or_ne bGr [] with bGrn | bGrn
+    · {
+      simp only [bGrn, ↓reduceIte]
+      unfold Fintype.nCompSet
+      simp only
+      rw[Fintype.nComp_eq_zero_iff]
+      simp only [Set.mem_setOf_eq]
+      rw[isEmpty_iff]
+      intro ⟨a, b, hb⟩
+      have ⟨c, hc, _⟩ := patchG.exists_border_of_cglink_rem_disk (by{simp}) (by{simp}) hb
+      rw[patchG.mem_border_iff_rem] at hc
+      unfold remBorder at hc
+      simp[bGrn] at hc
+    }
+    simp only [bGrn, ↓reduceIte]
+    unfold Fintype.nCompSet
+    simp only
+    rw[Fintype.nComp_eq_one_iff_nonempty_all]
+    simp only [Set.mem_setOf_eq, nonempty_subtype, LiftOn, Subtype.forall, forall_exists_index]
+    constructor
+    · {
+      have ⟨a, l, hal⟩:=List.exists_cons_of_ne_nil bGrn
+      have ha : a ∈ bGr := by{simp[hal]}
+      have ⟨b, hbe, hbn⟩ := patchG.exists_galois_en_of_mem_bGr ha
+      use (edge b), a
+      rw[hbe]
+      apply ReflTransGen.refl
+    }
+    intro xd yr hyrxd zd wr hwrzd
+    change Gd.cglink xd zd
+    have ⟨ar, ad, ha0, ha1, ha2⟩ := patchG.exists_border_of_cglink_rem_disk' hyrxd
+    have ⟨br, bd, hb0, hb1, hb2⟩ := patchG.exists_border_of_cglink_rem_disk' hwrzd
+    apply Gd.cglink_equivalence.trans (cglink_equivalence.symm ha2)
+    apply cglink_equivalence.trans ?_ hb2
+    apply cglink_of_cedge
+    apply patchG.disk_cedge_of_mem_border
+    · exact patchG.border_antisymm_disk.mp ⟨_, ha0⟩
+    · exact patchG.border_antisymm_disk.mp ⟨_, hb0⟩
+  }
+}
+
+theorem genus_eq_add : G.genus = Gd.genus + Gr.genus := by{
+  unfold genus
+  apply Nat.mul_left_cancel (n:=2) (by{simp})
+  rw[mul_add, Nat.mul_div_cancel' G.always_even_genus]
+  rw[Nat.mul_div_cancel' Gd.always_even_genus]
+  rw[Nat.mul_div_cancel' Gr.always_even_genus]
+  rw[Nat.sub_eq_iff_eq_add G.always_nneg_genus]
+  rw[add_right_comm, ← Nat.add_sub_assoc Gr.always_nneg_genus]
+  apply Nat.eq_sub_of_add_eq
+  rw[add_assoc, add_comm (_ - _), ← Nat.add_sub_assoc Gd.always_nneg_genus]
+  apply Nat.eq_sub_of_add_eq
+  unfold euler_lhs euler_rhs
+  rw[patchG.disk_fcomp]
+  rw[Nat.add_comm _ bGd.length, Nat.add_left_comm _ bGd.length]
+  rw[Nat.add_left_comm _ bGd.length, ← add_assoc]
+  rw[Nat.add_right_comm _ _ bGd.length]
+  rw[Nat.add_assoc _ (Fintype.card α)]
+  have h0 : bGd.length = patchG.diskBorder.length := by{simp}
+  rw[h0, ← patchG.card_inex]
+  simp only [Nat.add_assoc, Nat.add_left_comm _ (Fintype.card αd), Nat.add_comm _ (Fintype.card αd)]
+  simp only [Nat.add_left_comm _ (Fintype.card αr)]
+  congr 2
+  rw[patchG.rem_ecomp, patchG.disk_ecomp]
+  simp only [Nat.add_left_comm _ (Fintype.nCompSet G.esetoid patchG.rem)]
+  simp only [Nat.add_assoc, Nat.add_left_comm _ (Fintype.nCompSet G.esetoid patchG.remᶜ)]
+  rw[← Nat.add_assoc, Nat.add_comm (Fintype.nCompSet _ _)]
+  rw[← Fintype.nCompSet_inex_of_closure (by{
+    change Closure G.cedge _
+    unfold Closure
+    have ih := patchG.rem_cedge_close
+    unfold cedge funReflTransGen
+    simp only [reflTransGen_idem]
+    exact ih
+  })]
+  congr 1
+  rw[patchG.rem_ncomp, patchG.disk_ncomp]
+  simp only [Nat.add_assoc, Nat.add_left_comm _ (Fintype.nCompSet G.nsetoid patchG.disk)]
+  simp only [Nat.add_left_comm _ (Fintype.nCompSet G.nsetoid patchG.diskᶜ)]
+  rw[← Nat.add_assoc, Nat.add_comm (Fintype.nCompSet _ _)]
+  rw[← Fintype.nCompSet_inex_of_closure (by{
+    change Closure G.cnode _
+    unfold Closure
+    have ih := patchG.disk_cnode_close
+    unfold cnode funReflTransGen
+    simp only [reflTransGen_idem]
+    exact ih
+  })]
+  congr 1
+  rw[patchG.rem_fcomp]
+  simp only [Nat.add_left_comm _ (Fintype.nCompSet G.fsetoid patchG.outer)]
+  simp only [Nat.add_comm _ (Fintype.nCompSet G.fsetoid patchG.outerᶜ),
+    Nat.add_left_comm _ (Fintype.nCompSet G.fsetoid patchG.outerᶜ)]
+  rw[← Nat.add_assoc, Nat.add_comm (Fintype.nCompSet _ _)]
+  rw[← Fintype.nCompSet_inex_of_closure (by{
+      change Closure G.cface _
+      unfold Closure
+      have ih := patchG.outer_cface_close
+      unfold cface funReflTransGen
+      simp only [reflTransGen_idem]
+      exact ih
+    })]
+  congr 1
+  rw[patchG.rem_gcomp, patchG.disk_gcomp]
+  rw[Nat.add_mul, ← Nat.add_assoc (Fintype.nCompSet _ _ * _), ← Nat.add_mul]
+  rw[← Fintype.nCompSet_inex_of_closure (by{
+      change Closure G.cglink _
+      unfold Closure
+      have ih := patchG.remGClosure_glink_close
+      unfold cglink
+      simp only [reflTransGen_idem]
+      exact ih
+    })]
+  congr 1
+  rw[Nat.mul_two]
+  congr
+  simp only [eq_iff_iff]
+  simp only [List.eq_nil_iff_length_eq_zero, patchG.disk_rem_border_length_eq']
+}
+theorem planar_patch_iff : G.planar ↔ Gd.planar ∧ Gr.planar := by{
+  unfold planar
+  rw[patchG.genus_eq_add, Nat.add_eq_zero_iff]
 }
 
 end Patch

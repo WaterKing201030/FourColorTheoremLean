@@ -4,3 +4,4 @@ import FourColorTheorem.Utils.Finite.Chain
 import FourColorTheorem.Utils.Finite.Period
 --import FourColorTheorem.Utils.Finite.Bijinv
 import FourColorTheorem.Utils.Finite.Skip
+import FourColorTheorem.Utils.Finite.Partial
