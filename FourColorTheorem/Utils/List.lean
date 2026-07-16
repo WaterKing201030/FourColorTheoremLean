@@ -652,3 +652,17 @@ theorem List.eq_prev_iff_next_eq [DecidableEq α] {l : List α} {x y : α}
   x = l.prev y hyl ↔ l.next x hxl = y := by{
     rw[Eq.comm (a:=x), prev_eq_iff_eq_next hl hyl hxl, Eq.comm]
   }
+
+
+def List.pairmap {β : Type _} (f : α → α → β) (l : List α)
+  : List β := List.zipWith f l l.tail
+@[simp] theorem List.pairmap_nil {β : Type _} {f : α → α → β} :
+  List.pairmap f [] = [] := rfl
+@[simp] theorem List.pairmap_singleton {β : Type _} {f : α → α → β} {a : α} :
+  List.pairmap f [a] = [] := rfl
+theorem List.pairmap_cons_cons {β : Type _} {f : α → α → β} {a b : α} {l : List α} :
+  List.pairmap f (a :: b :: l) = f a b :: List.pairmap f (b :: l) := by{
+  unfold pairmap
+  rw[List.tail, List.tail]
+  rw[List.zipWith_cons_cons]
+}

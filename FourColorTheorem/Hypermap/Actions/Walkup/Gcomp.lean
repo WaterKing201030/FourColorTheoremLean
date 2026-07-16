@@ -703,7 +703,6 @@ theorem walkupe_gcomp' {x : α} : (H.WalkupE x).gcomp +
   (if H.glink x x then (if H.isbarb x then 2 else 1)
   else (if H.skip_edge'_issplit x then 0 else 1))
   = H.gcomp + 1
-  -- 这个后面补充if then else你也帮我看看是不是对的
   := by{
     rw[walkupe_gcomp_eq_skip_edge'_remain_add_complement]
     rw[←walkupe_skip_edge'_complement_ncomp_succ (x:=x)]

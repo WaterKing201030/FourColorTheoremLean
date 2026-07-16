@@ -191,8 +191,4 @@ termination_by Fintype.card α
 theorem planar_iff_jordan : H.planar ↔ H.jordan :=
   ⟨jordan_of_planar, planar_of_jordan⟩
 
-theorem mirror_jordan : H.mirror.jordan ↔ H.jordan := by{
-  simp only [←planar_iff_jordan, mirror_planar]
-}
-
 end Hypermap

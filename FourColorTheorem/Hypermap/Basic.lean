@@ -741,6 +741,29 @@ theorem moebius_path_cross_nlink {p : List α} (hp : H.moebius_path p)
 def bridgeless (H : Hypermap α) := ∀x, ¬H.cface x (H.edge x)
 def loopless (H : Hypermap α) := ∀x, ¬H.cnode x (H.edge x)
 
+theorem node_period_ge_two_of_bridgeless (Hb : H.bridgeless)
+  : ∀x, minimalPeriod H.node x ≥ 2 := by{
+  intro x
+  by_contra
+  rw[not_le] at this
+  match hmpnx : minimalPeriod node x with
+  | 0 => {
+    have hmpnx' := H.node_injective.minimalPeriod_pos (x:=x)
+    simp[hmpnx] at hmpnx'
+  }
+  | 1 => {
+    simp only [minimalPeriod_eq_one_iff_isFixedPt] at hmpnx
+    change node x = x at hmpnx
+    specialize Hb (node x)
+    apply Hb
+    apply cface_equivalence.symm
+    apply ReflTransGen.single
+    change _ = _
+    rw[fen_cancel, hmpnx]
+  }
+  | _ + 2 => simp[hmpnx] at this; omega
+}
+
 def arity (H : Hypermap α) (x : α) := minimalPeriod' H.face x
 def pentagonal (H : Hypermap α) := ∀x, 4 < H.arity x
 theorem cface_arity {x y : α} (hxy : H.cface x y) : H.arity x = H.arity y := by{

@@ -19,10 +19,6 @@ import FourColorTheorem.Utils.Finite.BijInv
 open Relation
 open Function
 
-
-
--- skip
-
 section Fintype
 variable {α : Type _}
 variable [DecidableEq α]

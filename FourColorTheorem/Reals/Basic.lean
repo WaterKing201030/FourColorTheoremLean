@@ -405,6 +405,20 @@ def Map.colorable_with (m : Map) (n : ℕ) : Prop :=
 
 section plain_lemmas
 
+theorem IsPlainMap.mk' {m : Map} (map_symm : ∀ {z1 z2 : Point}, m z1 z2 → m z2 z1)
+(map_trans : ∀ {z1 z2 z3 : Point}, m z1 z2 → m z2 z3 → m z1 z3) :
+  IsPlainMap m := by{
+    apply IsPlainMap.mk
+    · {
+      intro z1 z2 h12
+      exact map_symm h12
+    }
+    · {
+      intro z1 z2 h12 z3 h23
+      exact map_trans h12 h23
+    }
+  }
+
 variable {m : Map}
 variable [IsPlainMap m]
 theorem map_symm {p1 p2 : Point} : p2 ∈ m p1 → p1 ∈ m p2 := IsPlainMap.map_symm
