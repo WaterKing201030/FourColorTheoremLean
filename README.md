@@ -1,13 +1,7 @@
-# FourColorTheorem
+# FourColorTheoremLean
 
-## GitHub configuration
+一个将Coq四色定理证明转写为Lean4的个人爱好项目。
 
-To set up your new GitHub repository, follow these steps:
+部分定理借助了Deepseek的帮助。大部分证明是理解了证明过程之后手写的。
 
-* Under your repository name, click **Settings**.
-* In the **Actions** section of the sidebar, click "General".
-* Check the box **Allow GitHub Actions to create and approve pull requests**.
-* Click the **Pages** section of the settings sidebar.
-* In the **Source** dropdown menu, select "GitHub Actions".
-
-After following the steps above, you can remove this section from the README file.
+由于本人对Lean4的策略和定理并不熟练，希望得到指导，以提升书写证明的效率和可读性。
