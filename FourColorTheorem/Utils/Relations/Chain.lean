@@ -13,6 +13,8 @@ open Function
 
 variable {α : Type _}
 
+theorem Relation.ReflTransGen.of_eq (r : α → α → Prop) {a b : α}
+  (hab : a = b) : ReflTransGen r a b := by{simp[hab]; rfl}
 theorem Relation.ReflTransGen_Symm_of_Symm {r : α → α → Prop} (hr : Std.Symm r) :
   Std.Symm (ReflTransGen r) := by{
   apply Std.Symm.mk

@@ -69,5 +69,12 @@ theorem Equivalence.comm {r : α → α → Prop} (e : Equivalence r) {a b : α}
     all_goals
     apply e.symm
   }
+theorem Std.Symm.comm {r : α → α → Prop} (e : Std.Symm r) {a b : α}
+  : r a b = r b a := by{
+    ext
+    constructor
+    all_goals
+    apply e.symm
+  }
 
 theorem Setoid.equivalence {r : Setoid α} : Equivalence r := r.iseqv

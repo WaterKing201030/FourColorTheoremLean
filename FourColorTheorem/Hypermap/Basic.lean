@@ -76,6 +76,21 @@ theorem cnode_pred_eq_of_cnode {x y : α} (hxy : H.cnode x y)
   : H.cnode x = H.cnode y := cnode_equivalence.pred_eq_iff.mpr hxy
 theorem cface_pred_eq_of_cface {x y : α} (hxy : H.cface x y)
   : H.cface x = H.cface y := cface_equivalence.pred_eq_iff.mpr hxy
+theorem cedge_edge {x : α} : H.cedge (edge x) = H.cedge x := by{
+  apply H.cedge_pred_eq_of_cedge
+  apply cedge_equivalence.symm
+  apply funReflTransGen.single
+}
+theorem cnode_node {x : α} : H.cnode (node x) = H.cnode x := by{
+  apply H.cnode_pred_eq_of_cnode
+  apply cnode_equivalence.symm
+  apply funReflTransGen.single
+}
+theorem cface_face {x : α} : H.cface (face x) = H.cface x := by{
+  apply H.cface_pred_eq_of_cface
+  apply cface_equivalence.symm
+  apply funReflTransGen.single
+}
 
 def glink (H : Hypermap α) : α → α → Prop := fromFun H.edge ∪ (fromFun H.node ∪ fromFun H.face)
 theorem glink_iff {x y : α} : H.glink x y ↔ H.edge x = y ∨ H.node x = y ∨ H.face x = y := by rfl
@@ -211,6 +226,15 @@ theorem faceinv_eq:H.faceinv = H.edge ∘ H.node:=by{
   unfold faceinv
   rw[Fintype.rightInverse_bijInv H.face_bijective x]
   simp[fen_cancel]
+}
+theorem edgeinv_apply {x : α}:H.edgeinv x = node (face x):=by{
+  simp[edgeinv_eq]
+}
+theorem nodeinv_apply {x : α}:H.nodeinv x = face (edge x):=by{
+  simp[nodeinv_eq]
+}
+theorem faceinv_apply {x : α}:H.faceinv x = edge (node x):=by{
+  simp[faceinv_eq]
 }
 
 theorem edgeinv_eq_iff_eq_edge {x y : α}
@@ -740,8 +764,7 @@ theorem moebius_path_cross_nlink {p : List α} (hp : H.moebius_path p)
 
 def bridgeless (H : Hypermap α) := ∀x, ¬H.cface x (H.edge x)
 def loopless (H : Hypermap α) := ∀x, ¬H.cnode x (H.edge x)
-
-theorem node_period_ge_two_of_bridgeless (Hb : H.bridgeless)
+theorem bridgeless.node_period_ge_two (Hb : H.bridgeless)
   : ∀x, minimalPeriod H.node x ≥ 2 := by{
   intro x
   by_contra
@@ -762,6 +785,20 @@ theorem node_period_ge_two_of_bridgeless (Hb : H.bridgeless)
     rw[fen_cancel, hmpnx]
   }
   | _ + 2 => simp[hmpnx] at this; omega
+}
+theorem bridgeless.edge_ne (Hb : H.bridgeless)
+  : ∀x, H.edge x ≠ x := by{
+    intro x
+    specialize Hb x
+    contrapose Hb
+    rw[Hb]
+    apply ReflTransGen.refl
+  }
+theorem bridgeless.not_cface_of_cface_edge (HB : H.bridgeless) (x y : α)
+  : H.cface (edge x) y → ¬H.cface x y := by{
+  intro hexy hxy
+  apply HB x
+  exact hxy.trans (cface_equivalence.symm hexy)
 }
 
 def arity (H : Hypermap α) (x : α) := minimalPeriod' H.face x
@@ -1030,6 +1067,15 @@ theorem cubicSubset_subset_precubicSubset : H.cubicSubset ⊆ H.precubicSubset :
   simp only [Set.mem_setOf] at h'
   rw[h']
 }
+theorem cubic.precubic (Hc : H.cubic) : H.precubic := by{
+  unfold cubic at Hc
+  change Set.univ ∈ _
+  unfold precubicSubset
+  unfold cubicSubset at Hc
+  simp only [Set.mem_setOf, Set.univ_subset_iff, Set.eq_univ_iff_forall] at *
+  intro x
+  simp[Hc]
+}
 
 structure PlanarBridgeless : Prop where
   planar : H.planar
@@ -1231,6 +1277,13 @@ theorem plain.edgeinv_eq_edge (hp : H.plain) : H.edgeinv = H.edge := by{
   ext x
   rw[← edge_inj, edgeinv_rightinv, hp.edge_edge]
 }
+theorem plain.edge_eq_eq_eq_edge (hp : H.plain) {a b : α} : H.edge a = b ↔ a = H.edge b := by{
+  nth_rw 1 [← hp.edgeinv_eq_edge, edgeinv_eq_iff_eq_edge]
+}
+theorem plain.edge_ne (hp : H.plain) (p : α) : H.edge p ≠ p := by{
+  rw[plain_iff_edge_edge] at hp
+  exact (hp p).right
+}
 end plain
 
 section cubic
@@ -1253,6 +1306,12 @@ theorem not_invol_of_cubic (hc : H.cubic) {x : α} : H.node (H.node x) ≠ x := 
   have h' := (hc x).left
   rw[h] at h'
   exact (hc x).right h'
+}
+theorem cubic_def : H.cubic ↔ ∀x, minimalPeriod H.node x = 3 := by{
+  simp[cubic, cubicSubset, Set.eq_univ_iff_forall]
+}
+theorem precubic_def : H.precubic ↔ ∀x, minimalPeriod H.node x ≤ 3 := by{
+  simp[precubic, precubicSubset, Set.eq_univ_iff_forall]
 }
 end cubic
 end Hypermap

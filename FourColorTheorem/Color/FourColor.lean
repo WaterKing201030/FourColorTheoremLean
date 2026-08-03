@@ -67,6 +67,13 @@ theorem bit1_eq_select : bit1 = select false false true true
   | true, false | true, true => rfl
 }
 
+theorem ofBits_injective {b : Bool} : Injective (ofBits b) := by{
+  intro b'
+  match b, b' with
+  | false, false | false, true
+  | true, false | true, true => simp[ofBits]
+}
+
 def add : FourColor → FourColor → FourColor :=
   select id
     (select color1 color0 color3 color2)

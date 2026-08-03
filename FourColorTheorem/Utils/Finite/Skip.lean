@@ -250,6 +250,52 @@ theorem Function.skip_val {f : α → α} {x : α} (hf : Injective f)
     unfold skip
     rfl
   }
+theorem Function.skip_iterate_of_not_funReflTransGen {f : α → α} {x : α} (hf : Injective f)
+  {u : {a // a ≠ x}} (hux : ¬funReflTransGen f u x) (n : ℕ)
+  : (skip hf x)^[n] u = f^[n] u := by{
+    induction n generalizing u with
+    | zero => simp
+    | succ n' ih => {
+      rw[iterate_succ_apply, iterate_succ_apply, skip_eq_of_apply_ne hf (by{
+        contrapose hux
+        nth_rw 2 [← hux]
+        apply funReflTransGen.single
+      })]
+      apply ih
+      simp only
+      contrapose hux
+      rw[funReflTransGen_iff_iterate] at *
+      have ⟨n, hn⟩:=hux
+      use n + 1
+      rw[iterate_succ_apply, hn]
+    }
+  }
+theorem Function.skip_iterate_of_lt_not_eq {f : α → α} {x : α} (hf : Injective f)
+  {u : {a // a ≠ x}} {n : ℕ} (hux : ∀ m < n, f^[m] u ≠ x) {m : ℕ} (hm : m < n)
+  : (skip hf x)^[m] u = f^[m] u := by{
+    induction n generalizing u m with
+    | zero => simp at hm
+    | succ n' ih => {
+      have hux' : ∀m < n', f^[m] (f u) ≠ x:=by{
+        intro m hmn'
+        specialize hux (m + 1) (by{simp[hmn']})
+        rw[iterate_succ_apply] at hux
+        exact hux
+      }
+      match m with
+      | 0 => simp
+      | m' + 1 => {
+        simp only [Order.lt_add_one_iff, Order.add_one_le_iff] at hm
+        have h0 : f u ≠ x := by{
+          specialize hux 1 (by{simp[Nat.zero_lt_of_lt hm]})
+          exact hux
+        }
+        specialize @ih ⟨f u, h0⟩ hux' m' hm
+        rw[iterate_succ_apply, skip_eq_of_apply_ne hf h0, ih, iterate_succ_apply]
+      }
+    }
+  }
+
 variable [Fintype α]
 theorem Finite.skip_bijective {α : Type _} [Finite α] [DecidableEq α] {f : α → α}
   (hf : Injective f) (x : α) : Bijective (skip hf x) :=
@@ -483,4 +529,205 @@ theorem Fintype.skip_bijInv_comm {f : α → α} (hf : Bijective f) {x : α}
     }
     | inr hux => simp[hux]
   }
+
+theorem Fintype.skip_minimalPeriod {α : Sort _} [DecidableEq α] [Fintype α] {f : α → α}
+(hf : Injective f) {x : α} {a : {y // y ≠ x}}
+  : minimalPeriod (skip hf x) a + (if funReflTransGen f x a then 1 else 0) = minimalPeriod f a
+  := by{
+  set y := a.val
+  have hy : y ≠ x := a.prop
+  let p := minimalPeriod f y
+  let q := minimalPeriod (skip hf x) a
+  -- f is bijective because it is injective on a finite type
+  have hf_bi : Bijective f := by
+    apply Finite.injective_iff_bijective.mp hf
+  -- Symmetry of reachability for bijective functions
+  have h_symm {x y : α}: funReflTransGen f x y ↔ funReflTransGen f y x := by
+    rw[(funReflTransGen_Symm_of_injective hf).comm]
+  cases em' (funReflTransGen f x y) with
+  | inl H_not => {
+    -- Case: x does not reach y. By symmetry, y does not reach x.
+    have H_not_symm : ¬ funReflTransGen f y x := by
+      rwa [← h_symm]
+    -- For all n, the iterates under skip equal those under f.
+    have h_iter_eq : ∀ n, (skip hf x)^[n] a = f^[n] y := by
+      intro n
+      exact skip_iterate_of_not_funReflTransGen hf H_not_symm n
+    -- Hence minimal periods coincide.
+    have h_q_eq_p : q = p := by
+      unfold p q
+      rw[minimalPeriod_eq_minimalPeriod_iff]
+      intro n
+      change _ = _ ↔ _ = _
+      rw[Subtype.ext_iff, h_iter_eq]
+    rw [if_neg H_not, add_zero]
+    exact h_q_eq_p
+  }
+  | inr H => {
+    -- Case: x reaches y. Then y reaches x.
+    have H_symm : funReflTransGen f y x := h_symm.mp H
+    rw [funReflTransGen_iff_iterate] at H_symm
+    obtain ⟨n0, hn0⟩ := H_symm
+    have hn0_pos : n0 > 0 := by
+      rw[gt_iff_lt, ← Nat.ne_zero_iff_zero_lt]
+      rintro rfl
+      rw [← hn0] at hy
+      contradiction
+    -- Let t be the least positive integer such that f^t(y) = x.
+    let t := Nat.find (p:=fun m => f^[m] y = x) (Exists.intro n0 hn0)
+    have ht : f^[t] y = x := Nat.find_spec (p:=fun m => f^[m] y = x) (Exists.intro n0 hn0)
+    have ht_min : ∀ m < t, f^[m] y ≠ x :=
+      fun _ => Nat.find_min (p:=fun m => f^[m] y = x) (Exists.intro n0 hn0)
+    have ht_pos : t > 0 := by
+      rw[gt_iff_lt, ← Nat.ne_zero_iff_zero_lt]
+      rintro h'
+      rw[h'] at ht
+      rw [← ht] at hy
+      contradiction
+    -- Also t < p, because x occurs in the cycle of y.
+    have hfp : f^[p] y = y := isPeriodicPt_minimalPeriod f y
+    have ht_lt_p : t < p := by
+      apply lt_of_not_ge
+      intro hge
+      have ⟨r, hr⟩ := Nat.exists_eq_add_of_le hge
+      rw [hr, add_comm, iterate_add_apply, hfp] at ht
+      cases r with
+      | zero => rw [iterate_zero_apply] at ht; exact hy ht
+      | succ r' =>
+        have hr_lt_t : r' + 1 < t := by
+          rw[hr]
+          apply Nat.lt_add_of_pos_left
+          apply hf.minimalPeriod_pos
+        specialize ht_min (r' + 1) hr_lt_t
+        rw [← ht] at ht_min
+        contradiction
+    have h_f_pow_ne_x : ∀ m, t < m → m ≤ p → f^[m] y ≠ x := by
+      intro m hm1 hm2 h_eq
+      cases eq_or_lt_of_le hm2 with
+      | inl h_eq_p =>
+        -- m = p
+        rw [h_eq_p, hfp] at h_eq      -- 由 f^p y = y，得到 y = x
+        exact hy h_eq            -- 矛盾于 y ≠ x
+      | inr h_lt_p =>
+        -- t < m < p
+        -- 利用最小周期性质：f^m y = f^t y（因为两者都等于 x）
+        rw[← ht] at h_eq
+        rw[← iterate_mod_minimalPeriod_eq, ← iterate_mod_minimalPeriod_eq (n:=t)] at h_eq
+        have h_mod := (iterate_eq_iterate_iff_of_lt_minimalPeriod
+          (Nat.mod_lt _ hf.minimalPeriod_pos) (Nat.mod_lt _ hf.minimalPeriod_pos)).mp h_eq
+        -- 由于 0 < t < m < p，有 m % p = m，t % p = t
+        have h_m_mod : m % p = m := Nat.mod_eq_of_lt h_lt_p
+        have h_t_mod : t % p = t := Nat.mod_eq_of_lt ht_lt_p
+        rw [h_m_mod, h_t_mod] at h_mod    -- 得到 m = t
+        exact (lt_irrefl m) (h_mod ▸ hm1) -- m > t 与 m = t 矛盾
+    -- We prove that for all n < p, skip^n(a) = f^{n + δ(n)}(y),
+    -- where δ(n) = 0 if n < t, and δ(n) = 1 if n ≥ t.
+    have h_skip_formula : ∀ n, n < p →
+      (if n < t then (skip hf x)^[n] a = f^[n] y
+       else (skip hf x)^[n] a = f^[n+1] y) := by
+      intro n hn
+      induction n with
+      | zero =>
+        cases lt_or_ge 0 t with
+        | inl h_lt => rw [if_pos h_lt]; rfl
+        | inr h_ge => exfalso; exact (not_lt_of_ge h_ge) (Nat.zero_lt_of_lt ht_pos)
+      | succ n' ih =>
+        have hn' : n' < p := by omega
+        specialize ih hn'
+        cases lt_or_ge n' t with
+        | inl h_lt_t' =>
+          rw [if_pos h_lt_t'] at ih
+          cases lt_or_ge (n'+1) t with
+          | inl h_lt_t_succ =>
+            rw [if_pos h_lt_t_succ]
+            rw [iterate_succ_apply', skip_val, ih, skip', if_neg, iterate_succ_apply']
+            specialize ht_min _ h_lt_t_succ
+            rwa[← iterate_succ_apply' f]
+          | inr h_ge_t_succ =>
+            have h_eq_t : n'+1 = t := by omega
+            rw [if_neg (not_lt_of_ge h_ge_t_succ)]
+            have ih' := Subtype.ext (a2:=⟨_, ih ▸ ((skip hf x)^[n'] a).prop⟩) ih
+            rw [iterate_succ_apply', ih']
+            simp only [iterate_succ_apply', skip_val, skip']
+            rw[if_pos]
+            rw[← ht, ← h_eq_t, iterate_succ_apply']
+        | inr h_ge_t' =>
+          rw [if_neg (not_lt_of_ge h_ge_t')] at ih
+          cases lt_or_ge (n'+1) t with
+          | inl h_lt_t_succ => exfalso; omega
+          | inr h_ge_t_succ =>
+            rw [if_neg (not_lt_of_ge h_ge_t_succ)]
+            have ih' := Subtype.ext (a2:=⟨_, ih ▸ ((skip hf x)^[n'] a).prop⟩) ih
+            rw [iterate_succ_apply', ih', skip_val, skip']
+            simp only
+            rw [← iterate_succ_apply f, iterate_succ_apply', iterate_succ_apply',
+            iterate_succ_apply', if_neg]
+            -- 需要 f^[n'+2] y ≠ x
+            have := h_f_pow_ne_x (n'+2) (by omega) (by omega)
+            simpa[iterate_succ_apply']
+    -- Now show skip^{p-1}(a) = a.
+    have h_skip_p_minus_1 : (skip hf x)^[p-1] a = a := by{
+      have h_p_gt_0 : p > 0 := by
+        apply hf.minimalPeriod_pos
+      have h_p_minus_1_lt_p : p-1 < p := by omega
+      have h_ge_t : p-1 ≥ t := by
+        rwa[ge_iff_le, Nat.le_sub_one_iff_lt h_p_gt_0]
+      specialize h_skip_formula _ h_p_minus_1_lt_p
+      rw[ite_cond_eq_false _ _ (by{simp[h_ge_t]})] at h_skip_formula
+      rw [Subtype.ext_iff, h_skip_formula, Nat.sub_add_cancel (by omega), hfp]
+    }
+    -- q divides p-1 because skip^{p-1}(a)=a and skip is injective (hence periodic).
+    have h_q_dvd : q ∣ p-1 := by
+      apply IsPeriodicPt.minimalPeriod_dvd h_skip_p_minus_1
+    -- We also know q ≥ p-1? Actually we'll prove q = p-1 by contradiction.
+    -- If q < p-1, derive contradiction.
+    have h_q_ge : q ≥ p-1 := by
+      apply le_of_not_gt
+      intro h_gt
+      have h_q_lt : q < p-1 := by omega
+      have h_q_lt_p : q < p := by omega
+      have h_case := h_skip_formula q h_q_lt_p
+      -- a 是 skip 的周期点（因为 skip 是双射），所以 q > 0
+      have h_skip_bi := Finite.skip_bijective hf x
+      have h_q_pos : 0 < q := (skip_injective hf _).minimalPeriod_pos
+      cases lt_or_ge q t with
+      | inl h_lt_t =>
+        -- q < t ⇒ skip^q(a) = f^q(y) = a.val = y，即 f^q(y)=y
+        rw [if_pos h_lt_t] at h_case
+        have h_eq : f^[q] y = y := by
+          rw[iterate_minimalPeriod] at h_case
+          exact h_case.symm
+        -- 与 p 的最小性矛盾（0<q<p）
+        have h' := IsPeriodicPt.minimalPeriod_le (by omega) h_eq
+        exact not_lt_of_ge h' h_q_lt_p
+      | inr h_ge_t =>
+        -- q ≥ t ⇒ skip^q(a) = f^{q+1}(y) = a.val = y，即 f^{q+1}(y)=y
+        rw [if_neg (not_lt_of_ge h_ge_t)] at h_case
+        rw[iterate_minimalPeriod] at h_case
+        have h_eq : f^[q+1] y = y := h_case.symm
+        have h_q1_pos : q+1 > 0 := by omega
+        have h_q1_lt_p : q+1 < p := by omega
+        -- 最小性 ⇒ p ≤ q+1，但 q+1 < p，矛盾
+        have h' := IsPeriodicPt.minimalPeriod_le (by omega) h_eq
+        exact not_lt_of_ge h' (Nat.add_lt_of_lt_sub h_q_lt)
+    -- Therefore q = p-1.
+    have h_q_eq_p_minus_1 : q = p-1 := by
+      apply le_antisymm
+      · exact Nat.le_of_dvd (by omega) h_q_dvd
+      · exact h_q_ge
+    -- Finish: q + 1 = p.
+    unfold q p at h_q_eq_p_minus_1
+    rw [if_pos H, h_q_eq_p_minus_1, Nat.sub_add_cancel]
+    exact hf.minimalPeriod_pos
+  }
+}
+
+theorem Finite.skip_minimalPeriod_le {α : Sort _} [DecidableEq α] [Finite α] {f : α → α}
+(hf : Injective f) {x : α} {a : {y // y ≠ x}}
+  : minimalPeriod (skip hf x) a ≤ minimalPeriod f a := by{
+  let := Fintype.ofFinite α
+  rw[← Fintype.skip_minimalPeriod hf]
+  simp
+}
+
 end Fintype

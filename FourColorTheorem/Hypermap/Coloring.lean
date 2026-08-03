@@ -16,9 +16,9 @@ variable [DecidableEq α]
 variable {H : Hypermap α}
 
 def isColoring (k : α → FourColor) :=
-  (∀x y, H.cedge x y → k x ≠ k y) ∧ (∀x y, H.cface x y → k x = k y)
+  (∀x, k (edge x) ≠ k x) ∧ (∀x, k (face x) = k x)
 def isGraphColoring (k : α → FourColor) :=
-  (∀x y, H.cedge x y → k x ≠ k y) ∧ (∀x y, H.cnode x y → k x = k y)
+  (∀x, k (edge x) ≠ k x) ∧ (∀x, k (node x) = k x)
 def fourColorable := ∃k, H.isColoring k
 def fourGraphColorable := ∃k, H.isGraphColoring k
 
@@ -41,18 +41,50 @@ def fourGraphColorable := ∃k, H.isGraphColoring k
   infer_instance
 }
 
-theorem fourColorable.bridgeless (hf : H.fourColorable) : H.bridgeless := by{
-  rcases hf with ⟨f, hfe, hff⟩
+theorem isColoring.cface_invariant' {k : α → FourColor}
+  (hk : ∀ x, k (face x) = k x) : ∀ x y, H.cface x y → k x = k y := by{
+  intro x y hxy
+  rw[cface, funReflTransGen_iff_iterate] at hxy
+  rcases hxy with ⟨n, hn⟩
+  induction n generalizing y with
+  | zero => simp at hn; simp[hn]
+  | succ n' ih => {
+    specialize ih (face^[n'] x) rfl
+    rw[iterate_succ_apply'] at hn
+    rw[ih, ← hk, hn]
+  }
+}
+theorem isColoring.cface_invariant {k : α → FourColor}
+  (hk : H.isColoring k) : ∀ x y, H.cface x y → k x = k y := by{
+  apply cface_invariant'
+  exact hk.right
+}
+
+theorem fourColorable.bridgeless (hf : H.fourColorable) : H.bridgeless
+:= by{
+  rcases hf with ⟨f, hf⟩
+  have hff' := hf.cface_invariant
+  rcases hf with ⟨hfe, hff⟩
   intro x hx
-  specialize hfe x (edge x) (funReflTransGen.single _ _)
-  specialize hff x (edge x) hx
-  exact hfe hff
+  specialize hfe x
+  specialize hff' x (edge x) hx
+  exact hfe hff'.symm
 }
 theorem isColoring_dual (k : α → FourColor)
 : H.dual.isColoring k ↔ H.isGraphColoring k := by{
-  unfold isColoring
-  simp only [dual_cedge, dual_cface]
-  rfl
+  unfold isColoring isGraphColoring
+  simp only [dual_edge, dual_face]
+  apply and_congr
+  · {
+    constructor
+    · intro ih x; specialize ih (edge x); rw[edgeinv_leftinv] at ih; exact ih.symm
+    · intro ih x; specialize ih (H.edgeinv x); rw[edgeinv_rightinv] at ih; exact ih.symm
+  }
+  · {
+    constructor
+    · intro ih x; specialize ih (node x); rw[nodeinv_leftinv] at ih; exact ih.symm
+    · intro ih x; specialize ih (H.nodeinv x); rw[nodeinv_rightinv] at ih; exact ih.symm
+  }
 }
 theorem fourColorable_dual
 : H.dual.fourColorable ↔ H.fourGraphColorable := by{
@@ -64,37 +96,23 @@ theorem fourColorable_dual
 theorem isColoring_mirror (k : α → FourColor)
 : H.mirror.isColoring k ↔ H.isColoring k := by{
   unfold isColoring
-  simp only [mirror_cedge, mirror_cface, InvImage]
+  simp only [mirror_edge, comp_apply, mirror_face]
+  have h0 : (∀ (x : α), k (H.faceinv x) = k x) ↔ (∀ (x : α), k (face x) = k x) := by{
+    constructor
+    · intro ih x; specialize ih (face x); rw[faceinv_leftinv] at ih; exact ih.symm
+    · intro ih x; specialize ih (H.faceinv x); rw[faceinv_rightinv] at ih; exact ih.symm
+  }
+  rw[h0]
   apply and_congr_left
-  intro hf
-  constructor
-  · {
-    intro ih x y hxy
-    specialize ih (face x) (face y)
-    have hf0 := hf x (face x) (funReflTransGen.single _ _)
-    have hf1 := hf y (face y) (funReflTransGen.single _ _)
-    rw[← hf0, ← hf1] at ih
-    apply ih
-    have hx (x : α) : H.cedge (H.edgeinv x) x := by{
-      apply ReflTransGen.single
-      exact edgeinv_rightinv _
-    }
-    simp only [edgeinv_eq, comp_apply] at hx
-    exact (hx x).trans (hxy.trans (H.cedge_equivalence.symm (hx y)))
+  intro hkf
+  simp only [hkf]
+  have h1 : (∀ (x : α), k (H.nodeinv x) ≠ k x) ↔ (∀ (x : α), k (node x) ≠ k x) := by{
+    constructor
+    · intro ih x; specialize ih (node x); rw[nodeinv_leftinv] at ih; exact ih.symm
+    · intro ih x; specialize ih (H.nodeinv x); rw[nodeinv_rightinv] at ih; exact ih.symm
   }
-  · {
-    intro ih x y hxy
-    have hxy' : H.cedge (edge (node x)) (edge (node y)) := by{
-      apply (H.cedge_equivalence.symm (funReflTransGen.single H.edge (node x))).trans
-      apply hxy.trans
-      apply funReflTransGen.single
-    }
-    specialize ih _ _ hxy'
-    have hf (x : α) := hf (edge (node x)) (face (edge (node x))) (funReflTransGen.single _ _)
-    simp only [fen_cancel] at hf
-    simp only [hf] at ih
-    exact ih
-  }
+  simp only [nodeinv_apply, hkf] at h1
+  rw[← h1]
 }
 theorem fourColorable_mirror : H.mirror.fourColorable ↔ H.fourColorable := by{
   unfold fourColorable
