@@ -1,0 +1,2 @@
+import FourColorTheorem.Hypermap.Properties.Pentagonal.Basic
+import FourColorTheorem.Hypermap.Properties.Pentagonal.Mirror

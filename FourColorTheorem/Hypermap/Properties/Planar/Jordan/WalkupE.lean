@@ -1,4 +1,5 @@
-import FourColorTheorem.Hypermap.Actions.Walkup.Skip
+import FourColorTheorem.Hypermap.Actions.Walkup.Basic
+import FourColorTheorem.Hypermap.Properties.Planar.Jordan.Basic
 
 namespace Hypermap
 

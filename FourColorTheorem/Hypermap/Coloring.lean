@@ -4,6 +4,7 @@ import FourColorTheorem.Color.Trace
 import FourColorTheorem.Hypermap.Actions.Dual
 import FourColorTheorem.Hypermap.Actions.Mirror
 import FourColorTheorem.Hypermap.Actions.Walkup
+import FourColorTheorem.Hypermap.Properties.BridgeLoop
 
 open Relation
 open Function

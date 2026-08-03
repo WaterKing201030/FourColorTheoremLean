@@ -1,4 +1,4 @@
-import FourColorTheorem.Hypermap.Actions.Walkup.Skip
+import FourColorTheorem.Hypermap.Actions.Walkup.Basic
 
 namespace Hypermap
 
@@ -1030,79 +1030,5 @@ theorem walkupe_ecomp {x : α} :
     apply Nat.eq_sub_of_add_eq
     exact walkupe_ecomp'
   }
--- e + n + f
-theorem walkupe_euler_rhs {x : α} :
-  (H.WalkupE x).euler_rhs = H.euler_rhs + 1 - if H.isbarb x then 4
-  else if H.glink x x then 2 else if H.cross_edge x then 0 else 2 := by{
-    unfold euler_rhs
-    rw[walkupe_ecomp, walkupe_ncomp, walkupe_fcomp]
-    have hep:=H.ecomp_pos_intro x
-    have hnp:=H.ncomp_pos_intro x
-    have hfp:=H.fcomp_pos_intro x
-    cases em (H.isbarb x) with
-    | inl hbx => {
-      simp only [hbx, ↓reduceIte, Nat.reduceSubDiff]
-      simp[isbarb_iff_all_perm_self] at hbx
-      simp only [hbx, ↓reduceIte]
-      rw[←Nat.sub_add_comm hep]
-      rw[←Nat.sub_add_comm hnp]
-      rw[←Nat.add_sub_assoc hfp]
-      rw[Nat.sub_sub]
-      rw[←Nat.add_sub_assoc
-        (Nat.add_le_add hnp hfp)]
-      rw[Nat.sub_sub]
-    }
-    | inr hbx => {
-      cases em (H.cross_edge x) with
-      | inl hcex => {
-        cases em (H.glink x x) with
-        | inl hgx => {
-          have hex:=(cross_edge_iff_not_edge_self_of_not_isbarb_of_glink
-          hbx hgx).mp hcex
-          simp only [hgx, hcex, hbx, ↓reduceIte]
-          simp only [add_tsub_cancel_right, Nat.reduceSubDiff]
-          have hn:H.face x = x ↔ H.node x ≠ x:=by{
-            constructor
-            · {
-              intro hfx hnx
-              apply hex
-              nth_rw 1 [←hnx, ←hfx, enf_cancel]
-            }
-            · {
-              intro hnx
-              exact (hgx.resolve_left hex).resolve_left hnx
-            }
-          }
-          simp only [hn, ne_eq, ite_not]
-          cases em (H.node x = x) with
-          | inl hnx => {
-            simp only [hnx, ↓reduceIte, tsub_zero]
-            rw[←Nat.sub_add_comm hnp]
-            rw[←Nat.add_sub_assoc]
-            apply Nat.le_add_left_of_le
-            exact hfp
-          }
-          | inr hnx => {
-            simp only [hnx, ↓reduceIte, tsub_zero]
-            rw[←Nat.add_sub_assoc hfp]
-            rw[←Nat.add_sub_assoc]
-            apply Nat.le_add_left_of_le
-            exact hfp
-          }
-        }
-        | inr hgx => {
-          simp [hgx]
-          simp [glink_iff] at hgx
-          simp [hgx, hbx, hcex, Nat.succ_add]
-        }
-      }
-      | inr hcex => {
-        have hnx:=not_node_self_of_not_cross_edge hcex
-        have hfx:=not_face_self_of_not_cross_edge hcex
-        simp[hfx, hnx, hcex, hbx]
-        simp[←Nat.sub_add_comm hep]
-      }
-    }
-}
 
 end Hypermap

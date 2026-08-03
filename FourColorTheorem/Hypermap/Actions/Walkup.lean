@@ -1,3 +1,3 @@
-import FourColorTheorem.Hypermap.Actions.Walkup.EulerTree
-import FourColorTheorem.Hypermap.Actions.Walkup.PathLift
-import FourColorTheorem.Hypermap.Actions.Walkup.Properties
+import FourColorTheorem.Hypermap.Actions.Walkup.Basic
+import FourColorTheorem.Hypermap.Actions.Walkup.Ecomp
+import FourColorTheorem.Hypermap.Actions.Walkup.Gcomp

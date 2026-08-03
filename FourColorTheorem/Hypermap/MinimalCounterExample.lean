@@ -1,4 +1,4 @@
-import FourColorTheorem.Hypermap.Actions.Walkup
+import FourColorTheorem.Hypermap.Properties
 import FourColorTheorem.Hypermap.Coloring
 
 open Relation
@@ -42,23 +42,11 @@ theorem MinimalCounterExample.cubic (Hm : H.IsMinimalCounterExample) :
   rcases Hbc with ⟨hn2, hn1⟩
   let H1 := H.WalkupE x
   let H2 := H1.WalkupE ⟨node x, hn1⟩
-  have H2p : H2.planar := by{
-    apply planar_walkupe_planar
-    apply planar_walkupe_planar
-    exact Hm.planar
-  }
-  have H2c : H2.precubic := by{
-    apply walkupe_precubic_of_precubic
-    apply walkupe_precubic_of_precubic
-    exact Hm.precubic
-  }
-  have H2p' : H2.plain := by{
-    apply walkupe2_plain_of_plain_of_node_period_two <;> assumption
-  }
-  have H2b : H2.bridgeless := by{
-    apply walkupe2_bridgeless_of_bridgeless_of_plain_of_node_period_two <;> assumption
-  }
-  have H2c' := Hm.minimal (H' := H2) ⟨⟨⟨H2p, H2b⟩, H2p'⟩, H2c⟩ (by{
+  have H2c' := Hm.minimal (H' := H2) (by{
+    apply walkupe2_planarBridgelessPlainPrecubic_of_planarBridgelessPlainPrecubic
+    · exact Hm.toPlanarBridgelessPlainPrecubic
+    · exact hn2
+  }) (by{
     simp only [ne_eq, Fintype.card_subtype_compl, Fintype.card_unique]
     rw[Nat.sub_sub]
     apply Nat.sub_lt ?_ (by{simp})

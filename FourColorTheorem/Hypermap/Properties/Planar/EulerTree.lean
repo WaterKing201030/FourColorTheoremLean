@@ -1,8 +1,7 @@
 import Init.Data.Nat.Lemmas
-import FourColorTheorem.Hypermap.Actions.Walkup.Skip
-import FourColorTheorem.Hypermap.Actions.Walkup.Gcomp
-import FourColorTheorem.Hypermap.Actions.Walkup.Ecomp
-import FourColorTheorem.Hypermap.Actions.Walkup.Jordan
+import FourColorTheorem.Hypermap.Actions.Walkup.Basic
+import FourColorTheorem.Hypermap.Properties.Planar.Euler
+import FourColorTheorem.Hypermap.Properties.Planar.Jordan
 
 namespace Hypermap
 
@@ -14,20 +13,12 @@ variable {H : Hypermap α}
 open Function
 open Relation
 
-theorem glink_self_of_clink_self {x : α} (hcx : H.clink x x) : H.glink x x:=by{
-  rw[glink_iff]
-  right
-  rw[clink, union_iff, fromFun, fromFun, nodeinv_eq_iff_eq_node] at hcx
-  apply hcx.imp_left
-  apply Eq.symm
-}
-
-theorem euler_tree_node_lemma {x : α} (hy : ∀ y, H.cedge x y → ¬H.clink y y ∧ H.cross_edge y)
+lemma euler_tree_node_lemma {x : α} (hy : ∀ y, H.cedge x y → ¬H.clink y y ∧ H.cross_edge y)
   : ∀y, H.cedge x y → H.cedge y (H.node y) := by{
     intro a ha
     exact (hy a ha).right
   }
-theorem euler_tree_cnode_lemma {x : α} (hy : ∀ y, H.cedge x y → ¬H.clink y y ∧ H.cross_edge y)
+lemma euler_tree_cnode_lemma {x : α} (hy : ∀ y, H.cedge x y → ¬H.clink y y ∧ H.cross_edge y)
   : ∀a b, H.cedge x a → H.cnode a b → H.cedge x b := by{
     intro a b ha hb
     rw[cnode, funReflTransGen_iff_iterate] at hb
@@ -42,7 +33,7 @@ theorem euler_tree_cnode_lemma {x : α} (hy : ∀ y, H.cedge x y → ¬H.clink y
       exact ih
     }
   }
-theorem euler_tree_face_lemma {x : α} (hy : ∀ y, H.cedge x y → ¬H.clink y y ∧ H.cross_edge y)
+lemma euler_tree_face_lemma {x : α} (hy : ∀ y, H.cedge x y → ¬H.clink y y ∧ H.cross_edge y)
   : ∀a, H.cedge x a → H.cedge a (H.face a) := by{
     intro a ha
     have h1:H.cedge a (H.edgeinv a):=by{
@@ -59,7 +50,7 @@ theorem euler_tree_face_lemma {x : α} (hy : ∀ y, H.cedge x y → ¬H.clink y 
     have h3:=euler_tree_cnode_lemma hy _ _ (ha.trans h1) h2
     exact (cedge_equivalence.symm ha).trans h3
   }
-theorem euler_tree_cface_lemma {x : α} (hy : ∀ y, H.cedge x y → ¬H.clink y y ∧ H.cross_edge y)
+lemma euler_tree_cface_lemma {x : α} (hy : ∀ y, H.cedge x y → ¬H.clink y y ∧ H.cross_edge y)
   : ∀a b, H.cedge x a → H.cface a b → H.cedge x b := by{
     intro a b ha hb
     rw[cface, funReflTransGen_iff_iterate] at hb
@@ -74,6 +65,7 @@ theorem euler_tree_cface_lemma {x : α} (hy : ∀ y, H.cedge x y → ¬H.clink y
       exact ih
     }
   }
+
 theorem exists_edge_fpath (x : α)
   : ∃p, ∃(hpn : p ≠ []), H.cedge x (p.head hpn) ∧ p.IsChain (fromFun H.edge)
   ∧ H.simpleList p ∧ H.cface (p.getLast hpn) (H.edgeinv (p.head hpn)):=by{
@@ -106,7 +98,7 @@ theorem exists_edge_fpath (x : α)
     }
     have hp's : ¬H.simpleList p':=by{
       intro hp's
-      have hp'd:=nodup_of_simpleList hp's
+      have hp'd:=simpleList.nodup hp's
       match p' with
       | _::_::_ => {
         rw[List.nodup_cons] at hp'd
@@ -252,7 +244,7 @@ theorem nodup_clink_path_from_isChain_edge {p : List α} (hpn : p ≠ [])
   ∧ (∀y ∈ p', ∃x ∈ p, H.cface x y)
   ∧ (∀x ∈ p, ((p'.take (p'.idxOf x + 1)).drop
   (p'.idxOf (H.face x))).IsChain (fromFun H.face)) := by{
-    have hpd:=nodup_of_simpleList hps
+    have hpd:=simpleList.nodup hps
     match p with
     | [a] => {
       rw[List.head_singleton, List.getLast_singleton]
@@ -662,7 +654,7 @@ theorem exists_edge_fpath_contour_between_edge_fpath (x : α)
   ∧ (∀x, H.face x ∈ p' → x ∈ (p.getLast hpn :: p').dropLast) := by{
     have ⟨p, hpn, hpe, hpc, hps, hpf⟩:=H.exists_edge_fpath x
     refine ⟨p, hpn, hpe, hpc, hps, hpf, ?_⟩
-    have hpd:=nodup_of_simpleList hps
+    have hpd:=simpleList.nodup hps
     have ⟨q, hqn, hqh, hql, hqd, hqc, hqq, hqf, hqm, hqi, hqsurj, hqcf⟩:=
       H.nodup_clink_path_from_isChain_edge hpn hpc hps
     use q.take (q.idxOf (H.edgeinv (p.head hpn)) + 1)
@@ -883,7 +875,7 @@ theorem cross_edge_exists_fpath_contor_between_edge_fpath_exists_disjoint_fpath 
     have ⟨q1, hq1n, hq1h, hq1l, hq1d, hq1c, hq1q, hq1f⟩:=hq1
     refine ⟨p1, hp1n, hp1e, hp1c, hp1s, hp1f, ?_⟩
     refine ⟨q1, hq1n, hq1h, hq1l, hq1d, hq1c, hq1q, hq1f, ?_⟩
-    have hp1d:=nodup_of_simpleList hp1s
+    have hp1d:=simpleList.nodup hp1s
     have h_lemma : minimalPeriod H.edgeinv = minimalPeriod H.edge := by{
       rw[edgeinv, Fintype.bijInv_minimalPeriod]
     }
@@ -994,7 +986,7 @@ theorem cross_edge_exists_fpath_contor_between_edge_fpath_exists_disjoint_fpath'
     have ⟨q1, hq1n, hq1h, hq1l, hq1d, hq1c, hq1q, hq1f⟩:=hq1
     refine ⟨p1, hp1n, hp1e, hp1c, hp1s, hp1f, ?_⟩
     refine ⟨q1, hq1n, hq1h, hq1l, hq1d, hq1c, hq1q, hq1f, ?_⟩
-    have hp1d:=nodup_of_simpleList hp1s
+    have hp1d:=simpleList.nodup hp1s
     have h_lemma : minimalPeriod H.edgeinv = minimalPeriod H.edge := by{
       rw[edgeinv, Fintype.bijInv_minimalPeriod]
     }

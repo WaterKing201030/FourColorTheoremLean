@@ -1,6 +1,5 @@
 import FourColorTheorem.Hypermap.Basic
 import FourColorTheorem.Hypermap.Actions.Dual
-import FourColorTheorem.Hypermap.Planarity
 
 namespace Hypermap
 
@@ -66,10 +65,7 @@ theorem mirror_gcomp : H.mirror.gcomp = H.gcomp := by{
   unfold gcomp gsetoid
   simp[mirror_cglink]
 }
-theorem mirror_euler_lhs : H.mirror.euler_lhs = H.euler_lhs := by{
-  unfold euler_lhs
-  simp[mirror_gcomp]
-}
+
 theorem mirror_edge_adj_edgeinv : H.mirror.edge = H.nodeinv ∘ H.edgeinv ∘ H.node :=by{
   rw[mirror_edge, nodeinv_eq, edgeinv_eq]
   ext x
@@ -120,21 +116,6 @@ theorem mirror_ecomp : H.mirror.ecomp = H.ecomp := by{
   · apply Subsingleton.elim
   · apply Subsingleton.elim
 }
-theorem mirror_euler_rhs : H.mirror.euler_rhs = H.euler_rhs := by{
-  unfold euler_rhs
-  simp[mirror_ecomp, mirror_ncomp, mirror_fcomp]
-}
-theorem mirror_genus : H.mirror.genus = H.genus := by{
-  unfold genus
-  simp[mirror_euler_lhs, mirror_euler_rhs]
-}
-theorem mirror_planar : H.mirror.planar ↔ H.planar := by{
-  unfold planar
-  simp[mirror_genus]
-}
-theorem mirror_jordan : H.mirror.jordan ↔ H.jordan := by{
-  simp only [←planar_iff_jordan, mirror_planar]
-}
 
 theorem mirror_mirror : H.mirror.mirror = H := by{
   unfold mirror
@@ -147,45 +128,6 @@ theorem mirror_dual : H.mirror.dual = H.dual.mirror := by{
   simp [faceinv_eq, nodeinv_eq, edgeinv_eq]
   simp [Function.comp_assoc, fen_id, enf_id, nfe_id]
   simp[←Function.comp_assoc (h:=H.node), enf_id]
-}
-
-theorem mirror_bridgeless : H.mirror.bridgeless = H.bridgeless := by{
-  unfold bridgeless
-  rw[mirror_cface, mirror_edge]
-  ext
-  constructor
-  · {
-    intro h x hx
-    apply h (H.face (H.edge x))
-    rw[comp_apply, nfe_cancel]
-    apply H.cface_Symm.symm
-    apply (H.cface_equivalence.symm (funReflTransGen.single H.face x)).trans
-    apply hx.trans
-    exact funReflTransGen.single H.face (H.edge x)
-  }
-  · {
-    intro h x hx
-    apply h (H.node x)
-    apply H.cface_equivalence.symm
-    apply (funReflTransGen.single H.face _).trans
-    rw[fen_cancel]
-    apply hx.trans
-    apply H.cface_equivalence.symm
-    rw[comp_apply]
-    apply funReflTransGen.single
-  }
-}
-theorem mirror_loopless : H.mirror.loopless = H.loopless := by{
-  rw[←dual_bridgeless, ←dual_bridgeless]
-  rw[mirror_dual]
-  apply mirror_bridgeless
-}
-
-theorem mirror_arity : H.mirror.arity = H.arity :=by{
-  unfold arity
-  rw[mirror_face]
-  unfold faceinv
-  rw[Fintype.bijInv_minimalPeriod' H.face_bijective]
 }
 
 end Hypermap

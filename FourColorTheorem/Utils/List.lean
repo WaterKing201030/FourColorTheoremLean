@@ -560,7 +560,8 @@ theorem List.subset_rotate {l1 l2 : List α} {n : ℕ}
   }
 
 theorem List.perm_of_nodup_subset_length_eq {l1 l2 : List α}
-  (h1d : l1.Nodup) (h2d : l2.Nodup) (h12 : l1 ⊆ l2) (h12' : l1.length = l2.length) : l1.Perm l2 := by{
+  (h1d : l1.Nodup) (h2d : l2.Nodup) (h12 : l1 ⊆ l2) (h12' : l1.length = l2.length) : l1.Perm l2
+  := by{
     cases em (l1 = []) with
     | inl hl1 => {simp[hl1, Eq.comm] at h12'; simp[hl1, h12']}
     | inr hl1 => {

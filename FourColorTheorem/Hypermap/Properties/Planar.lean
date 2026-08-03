@@ -1,0 +1,4 @@
+import FourColorTheorem.Hypermap.Properties.Planar.Euler
+import FourColorTheorem.Hypermap.Properties.Planar.Jordan
+import FourColorTheorem.Hypermap.Properties.Planar.Dual
+import FourColorTheorem.Hypermap.Properties.Planar.Mirror

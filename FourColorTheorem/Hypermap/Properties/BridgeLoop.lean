@@ -1,0 +1,4 @@
+import FourColorTheorem.Hypermap.Properties.BridgeLoop.Basic
+import FourColorTheorem.Hypermap.Properties.BridgeLoop.Dual
+import FourColorTheorem.Hypermap.Properties.BridgeLoop.Mirror
+import FourColorTheorem.Hypermap.Properties.BridgeLoop.Patch

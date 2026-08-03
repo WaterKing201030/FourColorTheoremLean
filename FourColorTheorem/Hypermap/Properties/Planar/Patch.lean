@@ -1,9 +1,15 @@
-import FourColorTheorem.Hypermap.Actions.Patch.Basic
+import FourColorTheorem.Hypermap.Actions.Patch
+import FourColorTheorem.Hypermap.Properties.Planar.PlanarEquiv
 
 open Function
 open Relation
 
 namespace Hypermap
+
+variable {α : Type _} [Fintype α] [DecidableEq α]
+variable {αd : Type _} [Fintype αd] [DecidableEq αd]
+variable {αr : Type _} [Fintype αr] [DecidableEq αr]
+
 namespace Patch
 
 variable {α : Type _} [Fintype α] [DecidableEq α]

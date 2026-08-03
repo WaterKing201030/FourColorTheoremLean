@@ -1,4 +1,4 @@
-import FourColorTheorem.Hypermap.Actions.Walkup.Skip
+import FourColorTheorem.Hypermap.Actions.Walkup.Basic
 
 namespace Hypermap
 
@@ -756,33 +756,6 @@ theorem walkupe_gcomp {x : α} : (H.WalkupE x).gcomp = H.gcomp + 1 -
   else (if H.skip_edge'_issplit x then 0 else 1) := by{
     apply Nat.eq_sub_of_add_eq
     exact walkupe_gcomp'
-  }
-theorem walkupe_euler_lhs {x : α} : (H.WalkupE x).euler_lhs =
-  H.euler_lhs + 1 - if H.glink x x then (if H.isbarb x then 4 else 2)
-  else (if H.skip_edge'_issplit x then 0 else 2) := by{
-    unfold euler_lhs
-    simp only [ne_eq, walkupe_gcomp, Fintype.card_subtype_compl, Fintype.card_unique]
-    simp only [Nat.sub_mul, Nat.add_mul, one_mul, ite_mul, Nat.reduceMul, zero_mul]
-    rw[←Nat.sub_add_comm (by{
-      rw[apply_ite (· ≤ _)]
-      rw[apply_ite (· ≤ _)]
-      rw[apply_ite (· ≤ _)]
-      simp only [Nat.reduceLeDiff, zero_lt_two, le_mul_iff_one_le_left, le_add_iff_nonneg_left,
-        zero_le, if_true_right, ite_self]
-      intro _ _
-      unfold gcomp Fintype.nComp
-      apply Nat.succ_le_of_lt
-      apply Fintype.card_pos_iff.mpr
-      apply Nonempty.intro ⟦x⟧
-    })]
-    apply congrArg (· - _)
-    rw[←Nat.add_sub_assoc (by{
-      apply Nat.succ_le_of_lt
-      apply Fintype.card_pos_iff.mpr
-      apply Nonempty.intro x
-    })]
-    rw[Nat.add_right_comm]
-    simp
   }
 
 
