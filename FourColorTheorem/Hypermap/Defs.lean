@@ -140,6 +140,8 @@ theorem cglink_of_cface : H.cface ⊆ H.cglink := by{
   simp only [union_iff]
   right; right; assumption
 }
+theorem cglink_pred_eq_of_cglink {x y : α} (hxy : H.cglink x y)
+  : H.cglink x = H.cglink y := cglink_equivalence.pred_eq_iff.mpr hxy
 
 def edgeinv (H : Hypermap α) :=Fintype.bijInv H.edge_bijective
 def nodeinv (H : Hypermap α) :=Fintype.bijInv H.node_bijective
