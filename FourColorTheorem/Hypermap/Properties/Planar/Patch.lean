@@ -1,5 +1,5 @@
 import FourColorTheorem.Hypermap.Actions.Patch
-import FourColorTheorem.Hypermap.Properties.Planar.PlanarEquiv
+import FourColorTheorem.Hypermap.Properties.Planar.Euler
 
 open Function
 open Relation
@@ -570,8 +570,8 @@ theorem genus_eq_add : G.genus = Gd.genus + Gr.genus := by{
   simp only [eq_iff_iff]
   simp only [List.eq_nil_iff_length_eq_zero, patchG.disk_rem_border_length_eq']
 }
-theorem planar_patch_iff : G.planar ↔ Gd.planar ∧ Gr.planar := by{
-  unfold planar
+theorem planar_patch_iff : G.Planar ↔ Gd.Planar ∧ Gr.Planar := by{
+  simp only [planar_def]
   rw[patchG.genus_eq_add, Nat.add_eq_zero_iff]
 }
 

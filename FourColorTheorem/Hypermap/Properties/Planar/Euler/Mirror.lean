@@ -24,9 +24,13 @@ theorem mirror_genus : H.mirror.genus = H.genus := by{
   unfold genus
   simp[mirror_euler_lhs, mirror_euler_rhs]
 }
-theorem mirror_planar : H.mirror.planar ↔ H.planar := by{
-  unfold planar
+theorem mirror_planar_iff : H.mirror.Planar ↔ H.Planar := by{
+  simp[planar_def]
   simp[mirror_genus]
+}
+theorem Planar.mirror (Hp : H.Planar) : H.mirror.Planar := by{
+  rw[mirror_planar_iff]
+  exact Hp
 }
 
 end Hypermap

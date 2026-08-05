@@ -5,11 +5,6 @@ open Function
 open Relation
 
 namespace Hypermap
-
-variable {α : Type _} [Fintype α] [DecidableEq α]
-variable {αd : Type _} [Fintype αd] [DecidableEq αd]
-variable {αr : Type _} [Fintype αr] [DecidableEq αr]
-
 namespace Patch
 
 variable {α : Type _} [Fintype α] [DecidableEq α]
@@ -20,12 +15,13 @@ variable {hd : αd → α} {hr : αr → α} {bGd : List αd} {bGr : List αr}
 variable (patchG : Patch G Gd Gr hd hr bGd bGr)
 include patchG
 
-theorem of_bridgeless (br'G : G.bridgeless) : Gd.bridgeless ∧ Gr.bridgeless := by{
+theorem of_bridgeless (br'G : G.Bridgeless) : Gd.Bridgeless ∧ Gr.Bridgeless := by{
   constructor
   · {
-    rw[bridgeless]
+    rw[bridgeless_def]
     intro x hx
     have hx':=patchG.cface_of_disk_cface hx
+    rw[bridgeless_def] at br'G
     apply br'G (hd x)
     apply Eq.mp ?_ hx'
     congr
@@ -45,7 +41,9 @@ theorem of_bridgeless (br'G : G.bridgeless) : Gd.bridgeless ∧ Gr.bridgeless :=
     apply funReflTransGen.single
   }
   · {
+    rw[bridgeless_def]
     intro x hx
+    rw[bridgeless_def] at br'G
     apply br'G (hr x)
     have hx' := patchG.cface_of_rem_cface hx
     apply Eq.mp ?_ hx'
@@ -54,13 +52,15 @@ theorem of_bridgeless (br'G : G.bridgeless) : Gd.bridgeless ∧ Gr.bridgeless :=
   }
 }
 
-theorem bridgeless_of (bridge'Gd : Gd.bridgeless) (bridge'Gr : Gr.bridgeless)
-  (chord'Gd : Gd.chordless bGd) : G.bridgeless := by{
+theorem bridgeless_of_chordless (bridge'Gd : Gd.Bridgeless) (bridge'Gr : Gr.Bridgeless)
+  (chord'Gd : Gd.chordless bGd) : G.Bridgeless := by{
+  rw[bridgeless_def]
   intro x xFex
   have x'R : x ∉ patchG.rem := by{
     intro xR
     have ⟨xr, hxr⟩:=xR
     rw[← hxr, ← patchG.rem_edge_morph, ← patchG.rem_cface_iff] at xFex
+    rw[bridgeless_def] at bridge'Gr
     exact bridge'Gr _ xFex
   }
   have ⟨xD, x'B⟩ := not_or.mp (x'R ∘ patchG.mem_rem_iff.mpr)
@@ -72,6 +72,7 @@ theorem bridgeless_of (bridge'Gd : Gd.bridgeless) (bridge'Gr : Gr.bridgeless)
   have xO : hd xd ∈ patchG.outer := by{
     by_contra x'O
     rw[← patchG.disk_cface_iff_of_mem_outerC x'O] at xFex
+    rw[bridgeless_def] at bridge'Gd
     exact bridge'Gd _ xFex
   }
   have hemxd : hd (edge xd) = edge (hd xd) :=
@@ -100,6 +101,7 @@ theorem bridgeless_of (bridge'Gd : Gd.bridgeless) (bridge'Gr : Gr.bridgeless)
     rw[hcn] at hyre
     rw[hyrn, hyre, ← patchG.rem_cface_iff] at Fydzd'
     nth_rw 2 [← Gr.fen_cancel yr] at Fydzd'
+    rw[bridgeless_def] at bridge'Gr
     apply bridge'Gr (node yr)
     apply Fydzd'.trans
     apply Gr.cface_equivalence.symm
@@ -117,6 +119,7 @@ theorem bridgeless_of (bridge'Gd : Gd.bridgeless) (bridge'Gr : Gr.bridgeless)
     rw[hzrn, hzre, ← patchG.rem_cface_iff] at Fydzd'
     nth_rw 1 [← Gr.fen_cancel zr] at Fydzd'
     apply Gr.cface_equivalence.symm at Fydzd'
+    rw[bridgeless_def] at bridge'Gr
     apply bridge'Gr (node zr)
     apply Fydzd'.trans
     apply Gr.cface_equivalence.symm
@@ -126,4 +129,23 @@ theorem bridgeless_of (bridge'Gd : Gd.bridgeless) (bridge'Gr : Gr.bridgeless)
 }
 
 end Patch
+
+section
+variable {α : Type _} [Fintype α] [DecidableEq α]
+variable {αd : Type _} [Fintype αd] [DecidableEq αd]
+variable {αr : Type _} [Fintype αr] [DecidableEq αr]
+variable {G : Hypermap α} {Gd : Hypermap αd} {Gr : Hypermap αr}
+variable {hd : αd → α} {hr : αr → α} {bGd : List αd} {bGr : List αr}
+variable (patchG : Patch G Gd Gr hd hr bGd bGr)
+include patchG
+theorem Bridgeless.patch_disk (Hb : G.Bridgeless) : Gd.Bridgeless := by{
+  have ih := patchG.of_bridgeless Hb
+  exact ih.left
+}
+theorem Bridgeless.patch_rem (Hb : G.Bridgeless) : Gr.Bridgeless := by{
+  have ih := patchG.of_bridgeless Hb
+  exact ih.right
+}
+end
+
 end Hypermap

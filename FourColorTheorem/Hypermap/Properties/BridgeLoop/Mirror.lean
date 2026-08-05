@@ -11,8 +11,8 @@ variable {H : Hypermap α}
 open Function
 open Relation
 
-theorem mirror_bridgeless : H.mirror.bridgeless = H.bridgeless := by{
-  unfold bridgeless
+theorem mirror_bridgeless_iff : H.mirror.Bridgeless = H.Bridgeless := by{
+  simp only [bridgeless_def]
   rw[mirror_cface, mirror_edge]
   ext
   constructor
@@ -37,10 +37,16 @@ theorem mirror_bridgeless : H.mirror.bridgeless = H.bridgeless := by{
     apply funReflTransGen.single
   }
 }
-theorem mirror_loopless : H.mirror.loopless = H.loopless := by{
-  rw[←dual_bridgeless, ←dual_bridgeless]
+theorem mirror_loopless_iff : H.mirror.Loopless = H.Loopless := by{
+  rw[←dual_bridgeless_iff, ←dual_bridgeless_iff]
   rw[mirror_dual]
-  apply mirror_bridgeless
+  apply mirror_bridgeless_iff
+}
+theorem Bridgeless.mirror (Hb : H.Bridgeless) : H.mirror.Bridgeless := by{
+  rwa[mirror_bridgeless_iff]
+}
+theorem Loopless.mirror (Hb : H.Loopless) : H.mirror.Loopless := by{
+  rwa[mirror_loopless_iff]
 }
 
 end Hypermap

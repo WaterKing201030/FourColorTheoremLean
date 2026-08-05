@@ -14,41 +14,29 @@ variable {H : Hypermap α}
 open Function
 open Relation
 
-structure PlanarBridgeless : Prop where
-  planar : H.planar
-  bridgeless : H.bridgeless
-structure PlainCubic : Prop where
-  plain : H.plain
-  cubic : H.cubic
-structure PlainCubicConnected : Prop extends H.PlainCubic where
-  connected : H.connected
-structure PlanarPlainCubicConnected : Prop extends H.PlainCubicConnected where
-  planar : H.planar
-structure PlainCubicPentagonal : Prop extends H.PlainCubic where
-  pentagonal : H.pentagonal
-structure PlanarBridgelessPlain : Prop extends H.PlanarBridgeless where
-  plain : H.plain
-structure PlanarBridgelessPlainConnected : Prop extends H.PlanarBridgelessPlain where
-  connected : H.connected
-structure PlanarBridgelessPlainPrecubic : Prop extends H.PlanarBridgelessPlain where
-  precubic : H.precubic
+structure PlanarBridgeless (H : Hypermap α) : Prop
+  extends H.Planar, H.Bridgeless where
+structure PlanarBridgelessPlain (H : Hypermap α) : Prop
+  extends H.PlanarBridgeless, H.Plain where
+structure PlanarBridgelessPlainPrecubic (H : Hypermap α) : Prop
+  extends H.PlanarBridgelessPlain, H.Precubic where
 
-theorem walkupe2_bridgeless_of_bridgeless_of_plain_of_node_period_two
-  (Hb : H.bridgeless) (Hp : H.plain) {x : α} (hnx : node x ≠ x) (hn2x : node (node x) = x)
-  : ((H.WalkupE x).WalkupE ⟨_, hnx⟩).bridgeless := by{
-  rw[bridgeless] at Hb
-  rw[bridgeless]
+theorem concatedge_bridgeless_of_bridgeless_of_plain_of_subdiv
+  (Hb : H.Bridgeless) (Hp : H.Plain) {x : α} (hxv : H.isSubdivVertice x)
+  : ((H.WalkupE x).WalkupE ⟨_, hxv.node_ne⟩).Bridgeless := by{
+  rw[bridgeless_def] at Hb
+  rw[bridgeless_def]
   intro ⟨⟨y, hyx⟩, hynx⟩
   simp only [ne_eq, Subtype.mk.injEq] at hynx
   simp only [walkupe_cface]
   rw[walkupe_edge, skip_edge'_val, skip_edge'']
-  have h0 : (H.WalkupE x).face ((H.WalkupE x).edge ⟨y, hyx⟩) ≠ ⟨node x, hnx⟩ := by{
+  have h0 : (H.WalkupE x).face ((H.WalkupE x).edge ⟨y, hyx⟩) ≠ ⟨node x, hxv.node_ne⟩ := by{
     rw[← comp_apply (f:=(H.WalkupE x).face) (g:=(H.WalkupE x).edge), ← nodeinv_eq, ne_eq,
     nodeinv_eq_iff_eq_node, walkupe_node, Subtype.ext_iff, skip_val, skip']
-    simp[hn2x, hynx]
+    simp[hxv.node_2, hynx]
   }
-  have h1 : (H.WalkupE x).node ⟨node x, hnx⟩ = ⟨node x, hnx⟩ := by{
-    simp[walkupe_node, Subtype.ext_iff, skip_val, skip', hn2x]
+  have h1 : (H.WalkupE x).node ⟨node x, hxv.node_ne⟩ = ⟨node x, hxv.node_ne⟩ := by{
+    simp[walkupe_node, Subtype.ext_iff, skip_val, skip', hxv.node_2]
   }
   simp only
   rw[if_neg h0, h1]
@@ -100,33 +88,33 @@ theorem walkupe2_bridgeless_of_bridgeless_of_plain_of_node_period_two
   }
 }
 
-theorem walkupe2_planarBridgelessPlainPrecubic_of_planarBridgelessPlainPrecubic
-  (Hh : H.PlanarBridgelessPlainPrecubic) {x : α} (hnx : node x ≠ x) (hn2x : node (node x) = x)
-  : ((H.WalkupE x).WalkupE ⟨_, hnx⟩).PlanarBridgelessPlainPrecubic := by{
-    have Hc := Hh.precubic
-    have Hb := Hh.bridgeless
-    have Hp := Hh.plain
+theorem PlanarBridgelessPlainPrecubic.concatEdge
+  (Hh : H.PlanarBridgelessPlainPrecubic) {x : α} (hxv : H.isSubdivVertice x)
+  : ((H.WalkupE x).WalkupE ⟨_, hxv.node_ne⟩).PlanarBridgelessPlainPrecubic := by{
+    have Hc := Hh.toPrecubic
+    have Hb := Hh.toBridgeless
+    have Hp := Hh.toPlain
     have Hb' := Hb.node_period_ge_two
     simp only [precubic_def] at Hc
     let H1 := H.WalkupE x
-    let H2 := H1.WalkupE ⟨node x, hnx⟩
-    have H2p : H2.planar := by{
-      apply planar_walkupe_planar
-      apply planar_walkupe_planar
-      exact Hh.planar
+    let H2 := H1.WalkupE ⟨node x, hxv.node_ne⟩
+    have H2p : H2.Planar := by{
+      apply Planar.walkupe
+      apply Planar.walkupe
+      exact Hh.toPlanar
     }
-    have H2c : H2.precubic := by{
-      apply walkupe_precubic_of_precubic
-      apply walkupe_precubic_of_precubic
-      exact Hh.precubic
+    have H2c : H2.Precubic := by{
+      apply Precubic.walkupe
+      apply Precubic.walkupe
+      exact Hh.toPrecubic
     }
-    have H2p' : H2.plain := by{
-      apply walkupe2_plain_of_plain_of_node_period_two <;> assumption
+    have H2p' : H2.Plain := by{
+      apply Plain.concat_edge <;> assumption
     }
-    have H2b : H2.bridgeless := by{
-      apply walkupe2_bridgeless_of_bridgeless_of_plain_of_node_period_two <;> assumption
+    have H2b : H2.Bridgeless := by{
+      apply concatedge_bridgeless_of_bridgeless_of_plain_of_subdiv <;> assumption
     }
-    exact ⟨⟨⟨H2p, H2b⟩, H2p'⟩, H2c⟩
+    refine ⟨⟨⟨H2p, H2b⟩, H2p'⟩, H2c⟩
   }
 
 end Hypermap

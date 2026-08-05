@@ -13,7 +13,7 @@ open Relation
 
 open CubeTag
 
-theorem cube_plain : H.cube.plain := by{
+theorem cube_plain : H.cube.Plain := by{
   rw[plain_iff_edge_edge]
   intro ⟨t, x⟩
   match t with | CTn | CTen | CTf | CTnf | CTe | CTfe => {

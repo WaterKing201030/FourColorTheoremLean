@@ -11,20 +11,7 @@ open Function
 open Relation
 
 def cubicSubset (H : Hypermap α) : Set (Set α) := { s | s ⊆ {x | minimalPeriod H.node x = 3}}
-def cubic (H : Hypermap α) := Set.univ ∈ H.cubicSubset
 def precubicSubset (H : Hypermap α) : Set (Set α) := {s | s ⊆ {x | minimalPeriod H.node x ≤ 3}}
-def precubic (H : Hypermap α) := Set.univ ∈ H.precubicSubset
-theorem cubic_def : H.cubic ↔ ∀x, minimalPeriod H.node x = 3 := by{
-  simp[cubic, cubicSubset, Set.eq_univ_iff_forall]
-}
-theorem precubic_def : H.precubic ↔ ∀x, minimalPeriod H.node x ≤ 3 := by{
-  simp[precubic, precubicSubset, Set.eq_univ_iff_forall]
-}
-theorem cubic_iff_node_node_node : H.cubic ↔ ∀x, H.node (H.node (H.node x)) = x ∧ H.node x ≠ x:=by{
-  unfold cubic cubicSubset
-  simp[Set.eq_univ_iff_forall]
-  simp[minimalPeriod_eq_three_iff]
-}
 theorem cubicSubset_subset_precubicSubset : H.cubicSubset ⊆ H.precubicSubset := by{
   intro x h
   unfold cubicSubset at h
@@ -37,14 +24,32 @@ theorem cubicSubset_subset_precubicSubset : H.cubicSubset ⊆ H.precubicSubset :
   simp only [Set.mem_setOf] at h'
   rw[h']
 }
-theorem cubic.precubic (Hc : H.cubic) : H.precubic := by{
-  unfold cubic at Hc
-  change Set.univ ∈ _
-  unfold precubicSubset
-  unfold cubicSubset at Hc
-  simp only [Set.mem_setOf, Set.univ_subset_iff, Set.eq_univ_iff_forall] at *
-  intro x
-  simp[Hc]
+
+structure Cubic (H : Hypermap α) where
+  univ_cubic : Set.univ ∈ H.cubicSubset
+structure Precubic (H : Hypermap α) where
+  univ_precubic : Set.univ ∈ H.precubicSubset
+theorem cubic_def' : H.Cubic ↔ Set.univ ∈ H.cubicSubset := by{
+  constructor
+  · apply Cubic.univ_cubic
+  · apply Cubic.mk
+}
+theorem precubic_def' : H.Precubic ↔ Set.univ ∈ H.precubicSubset := by{
+  constructor
+  · apply Precubic.univ_precubic
+  · apply Precubic.mk
+}
+theorem cubic_def : H.Cubic ↔ ∀x, minimalPeriod H.node x = 3 := by{
+  simp[cubic_def', cubicSubset, Set.eq_univ_iff_forall]
+}
+theorem precubic_def : H.Precubic ↔ ∀x, minimalPeriod H.node x ≤ 3 := by{
+  simp[precubic_def', precubicSubset, Set.eq_univ_iff_forall]
+}
+theorem Cubic.precubic (Hc : H.Cubic) : H.Precubic := by{
+  rw[cubic_def'] at Hc
+  rw[precubic_def']
+  apply cubicSubset_subset_precubicSubset
+  assumption
 }
 
 end Hypermap

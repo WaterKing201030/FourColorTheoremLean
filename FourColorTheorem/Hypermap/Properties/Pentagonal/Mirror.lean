@@ -17,5 +17,11 @@ theorem mirror_arity : H.mirror.arity = H.arity :=by{
   unfold faceinv
   rw[Fintype.bijInv_minimalPeriod' H.face_bijective]
 }
+theorem mirror_pentagonal_iff : H.mirror.Pentagonal ↔ H.Pentagonal := by{
+  simp[pentagonal_def, mirror_arity]
+}
+theorem Pentagonal.mirror (hp : H.Pentagonal) : H.mirror.Pentagonal := by{
+  rwa[mirror_pentagonal_iff]
+}
 
 end Hypermap

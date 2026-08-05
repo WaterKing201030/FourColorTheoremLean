@@ -11,8 +11,8 @@ variable {H : Hypermap α}
 open Function
 open Relation
 
-theorem dual_bridgeless : H.dual.bridgeless = H.loopless := by{
-  unfold bridgeless loopless
+theorem dual_bridgeless_iff : H.dual.Bridgeless = H.Loopless := by{
+  simp only [bridgeless_def, loopless_def]
   rw[dual_cface, dual_edge]
   ext
   constructor
@@ -32,8 +32,15 @@ theorem dual_bridgeless : H.dual.bridgeless = H.loopless := by{
     exact hn
   }
 }
-theorem dual_loopless : H.dual.loopless = H.bridgeless := by{
-  rw[←dual_bridgeless, dual_dual]
+theorem dual_loopless_iff : H.dual.Loopless = H.Bridgeless := by{
+  rw[←dual_bridgeless_iff, dual_dual]
+}
+
+theorem Bridgeless.dual_loopless (Hb : H.Bridgeless) : H.dual.Loopless := by{
+  rwa[dual_loopless_iff]
+}
+theorem Loopless.dual_bridgeless (Hb : H.Loopless) : H.dual.Bridgeless := by{
+  rwa[dual_bridgeless_iff]
 }
 
 end Hypermap

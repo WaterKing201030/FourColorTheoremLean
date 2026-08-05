@@ -13,7 +13,7 @@ open Relation
 
 open CubeTag
 
-theorem cube_cubic : H.cube.cubic := by{
+theorem cube_cubic : H.cube.Cubic := by{
   rw[cubic_iff_period_three]
   intro ⟨t, x⟩
   match t with | CTn | CTen | CTf | CTnf | CTe | CTfe => {

@@ -12,7 +12,7 @@ open Function
 open Relation
 
 theorem not_planar_of_moebius_path_triple {x y z : α} (huniv : ∀ a, a ∈ [x, y, z])
-  (hp : H.moebius_path [x, y, z]) : ¬H.planar := by{
+  (hp : H.moebius_path [x, y, z]) : ¬H.Planar := by{
   have h0:=moebius_path_node_head_mem_dropLast_tail hp
   have h1:=moebius_path_nodeinv_getLast_mem_dropLast_tail hp
   have hpd:=moebius_path_nodup hp
@@ -112,12 +112,13 @@ theorem not_planar_of_moebius_path_triple {x y z : α} (huniv : ∀ a, a ∈ [x,
     rw[←h1]
     simp
   }
-  unfold planar genus euler_lhs euler_rhs
+  rw[planar_def]
+  unfold genus euler_lhs euler_rhs
   simp[he, hn, hf, hg, hc]
 }
 
 theorem jordan_of_planar {α : Type _} [Fintype α] [DecidableEq α] {H : Hypermap α}
-  (hp : H.planar) : H.jordan := by{
+  (hp : H.Planar) : H.jordan := by{
   obtain ⟨n, hn⟩:∃ n, Fintype.card α = n := ⟨Fintype.card α, rfl⟩
   induction n using Nat.strong_induction_on generalizing α with
   | _ n ih => {
@@ -158,7 +159,7 @@ theorem jordan_of_planar {α : Type _} [Fintype α] [DecidableEq α] {H : Hyperm
         | y::p2 => {
           cases em (H.nodeinv x = y) with
           | inl h0 => {
-            have ih':=ih (p2.length + 1) (by{simp}) (H:=H.WalkupE x) (planar_walkupe_planar hp)
+            have ih':=ih (p2.length + 1) (by{simp}) (H:=H.WalkupE x) (Planar.walkupe hp)
               (by{simp[hlc]})
             rw[←h0] at hj
             have ⟨q, hq, _⟩:=moebius_path_liftE_of_cons_nodeinv hj
@@ -181,7 +182,7 @@ theorem jordan_of_planar {α : Type _} [Fintype α] [DecidableEq α] {H : Hyperm
                   exact hj
                 })
                 have ih':=ih (x::z::p3).length (by{simp})
-                  (H:=H.WalkupF (H.face x)) (planar_walkupf_planar hp)
+                  (H:=H.WalkupF (H.face x)) (Planar.walkupf hp)
                   (by{simp[hlc]})
                 apply ih' _ hq.left
               }
@@ -212,7 +213,7 @@ have ⟨q, hq⟩:=
   (x:=x) (p:=p4) (by{simp only [hzwc, h1', h0']; exact hj})
   (by{simp only [hzwc, h1', h0']; exact hynl}) (by{simp[h0', hynh]})
 have ih':=ih (x::y::w::p4).length (by{simp}) (H:=(H.WalkupF (H.face (H.face x))))
-  (planar_walkupf_planar hp) (by{simp[hlc]})
+  (Planar.walkupf hp) (by{simp[hlc]})
 apply ih' _ hq.left
                       }
                       | inr hzwc => {
@@ -221,7 +222,7 @@ have ⟨q, hq⟩:=
   (x:=x) (p:=p4) (by{simp only [hzwc, h1', h0']; exact hj})
   (by{simp only [hzwc, h1', h0']; exact hynl}) (by{simp[h0', hynh]})
 have ih':=ih (x::y::w::p4).length (by{simp}) (H:=(H.WalkupE (H.face (H.face x))))
-  (planar_walkupe_planar hp) (by{simp[hlc]})
+  (Planar.walkupe hp) (by{simp[hlc]})
 apply ih' _ hq.left
                       }
                     }
@@ -232,14 +233,14 @@ have ⟨q, hq⟩:=
   (x:=x) (p:=p3) (by{simp[h0', h1', hj]}) (by{simp only [h0', h1']; exact hynl})
   (by{simp[h0', hynh]})
 have ih':=ih (x::z::p3).length (by{simp}) (H:=H.WalkupN (H.face x))
-  (planar_walkupn_planar hp) (by{simp[hlc]})
+  (Planar.walkupn hp) (by{simp[hlc]})
 apply ih' _ hq.left
                   }
                 | inr hynl => {
 have ⟨q, hq⟩:=H.moebius_path_liftE_of_cons_face_cons_face_of_face_ne_nodeinv_last (x:=x) (p:=p3)
   (by{simp[h0', h1', hj]}) (by{simp only [h0', h1', ne_eq, hynl, not_false_iff]})
 have ih':=ih (x::z::p3).length (by{simp}) (H:=H.WalkupE (H.face x))
-  (planar_walkupe_planar hp) (by{simp[hlc]})
+  (Planar.walkupe hp) (by{simp[hlc]})
 apply ih' _ hq.left
                 }
               }
@@ -252,7 +253,7 @@ apply ih' _ hq.left
       rw[not_forall] at hpx
       have ⟨x, hpx⟩:=hpx
       have ih':=ih (n - 1) (Nat.pred_lt_self hn_p)
-        (H:=H.WalkupE x) (planar_walkupe_planar hp)
+        (H:=H.WalkupE x) (Planar.walkupe hp)
       simp only [ne_eq, Fintype.card_subtype_compl, Fintype.card_unique] at ih'
       rw[hn] at ih'
       have ih'':=ih' rfl
@@ -263,10 +264,10 @@ apply ih' _ hq.left
 }
 
 theorem planar_of_jordan {α : Type _} [Fintype α] [DecidableEq α] {H : Hypermap α}
-  (hj : H.jordan) : H.planar := by{
+  (hj : H.jordan) : H.Planar := by{
   cases isEmpty_or_nonempty α with
   | inl ha => {
-    simp[planar, genus, euler_lhs, euler_rhs, gcomp, Fintype.nComp_eq_zero_iff.mpr ha]
+    simp[planar_def, genus, euler_lhs, euler_rhs, gcomp, Fintype.nComp_eq_zero_iff.mpr ha]
   }
   | inr ha => {
     have ih:=euler_tree hj ha.some
@@ -277,8 +278,8 @@ theorem planar_of_jordan {α : Type _} [Fintype α] [DecidableEq α] {H : Hyperm
       simp[Fintype.card_pos_iff, ha]
     }
     have ih:=planar_of_jordan hb'
-    rw[planar] at ih
-    rw[planar]
+    rw[planar_def] at ih
+    rw[planar_def]
     cases hb2 with
     | inl h => {
       have h:=glink_self_of_clink_self h
@@ -293,7 +294,13 @@ theorem planar_of_jordan {α : Type _} [Fintype α] [DecidableEq α] {H : Hyperm
 }
 termination_by Fintype.card α
 
-theorem planar_iff_jordan : H.planar ↔ H.jordan :=
+theorem planar_iff_jordan : H.Planar ↔ H.jordan :=
   ⟨jordan_of_planar, planar_of_jordan⟩
+
+theorem Planar.jordan (hp : H.Planar) : H.jordan := by{
+  rwa[← planar_iff_jordan]
+}
+theorem Planar.of_jordan (hp : H.jordan) : H.Planar :=
+  planar_of_jordan hp
 
 end Hypermap

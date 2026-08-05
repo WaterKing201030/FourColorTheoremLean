@@ -20,7 +20,7 @@ variable {hd : αd → α} {hr : αr → α} {bGd : List αd} {bGr : List αr}
 variable (patchG : Patch G Gd Gr hd hr bGd bGr)
 include patchG
 
-theorem plain_iff : G.plain ↔ Gd.plainSubset {x | x ∉ bGd} ∧ Gr.plain := by{
+theorem plain_iff : G.Plain ↔ Gd.plainSubset {x | x ∉ bGd} ∧ Gr.Plain := by{
   change _ ↔ _ ⊆ _ ∧ _
   rw[Set.setOf_subset_setOf, plain_iff_edge_edge, plain_iff_edge_edge]
   simp only [minimalPeriod_eq_two_iff]
@@ -72,4 +72,23 @@ theorem plain_iff : G.plain ↔ Gd.plainSubset {x | x ∉ bGd} ∧ Gr.plain := b
 }
 
 end Patch
+
+section
+variable {α : Type _} [Fintype α] [DecidableEq α]
+variable {αd : Type _} [Fintype αd] [DecidableEq αd]
+variable {αr : Type _} [Fintype αr] [DecidableEq αr]
+variable {G : Hypermap α} {Gd : Hypermap αd} {Gr : Hypermap αr}
+variable {hd : αd → α} {hr : αr → α} {bGd : List αd} {bGr : List αr}
+variable (patchG : Patch G Gd Gr hd hr bGd bGr)
+include patchG
+theorem Plain.patch_disk_plainSubset (Hc : G.Plain) : Gd.plainSubset {x | x ∉ bGd} := by{
+  rw[patchG.plain_iff] at Hc
+  exact Hc.left
+}
+theorem Plain.patch_rem (Hc : G.Plain) : Gr.Plain := by{
+  rw[patchG.plain_iff] at Hc
+  exact Hc.right
+}
+end
+
 end Hypermap

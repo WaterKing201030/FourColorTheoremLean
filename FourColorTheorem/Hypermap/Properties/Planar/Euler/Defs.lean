@@ -13,6 +13,14 @@ open Relation
 def euler_lhs (H : Hypermap α) := H.gcomp * 2 + Fintype.card α
 def euler_rhs (H : Hypermap α) := H.ecomp + (H.ncomp + H.fcomp)
 def genus (H : Hypermap α) := (H.euler_lhs - H.euler_rhs) / 2
-def planar (H : Hypermap α) : Prop := H.genus = 0
 
+structure Planar (H : Hypermap α) where
+  genus_zero : H.genus = 0
+theorem planar_def : H.Planar ↔ H.genus = 0 := by{
+  constructor
+  · intro h
+    exact h.genus_zero
+  · intro h
+    exact ⟨h⟩
+}
 end Hypermap

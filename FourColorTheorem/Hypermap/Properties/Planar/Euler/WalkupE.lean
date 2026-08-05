@@ -349,9 +349,9 @@ theorem walkupe_genus_eq_of_issplit {x : α} (hsx : H.skip_edge'_issplit x)
 
 theorem not_planar_of_not_glink_of_cross_edge_of_not_split {α : Type _}
 [Fintype α] [DecidableEq α] {H : Hypermap α} {x : α} (hgx : ¬H.glink x x)
-(hcex : H.cross_edge x) (hsx : ¬H.skip_edge'_issplit x) : ¬H.planar:=by{
+(hcex : H.cross_edge x) (hsx : ¬H.skip_edge'_issplit x) : ¬H.Planar:=by{
   have h:=euler_diff_ge_two_of_not_glink_of_cross_edge_of_not_split hgx hcex hsx
-  unfold planar
+  simp only [planar_def]
   apply Nat.ne_zero_of_lt (b:=0)
   unfold genus
   apply Nat.lt_of_succ_le
@@ -359,22 +359,22 @@ theorem not_planar_of_not_glink_of_cross_edge_of_not_split {α : Type _}
   exact h
 }
 
-theorem planar_walkupe_planar {x : α} (h : H.planar) : (H.WalkupE x).planar := by{
-  unfold planar at *
+theorem Planar.walkupe {x : α} (h : H.Planar) : (H.WalkupE x).Planar := by{
+  simp only [planar_def] at *
   have h':=walkupe_genus_le (H:=H) (x:=x)
   rw[h] at h'
   exact Nat.eq_zero_of_le_zero h'
 }
-theorem planar_walkupn_planar {x : α} (h : H.planar) : (H.WalkupN x).planar := by{
-  rw[WalkupN, permF_planar]
-  apply planar_walkupe_planar
-  rw[permN_planar]
+theorem Planar.walkupn {x : α} (h : H.Planar) : (H.WalkupN x).Planar := by{
+  rw[WalkupN, permF_planar_iff]
+  apply Planar.walkupe
+  rw[permN_planar_iff]
   exact h
 }
-theorem planar_walkupf_planar {x : α} (h : H.planar) : (H.WalkupF x).planar := by{
-  rw[WalkupF, permN_planar]
-  apply planar_walkupe_planar
-  rw[permF_planar]
+theorem Planar.walkupf {x : α} (h : H.Planar) : (H.WalkupF x).Planar := by{
+  rw[WalkupF, permN_planar_iff]
+  apply Planar.walkupe
+  rw[permF_planar_iff]
   exact h
 }
 

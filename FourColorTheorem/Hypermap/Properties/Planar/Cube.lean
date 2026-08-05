@@ -21,9 +21,8 @@ theorem cube_genus : H.cube.genus = H.genus := by{
   omega
 }
 
-theorem cube_planar : H.cube.planar ↔ H.planar := by{
-  unfold planar
-  simp[cube_genus]
+theorem cube_planar : H.cube.Planar ↔ H.Planar := by{
+  simp[planar_def,cube_genus]
 }
 
 open CubeTag

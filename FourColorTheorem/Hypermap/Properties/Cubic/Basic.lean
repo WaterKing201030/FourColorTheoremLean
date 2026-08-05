@@ -10,20 +10,23 @@ variable {H : Hypermap α}
 open Function
 open Relation
 
-theorem cubic_iff_period_three : H.cubic ↔ ∀x, H.node (H.node (H.node x)) = x ∧ H.node x ≠ x := by{
-  unfold cubic cubicSubset
+theorem cubic_iff_period_three : H.Cubic ↔ ∀x, H.node (H.node (H.node x)) = x ∧ H.node x ≠ x := by{
+  rw[cubic_def']
+  unfold cubicSubset
   simp[Set.eq_univ_iff_forall]
   simp[minimalPeriod_eq_three_iff]
 }
-theorem cubic.node_ne (hc : H.cubic) (x : α) : H.node x ≠ x := by{
+
+namespace Cubic
+theorem node_ne (hc : H.Cubic) (x : α) : H.node x ≠ x := by{
   rw[cubic_iff_period_three] at hc
   exact (hc x).right
 }
-theorem cubic.node_3 (hc : H.cubic) (x : α) : H.node (H.node (H.node x)) = x := by{
+theorem node_3 (hc : H.Cubic) (x : α) : H.node (H.node (H.node x)) = x := by{
   rw[cubic_iff_period_three] at hc
   exact (hc x).left
 }
-theorem cubic.node_2_ne (hc : H.cubic) (x : α) : H.node (H.node x) ≠ x := by{
+theorem node_2_ne (hc : H.Cubic) (x : α) : H.node (H.node x) ≠ x := by{
   rw[cubic_iff_period_three] at hc
   intro h
   have h' := (hc x).left
@@ -31,8 +34,7 @@ theorem cubic.node_2_ne (hc : H.cubic) (x : α) : H.node (H.node x) ≠ x := by{
   exact (hc x).right h'
 }
 
-namespace cubic
-theorem cnode_cases (hC : H.cubic) {x y : α} (hxy : H.cnode x y) :
+theorem cnode_cases (hC : H.Cubic) {x y : α} (hxy : H.cnode x y) :
   x = y ∨ node x = y ∨ node (node x) = y := by{
   rw[cnode, funReflTransGen_iff_iterate] at hxy
   rcases hxy with ⟨n, hn⟩
@@ -43,7 +45,7 @@ theorem cnode_cases (hC : H.cubic) {x y : α} (hxy : H.cnode x y) :
   | 0 | 1 | 2 => simp[hm] at hn; simp[hn]
   | _ + 3 => simp[hm, Nat.add_assoc] at hlt
 }
-theorem quotient_cases (hC : H.cubic) (x : α) : ∃q : Quotient H.nsetoid,
+theorem quotient_cases (hC : H.Cubic) (x : α) : ∃q : Quotient H.nsetoid,
   q.out = x ∨ node (q.out) = x ∨ node (node (q.out)) = x := by{
   let q : Quotient H.nsetoid := ⟦x⟧
   use q
@@ -58,7 +60,7 @@ theorem quotient_cases (hC : H.cubic) (x : α) : ∃q : Quotient H.nsetoid,
   simp[hqx, hnqx] at ih
   assumption
 }
-theorem ncomp_triple (hC : H.cubic) : Fintype.card α = H.ncomp * 3 := by{
+theorem ncomp_triple (hC : H.Cubic) : Fintype.card α = H.ncomp * 3 := by{
   have hC' := hC
   rw[cubic_iff_period_three] at hC
   let q1 := {x // ∃q : Quotient H.nsetoid, q.out = x}
@@ -262,6 +264,6 @@ theorem ncomp_triple (hC : H.cubic) : Fintype.card α = H.ncomp * 3 := by{
     }
   }
 }
-end cubic
+end Cubic
 
 end Hypermap

@@ -11,11 +11,12 @@ open Function
 open Relation
 
 section bridgeless
-theorem bridgeless.node_period_ge_two (Hb : H.bridgeless)
+theorem Bridgeless.node_period_ge_two (Hb : H.Bridgeless)
   : ∀x, minimalPeriod H.node x ≥ 2 := by{
   intro x
   by_contra
   rw[not_le] at this
+  rw[bridgeless_def] at Hb
   match hmpnx : minimalPeriod node x with
   | 0 => {
     have hmpnx' := H.node_injective.minimalPeriod_pos (x:=x)
@@ -33,17 +34,19 @@ theorem bridgeless.node_period_ge_two (Hb : H.bridgeless)
   }
   | _ + 2 => simp[hmpnx] at this; omega
 }
-theorem bridgeless.edge_ne (Hb : H.bridgeless)
+theorem Bridgeless.edge_ne (Hb : H.Bridgeless)
   : ∀x, H.edge x ≠ x := by{
     intro x
+    rw[bridgeless_def] at Hb
     specialize Hb x
     contrapose Hb
     rw[Hb]
     apply ReflTransGen.refl
   }
-theorem bridgeless.not_cface_of_cface_edge (HB : H.bridgeless) (x y : α)
+theorem Bridgeless.not_cface_of_cface_edge (HB : H.Bridgeless) (x y : α)
   : H.cface (edge x) y → ¬H.cface x y := by{
   intro hexy hxy
+  rw[bridgeless_def] at HB
   apply HB x
   exact hxy.trans (cface_equivalence.symm hexy)
 }

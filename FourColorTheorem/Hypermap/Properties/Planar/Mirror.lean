@@ -12,7 +12,7 @@ open Function
 open Relation
 
 theorem mirror_jordan : H.mirror.jordan ↔ H.jordan := by{
-  simp only [←planar_iff_jordan, mirror_planar]
+  simp only [←planar_iff_jordan, mirror_planar_iff]
 }
 
 end Hypermap

@@ -13,7 +13,8 @@ open Relation
 
 open CubeTag
 
-theorem cube_bridgeless : H.cube.bridgeless ↔ H.bridgeless := by{
+theorem cube_bridgeless_iff : H.cube.Bridgeless ↔ H.Bridgeless := by{
+  simp only [bridgeless_def]
   constructor
   · {
     intro ih x hfxe
@@ -62,6 +63,10 @@ theorem cube_bridgeless : H.cube.bridgeless ↔ H.bridgeless := by{
       exact ih hftxe
     }
   }
+}
+
+theorem Bridgeless.cube (Hb : H.Bridgeless) : H.cube.Bridgeless := by{
+  rwa[cube_bridgeless_iff]
 }
 
 end Hypermap

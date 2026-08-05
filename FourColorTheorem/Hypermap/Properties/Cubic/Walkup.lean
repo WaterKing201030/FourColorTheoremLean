@@ -11,7 +11,7 @@ variable {H : Hypermap α}
 open Function
 open Relation
 
-theorem walkupe_precubic_of_precubic (Hc : H.precubic) (x : α) : (H.WalkupE x).precubic := by{
+theorem Precubic.walkupe (Hc : H.Precubic) (x : α) : (H.WalkupE x).Precubic := by{
   rw[precubic_def] at *
   intro x'
   have Hc' := Hc x'.val

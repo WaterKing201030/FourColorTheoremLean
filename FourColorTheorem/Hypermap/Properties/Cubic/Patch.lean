@@ -6,10 +6,6 @@ open Relation
 
 namespace Hypermap
 
-variable {α : Type _} [Fintype α] [DecidableEq α]
-variable {αd : Type _} [Fintype αd] [DecidableEq αd]
-variable {αr : Type _} [Fintype αr] [DecidableEq αr]
-
 namespace Patch
 
 variable {α : Type _} [Fintype α] [DecidableEq α]
@@ -20,7 +16,7 @@ variable {hd : αd → α} {hr : αr → α} {bGd : List αd} {bGr : List αr}
 variable (patchG : Patch G Gd Gr hd hr bGd bGr)
 include patchG
 
-theorem cubic_iff : G.cubic ↔ Gd.cubic ∧ Gr.cubicSubset {x | x ∉ bGr} := by{
+theorem cubic_iff : G.Cubic ↔ Gd.Cubic ∧ Gr.cubicSubset {x | x ∉ bGr} := by{
   change _ ↔ _ ∧ _ ⊆ _
   simp only [Set.setOf_subset_setOf, cubic_iff_period_three, minimalPeriod_eq_three_iff]
   constructor
@@ -88,4 +84,23 @@ theorem cubic_iff : G.cubic ↔ Gd.cubic ∧ Gr.cubicSubset {x | x ∉ bGr} := b
 }
 
 end Patch
+
+section
+variable {α : Type _} [Fintype α] [DecidableEq α]
+variable {αd : Type _} [Fintype αd] [DecidableEq αd]
+variable {αr : Type _} [Fintype αr] [DecidableEq αr]
+variable {G : Hypermap α} {Gd : Hypermap αd} {Gr : Hypermap αr}
+variable {hd : αd → α} {hr : αr → α} {bGd : List αd} {bGr : List αr}
+variable (patchG : Patch G Gd Gr hd hr bGd bGr)
+include patchG
+theorem Cubic.patch_disk (Hc : G.Cubic) : Gd.Cubic := by{
+  rw[patchG.cubic_iff] at Hc
+  exact Hc.left
+}
+theorem Cubic.patch_rem_cubicSubset (Hc : G.Cubic) : Gr.cubicSubset {x | x ∉ bGr} := by{
+  rw[patchG.cubic_iff] at Hc
+  exact Hc.right
+}
+end
+
 end Hypermap

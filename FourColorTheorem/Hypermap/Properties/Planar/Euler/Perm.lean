@@ -24,9 +24,13 @@ theorem permN_genus : H.permN.genus = H.genus := by{
   unfold genus
   simp[H.permN_euler_rhs, H.permN_euler_lhs]
 }
-theorem permN_planar : H.permN.planar ↔ H.planar := by{
-  unfold planar
+theorem permN_planar_iff : H.permN.Planar ↔ H.Planar := by{
+  simp[planar_def]
   simp[H.permN_genus]
+}
+theorem Planar.permN (Hp : H.Planar) : H.permN.Planar := by{
+  rw[permN_planar_iff]
+  exact Hp
 }
 
 theorem permF_euler_lhs : H.permF.euler_lhs = H.euler_lhs := by{
@@ -42,9 +46,13 @@ theorem permF_genus : H.permF.genus = H.genus := by{
   unfold genus
   simp[H.permF_euler_rhs, H.permF_euler_lhs]
 }
-theorem permF_planar : H.permF.planar ↔ H.planar := by{
-  unfold planar
+theorem permF_planar_iff : H.permF.Planar ↔ H.Planar := by{
+  simp[planar_def]
   simp[H.permF_genus]
+}
+theorem Planar.permF (Hp : H.Planar) : H.permF.Planar := by{
+  rw[permF_planar_iff]
+  exact Hp
 }
 
 end Hypermap

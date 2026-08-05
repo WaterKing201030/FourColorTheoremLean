@@ -18,7 +18,7 @@ theorem dual_euler_rhs : H.dual.euler_rhs = H.euler_rhs := by{
   simp[dual_ecomp, dual_ncomp, dual_fcomp, Nat.add_comm]
 }
 theorem dual_genus : H.dual.genus = H.genus := by{unfold genus;simp[dual_euler_lhs, dual_euler_rhs]}
-theorem dual_planar : H.dual.planar ↔ H.planar := by{unfold planar;simp[dual_genus]}
+theorem dual_planar : H.dual.Planar ↔ H.Planar := by{simp[planar_def, dual_genus]}
 
 
 theorem dual_jordan_imp (hJ : H.jordan) : H.dual.jordan := by{

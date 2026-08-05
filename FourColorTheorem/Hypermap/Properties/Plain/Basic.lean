@@ -10,9 +10,9 @@ variable {H : Hypermap α}
 open Function
 open Relation
 
-namespace plain
+namespace Plain
 
-theorem cedge_cases (hp : H.plain) {x y : α} (hxy : H.cedge x y)
+theorem cedge_cases (hp : H.Plain) {x y : α} (hxy : H.cedge x y)
   : x = y ∨ edge x = y := by{
     rw[cedge, funReflTransGen_iff_iterate] at hxy
     have ⟨n, hn⟩:=hxy
@@ -27,7 +27,7 @@ theorem cedge_cases (hp : H.plain) {x y : α} (hxy : H.cedge x y)
       exact Or.symm ih
     }
   }
-theorem cedge_cases_iff (hp : H.plain) {x y : α}
+theorem cedge_cases_iff (hp : H.Plain) {x y : α}
   : H.cedge x y ↔ x = y ∨ edge x = y := by{
     apply Iff.intro hp.cedge_cases
     intro h
@@ -35,7 +35,7 @@ theorem cedge_cases_iff (hp : H.plain) {x y : α}
     · rw[h]; apply ReflTransGen.refl
     · rw[← h]; apply funReflTransGen.single
   }
-theorem cedge_cases'_iff (hp : H.plain) {x y : α}
+theorem cedge_cases'_iff (hp : H.Plain) {x y : α}
   : H.cedge x y ↔ x = y ∨ x = edge y := by{
     rw[hp.cedge_cases_iff]
     apply or_congr_right
@@ -43,10 +43,10 @@ theorem cedge_cases'_iff (hp : H.plain) {x y : α}
     rw[plain_iff_edge_edge] at hp
     rw[(hp x).left]
   }
-theorem cedge_cases' (hp : H.plain) {x y : α} (hxy : H.cedge x y)
+theorem cedge_cases' (hp : H.Plain) {x y : α} (hxy : H.cedge x y)
   : x = y ∨ x = edge y := hp.cedge_cases'_iff.mp hxy
 
-theorem equotient_lemma (hP : H.plain) (x : α) : (∃q : Quotient H.esetoid, q.out = x)
+theorem equotient_lemma (hP : H.Plain) (x : α) : (∃q : Quotient H.esetoid, q.out = x)
 ↔ ¬∃q : Quotient H.esetoid, edge (q.out) = x := by{
   have hP' := hP
   rw[plain_iff_edge_edge] at hP
@@ -81,7 +81,7 @@ theorem equotient_lemma (hP : H.plain) (x : α) : (∃q : Quotient H.esetoid, q.
     exact h0.resolve_right h
   }
 }
-theorem ecomp_double (hP : H.plain) : Fintype.card α = H.ecomp * 2 := by{
+theorem ecomp_double (hP : H.Plain) : Fintype.card α = H.ecomp * 2 := by{
   have hP' := hP
   rw[plain_iff_edge_edge] at hP
   let q1 := {x // ∃q : Quotient H.esetoid, q.out = x}
@@ -181,21 +181,21 @@ theorem ecomp_double (hP : H.plain) : Fintype.card α = H.ecomp * 2 := by{
     }
   }
 }
-theorem edge_edge (hp : H.plain) {p : α} : H.edge (H.edge p) = p := by{
+theorem edge_edge (hp : H.Plain) {p : α} : H.edge (H.edge p) = p := by{
   rw[plain_iff_edge_edge] at hp
   rw[(hp p).left]
 }
-theorem edgeinv_eq_edge (hp : H.plain) : H.edgeinv = H.edge := by{
+theorem edgeinv_eq_edge (hp : H.Plain) : H.edgeinv = H.edge := by{
   ext x
   rw[← edge_inj, edgeinv_rightinv, hp.edge_edge]
 }
-theorem edge_eq_eq_eq_edge (hp : H.plain) {a b : α} : H.edge a = b ↔ a = H.edge b := by{
+theorem edge_eq_eq_eq_edge (hp : H.Plain) {a b : α} : H.edge a = b ↔ a = H.edge b := by{
   nth_rw 1 [← hp.edgeinv_eq_edge, edgeinv_eq_iff_eq_edge]
 }
-theorem edge_ne (hp : H.plain) (p : α) : H.edge p ≠ p := by{
+theorem edge_ne (hp : H.Plain) (p : α) : H.edge p ≠ p := by{
   rw[plain_iff_edge_edge] at hp
   exact (hp p).right
 }
-end plain
+end Plain
 
 end Hypermap
