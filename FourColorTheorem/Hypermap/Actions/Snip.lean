@@ -13,6 +13,7 @@ variable (r : List α)
 
 def dlink (x y : α) := x ∉ r ∧ H.clink x y
 def dconnect (x y : α) := ReflTransGen (H.dlink r) (H.nodeinv y) x
+-- 给定一个集合，有不经过该集合的，与集合上某个元素相连的路径
 def diskN := {x | ∃y ∈ r, H.dconnect r x y}
 def diskE := {x | x ∈ H.diskN r ∧ x ∉ r}
 def diskF := H.diskN r \ H.fband r
@@ -21,7 +22,7 @@ def diskFC := (H.diskN r)ᶜ \ H.fband r
 end
 
 variable {α : Type _} [Fintype α] [DecidableEq α]
-variable {H : Hypermap α} (HP : H.planar)
+variable {H : Hypermap α}
 variable {r : List α} (scycRr : H.simpleCycle H.rlink r)
 
 theorem diskN_nodeinv_close : ∀x ∈ H.diskN r, H.nodeinv x ∈ H.diskN r := by{

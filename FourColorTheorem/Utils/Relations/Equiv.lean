@@ -78,3 +78,41 @@ theorem Std.Symm.comm {r : α → α → Prop} (e : Std.Symm r) {a b : α}
   }
 
 theorem Setoid.equivalence {r : Setoid α} : Equivalence r := r.iseqv
+
+@[inline] noncomputable instance Equiv.subtype_em {P : α → Prop} :
+  α ≃ {a // P a} ⊕ {a // ¬P a} := by{
+  classical
+  let f : α → {a // P a} ⊕ {a // ¬P a} :=
+    fun x => if h : P x then Sum.inl ⟨x, h⟩ else Sum.inr ⟨x, h⟩
+  apply Equiv.ofBijective f
+  constructor
+  · {
+    intro a b hab
+    unfold f at hab
+    rcases em (P a) with ha | ha
+    · {
+      have hb : P b := by{
+        by_contra hb
+        simp[ha, hb] at hab
+      }
+      simp[ha, hb] at hab
+      assumption
+    }
+    have hb : ¬P b := by{
+      by_contra hb
+      simp[ha, hb] at hab
+    }
+    simp[ha, hb] at hab
+    assumption
+  }
+  · {
+    intro a'
+    match a' with
+    | Sum.inl ⟨a, h⟩
+    | Sum.inr ⟨a, h⟩ => {
+      use a
+      unfold f
+      simp[h]
+    }
+  }
+}

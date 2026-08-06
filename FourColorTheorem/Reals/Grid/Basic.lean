@@ -1147,6 +1147,8 @@ def height (R : GRectangle) : ℕ := R.vspan.width
 def area (R : GRectangle) : ℕ := R.width * R.height
 def proper (R : GRectangle) : Prop := R.area > 0
 def enum (R : GRectangle) : List GPixel := (R.hspan.enum ×ˢ R.vspan.enum).map ofProd
+theorem width_eta {R : GRectangle} : R.hspan.width = R.width := rfl
+theorem height_eta {R : GRectangle} : R.vspan.width = R.height := rfl
 theorem enum_length {R : GRectangle} : R.enum.length = R.area := by{
   simp[enum, area, GInterval.enum, List.length_product, width, height]
 }
