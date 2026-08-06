@@ -117,4 +117,15 @@ theorem PlanarBridgelessPlainPrecubic.concatEdge
     refine ⟨⟨⟨H2p, H2b⟩, H2p'⟩, H2c⟩
   }
 
+theorem PlanarBridgeless.cube (Hp : H.PlanarBridgeless)
+  : H.cube.PlanarBridgeless := by{
+  refine ⟨Hp.toPlanar.cube, Hp.toBridgeless.cube⟩
+}
+
+theorem PlanarBridgeless.cube_planarBridgelessPlainPrecubic (Hp : H.PlanarBridgeless)
+  : H.cube.PlanarBridgelessPlainPrecubic := by{
+  refine ⟨?_, H.cube_cubic.precubic⟩
+  refine ⟨Hp.cube, H.cube_plain⟩
+}
+
 end Hypermap

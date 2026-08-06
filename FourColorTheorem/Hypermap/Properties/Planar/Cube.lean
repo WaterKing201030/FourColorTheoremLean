@@ -21,8 +21,12 @@ theorem cube_genus : H.cube.genus = H.genus := by{
   omega
 }
 
-theorem cube_planar : H.cube.Planar ↔ H.Planar := by{
+theorem cube_planar_iff : H.cube.Planar ↔ H.Planar := by{
   simp[planar_def,cube_genus]
+}
+
+theorem Planar.cube (Hp : H.Planar) : H.cube.Planar := by{
+  simpa[cube_planar_iff]
 }
 
 open CubeTag

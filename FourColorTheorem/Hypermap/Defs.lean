@@ -18,6 +18,19 @@ variable {H : Hypermap α}
 open Function
 open Relation
 
+def type (_ : Hypermap α) := α
+@[inline] instance type.instFintype : Fintype H.type
+  := by{
+    unfold type
+    infer_instance
+  }
+@[inline] instance type.instDecidableEq : DecidableEq H.type
+  := by{
+    unfold type
+    infer_instance
+  }
+
+
 theorem enf_id : H.edge ∘ H.node ∘ H.face = id := funext H.enf_cancel
 theorem edge_leftInverse : LeftInverse H.edge (H.node ∘ H.face) := H.enf_cancel
 theorem edge_surjective : Surjective H.edge := LeftInverse.surjective edge_leftInverse
