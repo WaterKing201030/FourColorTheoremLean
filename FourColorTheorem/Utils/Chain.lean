@@ -330,6 +330,17 @@ theorem List.IsChain_map {β : Type _} {r : α → α → Prop} {f : β → α} 
     | [] | [_] => simp
     | a::b::as => simp[InvImage, ←IsChain_map (l:=b::as)]
   }
+theorem List.IsChain.subset {r1 r2 : α → α → Prop} (h : ∀ {x y}, r1 x y → r2 x y)
+  {l : List α} (hl : l.IsChain r1) : l.IsChain r2 := by{
+    match l with
+    | [] | [_] => simp
+    | a::b::l' => {
+      rw[List.isChain_cons_cons] at *
+      apply And.intro (h hl.1)
+      apply subset h
+      exact hl.2
+    }
+  }
 
 theorem List.isChain_attachWith_of_iff_getElem {p : List α} {P : α → Prop} (hP : ∀ x ∈ p, P x)
   {r : α → α → Prop} {r' : {x // P x} → {x // P x} → Prop}
@@ -548,3 +559,17 @@ theorem List.isCycleChain_iff_prev_of_nodup [DecidableEq α] {r : α → α → 
       apply ih
     }
   }
+
+theorem List.isChain_disjoint_iff {r : α → α → Prop} {l1 l2 : List α} (nsing : ∀ x, l1 ≠ [x])
+: (l1.IsChain r ∧ l1.Disjoint l2) ↔ (l1.IsChain (fun x y => r x y ∧ x ∉ l2 ∧ y ∉ l2))
+:= by{
+  match l1 with
+  | [] | [a, b] => simp
+  | [_] => simp at nsing
+  | a :: b :: c :: l1' => {
+    rw[List.isChain_cons_cons (b:=b), List.isChain_cons_cons (b:=b)]
+    rw[← isChain_disjoint_iff (by{simp})]
+    simp
+    aesop
+  }
+}

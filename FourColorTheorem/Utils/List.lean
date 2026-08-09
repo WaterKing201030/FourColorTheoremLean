@@ -71,6 +71,11 @@ theorem List.getLast_cons_eq_getLastD {x : α} {l : List α}
       exact ih
     }
   }
+theorem List.head_concat_eq_headD {l : List α} {x : α}
+  : (l ++ [x]).head (by{simp}) = l.headD x := by{
+    match l with
+    | [] | _ :: _ => simp
+  }
 theorem List.getLastD_append_cons {a : α} {l₁ : List α} {x : α} {l₂ : List α}
   : (l₁ ++ x::l₂).getLastD a = l₂.getLastD x := by{
     induction l₂ generalizing l₁ x with
@@ -496,6 +501,17 @@ theorem List.disjoint_union_right [DecidableEq α] {l1 l2 l3 : List α}
   : l1.Disjoint (l2 ∪ l3) ↔ l1.Disjoint l2 ∧ l1.Disjoint l3 := by{
     rw[List.disjoint_union_right_iff_disjoint_append_right, List.disjoint_append_right]
   }
+theorem List.disjoint_tail_left {l1 l2 : List α} (h : l1.Disjoint l2)
+: l1.tail.Disjoint l2 := by{
+  intro x hx1
+  exact h (mem_of_mem_tail hx1)
+}
+theorem List.disjoint_tail_right {l1 l2 : List α} (h : l1.Disjoint l2)
+: l1.Disjoint l2.tail := by{
+  rw[disjoint_comm]
+  apply disjoint_tail_left
+  exact h.symm
+}
 
 theorem List.length_le_length_of_nodup_of_subset {l1 l2 : List α}
   (h1d : l1.Nodup) (h2d : l2.Nodup) (h12 : l1 ⊆ l2) : l1.length ≤ l2.length := by{

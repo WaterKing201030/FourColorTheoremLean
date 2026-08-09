@@ -617,6 +617,33 @@ theorem List.tail_eq_dropLast_map_of_isChain_fromFun {p : List α}
       }
     }
   }
+theorem List.isChain_fromFun_getLast {p : List α} {f : α → α}
+  (hpn : p ≠ []) (hpc : p.IsChain (fromFun f))
+  : ∀x ∈ p, funReflTransGen f x (p.getLast hpn) := by{
+    intro x hpx
+    induction p generalizing x with
+    | nil => contradiction
+    | cons x' p' ih => {
+      rcases eq_or_ne p' [] with hp'n | hp'n
+      · {
+        rw[funReflTransGen]
+        simp[hp'n] at *
+        simp[← hpx]
+        rfl
+      }
+      specialize ih hp'n hpc.of_cons
+      rw[List.mem_cons] at hpx
+      rcases hpx with hpx | hpx
+      · {
+        rw[hpx]
+        rw[funReflTransGen, ReflTransGen_iff_isChain_option]
+        use x' :: p'
+        simpa[List.getLast?_eq_some_getLast]
+      }
+      specialize ih _ hpx
+      rwa[List.getLast_cons hp'n]
+    }
+  }
 theorem List.isChain_fromFun_injective_univ {p : List α} {f : α → α} (hf : Injective f)
   (hpn : p ≠ []) (hpc : p.IsChain (fromFun f)) (hplh : p.head hpn = f (p.getLast hpn))
   : ∀x, x ∈ p → f x ∈ p := by{
@@ -880,3 +907,40 @@ theorem Relation.funReflTransGen_iff_mem_of_isCycleChain
     rw[← hn]
     apply List.forall_mem_of_isCycleChain hl hx
   }
+
+
+theorem List.exists_isChain_disjoint_shorten {l1 l2 : List α} {r : α → α → Prop}
+(hc : IsChain r l1) (hd : l1.Disjoint l2) (hn : l1 ≠ [])
+  : ∃ l1', ∃ h'n : l1' ≠ [], List.IsChain r l1' ∧ l1'.Nodup
+  ∧ l1'.head h'n = l1.head hn ∧ l1'.getLast h'n = l1.getLast hn ∧ l1'.Disjoint l2 := by{
+  match l1 with
+  | [x] => {
+    use [x]
+    simp at hd
+    simpa
+  }
+  | a :: b :: l1' => {
+    have IH := (List.isChain_disjoint_iff (r := r) (l1 := a :: b :: l1') (l2 := l2)
+      (by{simp})).mp ⟨hc, hd⟩
+    have IH' := ReflTransGen_iff_isChain.mpr ⟨b::l1', IH, rfl⟩
+    rw[ReflTransGen_iff_isChain_nodup] at IH'
+    rcases IH' with ⟨l, hl⟩
+    use a :: l, (by{simp})
+    apply And.intro (by{
+      apply hl.2.1.subset
+      intro x y ⟨h, _, _⟩
+      exact h
+    })
+    apply And.intro hl.1
+    apply And.intro (by{simp})
+    rw[List.getLast_cons_eq_getLastD, List.getLast_cons_eq_getLastD, hl.2.2]
+    apply And.intro rfl
+    rw[List.isChain_cons_cons] at IH
+    match l with
+    | [] => simp[IH]
+    | _ :: _ => {
+      rw[← List.isChain_disjoint_iff (by{simp})] at hl
+      simp[hl]
+    }
+  }
+}

@@ -68,7 +68,7 @@ theorem subset_fband {p : List α} {x : α} : x ∈ p → x ∈ H.fband p :=by{
   simp only [h, true_and]
   apply ReflTransGen.refl
 }
-theorem fband_closure {p : List α} {x : α} (hx : x ∈ H.fband p) : H.face x ∈ H.fband p:=by{
+theorem fband_close {p : List α} {x : α} (hx : x ∈ H.fband p) : H.face x ∈ H.fband p:=by{
   unfold fband at *
   simp only [List.any_eq_true, decide_eq_true_eq, Set.mem_setOf_eq] at *
   have ⟨k, hk⟩:=hx
@@ -79,6 +79,16 @@ theorem fband_closure {p : List α} {x : α} (hx : x ∈ H.fband p) : H.face x �
   apply cface_Symm.symm
   apply ReflTransGen.single
   simp[fromFun]
+}
+theorem fband_closure {p : List α} : Closure (fromFun H.face) (H.fband p) :=by{
+  rw[closure_iff_single]
+  unfold fromFun
+  simp only [forall_eq']
+  apply fband_close
+}
+theorem fband_cface_close {p : List α} {x y : α}
+(hxy : H.cface x y) (hx : x ∈ H.fband p) : y ∈ H.fband p :=by{
+  apply fband_closure _ hx _ hxy
 }
 theorem fproj_cface {p : List α} {x : α} :
   H.cface x (H.fproj p x) := by{
@@ -129,6 +139,57 @@ theorem simpleList_cons {x : α} {p : List α} : H.simpleList (x :: p) ↔
   }
 @[simp] theorem simpleCycle_nil {e : α → α → Prop} : H.simpleCycle e [] := by{
   unfold simpleCycle; simp
+}
+theorem simpleList.cface_nodup {p : List α}
+: H.simpleList p → ∀x ∈ p, ∀y ∈ p, H.cface x y → x = y := by{
+  unfold simpleList
+  induction p with
+  | nil => simp
+  | cons a p ih => {
+    rw[List.map_cons, List.nodup_cons]
+    intro ⟨ihl, ihr⟩
+    specialize ih ihr
+    rw[List.mem_map] at ihl
+    push_neg at ihl
+    simp only [ne_eq, Quotient.eq] at ihl
+    change ∀ a_1 ∈ p, ¬H.cface a_1 a at ihl
+    intro x hx y hy hxy
+    simp only [List.mem_cons] at hx hy
+    have ihl' : ∀b ∈ p, b ≠ a := by{
+      intro b hb hab
+      apply ihl b hb
+      rw[hab]
+      apply ReflTransGen.refl
+    }
+    rcases hx with hx | hx
+    · {
+      rcases hy with hy | hy
+      · simp[hx, hy]
+      specialize ihl _ hy
+      rw[← hx] at ihl
+      apply H.cface_equivalence.symm at hxy
+      contradiction
+    }
+    rcases hy with hy | hy
+    · {
+      specialize ihl _ hx
+      rw[← hy] at ihl
+      contradiction
+    }
+    exact ih _ hx _ hy hxy
+  }
+}
+theorem simpleList.rotate {p : List α} (hs : H.simpleList p) (n : ℕ)
+: H.simpleList (p.rotate n) := by{
+  unfold simpleList at *
+  rw[List.map_rotate]
+  rwa[List.nodup_rotate]
+}
+theorem simpleCycle.rotate {e : α → α → Prop} {p : List α}
+(hs : H.simpleCycle e p) (n : ℕ) : H.simpleCycle e (p.rotate n) := by{
+  constructor
+  · apply hs.left.rotate
+  · apply hs.right.rotate
 }
 end simple
 
