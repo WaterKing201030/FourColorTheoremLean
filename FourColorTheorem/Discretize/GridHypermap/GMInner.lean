@@ -96,6 +96,13 @@ theorem GMface_end0 {hgp : GridMapProper ab0 cm0} {u : hgp.GMDart}
     apply hd.elim h0n.left h2f.left
   }
 }
+theorem GMedge_inner_cases {hgp : GridMapProper ab0 cm0} {u : hgp.GMDart}
+: u ∈ hgp.GMInner ∨ GMedge u ∈ hgp.GMInner := by{
+  simp only [hgp.mem_GMInner_iff, GMedge]
+  have hu := u.prop
+  rw[hgp.mem_GMGrid_iff] at hu
+  exact hu
+}
 
 abbrev GMInnerDart (hgp : GridMapProper ab0 cm0) := {u // u ∈ hgp.GMInner}
 abbrev GMOuterDart (hgp : GridMapProper ab0 cm0) := {u // u ∉ hgp.GMInner}

@@ -224,4 +224,8 @@ theorem dual_jordan : H.dual.jordan ↔ H.jordan := by{
   · exact dual_jordan_imp
 }
 
+theorem Planar.dual (hp : H.Planar) : H.dual.Planar := by{
+  rwa[H.dual_planar]
+}
+
 end Hypermap

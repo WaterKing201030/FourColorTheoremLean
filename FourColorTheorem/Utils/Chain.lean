@@ -341,7 +341,22 @@ theorem List.IsChain.subset {r1 r2 : α → α → Prop} (h : ∀ {x y}, r1 x y 
       exact hl.2
     }
   }
-
+theorem List.IsChain.subset' {r1 r2 : α → α → Prop}
+  {l : List α} (h : ∀ {x y}, x ∈ l → y ∈ l → r1 x y → r2 x y) (hl : l.IsChain r1) : l.IsChain r2
+  := by{
+    match l with
+    | [] | [_] => simp
+    | a::b::l' => {
+      rw[List.isChain_cons_cons] at *
+      have h1 := h (x := a) (y := b) (by{simp}) (by{simp})
+      apply hl.imp h1
+      apply subset'
+      intro x y hx hy
+      apply h
+      · simp[hx]
+      · simp[hy]
+    }
+  }
 theorem List.isChain_attachWith_of_iff_getElem {p : List α} {P : α → Prop} (hP : ∀ x ∈ p, P x)
   {r : α → α → Prop} {r' : {x // P x} → {x // P x} → Prop}
   (h : ∀ i, (hi : i < p.length - 1) → r'
@@ -573,3 +588,33 @@ theorem List.isChain_disjoint_iff {r : α → α → Prop} {l1 l2 : List α} (ns
     aesop
   }
 }
+
+theorem List.IsCycleChain_map {β : Type _} {r : α → α → Prop} {f : β → α} {l : List β}
+  : IsCycleChain r (l.map f) ↔ IsCycleChain (InvImage r f) l := by{
+    unfold IsCycleChain
+    simp only [map_eq_nil_iff, getLast_map, head_map, dite_then_true]
+    rcases eq_or_ne l [] with hln | hln
+    · simp[hln]
+    · simp[hln, InvImage, IsChain_map]
+  }
+theorem List.IsCycleChain.subset' {r1 r2 : α → α → Prop}
+  {l : List α} (h : ∀ {x y}, x ∈ l → y ∈ l → r1 x y → r2 x y) (hl : l.IsCycleChain r1)
+  : l.IsCycleChain r2
+  := by{
+    revert hl
+    unfold IsCycleChain
+    rcases eq_or_ne l [] with hln | hln
+    · simp[hln]
+    · {
+      simp only [hln, ↓reduceDIte, and_imp]
+      intro hlc hlt
+      apply And.intro (hlc.subset' h)
+      apply h (by{simp}) (by{simp}) hlt
+    }
+  }
+theorem List.IsCycleChain.subset {r1 r2 : α → α → Prop} (h : ∀ {x y}, r1 x y → r2 x y)
+  {l : List α} (hl : l.IsCycleChain r1) : l.IsCycleChain r2 := by{
+    apply hl.subset'
+    intro _ _ _ _
+    apply h
+  }

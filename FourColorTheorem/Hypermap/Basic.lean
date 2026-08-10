@@ -95,6 +95,11 @@ theorem fband_rotate {p : List α} {n : ℕ}
   ext x
   simp [H.mem_fband_iff]
 }
+theorem fband_reverse {p : List α}
+: H.fband p.reverse = H.fband p := by{
+  ext x
+  simp [H.mem_fband_iff]
+}
 theorem fproj_cface {p : List α} {x : α} :
   H.cface x (H.fproj p x) := by{
     match hf : p.find? (H.cface x) with

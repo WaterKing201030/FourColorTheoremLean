@@ -27,6 +27,15 @@ theorem edge_mem_GMGrid_iff {hgp : GridMapProper ab0 cm0} {d : GDart}
   : edge d ∈ hgp.GMGrid ↔ d ∈ hgp.GMGrid := by{
   rw[mem_GMGrid_iff, mem_GMGrid_iff, or_comm, edge_2]
 }
+theorem CM_subset_GMGrid {hgp : GridMapProper ab0 cm0} {i : Fin n}
+: ∀{x}, x.half ∈ hgp.extendCMatte i → x ∈ hgp.GMGrid := by{
+  intro x hx
+  have IH := hgp.CM_subset_CMBBox (i := i)
+  have IH' := @IH x.half (by{rw[Matte.mem_toRegion_iff_mem]; simp[hx]})
+  rw[← GRectangle.mem_iff_toRegion] at IH'
+  rw[mem_GMGrid_iff]
+  simp[IH']
+}
 
 abbrev GMDart (hgp : GridMapProper ab0 cm0) := {d : GDart // d ∈ hgp.GMGrid}
 

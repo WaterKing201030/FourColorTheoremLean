@@ -124,6 +124,76 @@ theorem mem_diskFC_rotate {x : α} {n : ℕ}
   exact hx
 }
 
+theorem dlink_reverse_eq
+: H.dlink r.reverse = H.dlink r := by{
+  ext x y
+  unfold dlink
+  simp
+}
+theorem dlink.reverse {x y : α} (hxy : H.dlink r x y)
+: H.dlink r.reverse x y := by{
+  rwa[dlink_reverse_eq]
+}
+theorem dconnect_reverse_eq
+: H.dconnect r.reverse = H.dconnect r := by{
+  ext x y
+  unfold dconnect
+  rw[dlink_reverse_eq]
+}
+theorem dconnect.reverse {x y : α} (hxy : H.dconnect r x y)
+: H.dconnect r.reverse x y := by{
+  rwa[dconnect_reverse_eq]
+}
+theorem diskN_reverse_eq
+: H.diskN r.reverse = H.diskN r := by{
+  ext x
+  unfold diskN
+  rw[Set.mem_setOf]
+  simp[dconnect_reverse_eq]
+}
+theorem mem_diskN_reverse {x : α}
+: x ∈ H.diskN r → x ∈ H.diskN (r.reverse) := by{
+  intro hx
+  rw[diskN_reverse_eq]
+  exact hx
+}
+theorem diskE_reverse_eq
+: H.diskE (r.reverse) = H.diskE r := by{
+  ext x
+  change _ ∧ _ ↔ _ ∧ _
+  simp[diskN_reverse_eq]
+}
+theorem mem_diskE_reverse {x : α}
+: x ∈ H.diskE r → x ∈ H.diskE (r.reverse) := by{
+  intro hx
+  rw[diskE_reverse_eq]
+  exact hx
+}
+theorem diskF_reverse_eq
+: H.diskF (r.reverse) = H.diskF r := by{
+  ext x
+  change _ ∧ _ ↔ _ ∧ _
+  simp[diskN_reverse_eq, fband_reverse]
+}
+theorem mem_diskF_reverse {x : α}
+: x ∈ H.diskF r → x ∈ H.diskF (r.reverse) := by{
+  intro hx
+  rw[diskF_reverse_eq]
+  exact hx
+}
+theorem diskFC_reverse_eq
+: H.diskFC (r.reverse) = H.diskFC r := by{
+  ext x
+  change _ ∧ _ ↔ _ ∧ _
+  simp[diskN_reverse_eq, fband_reverse]
+}
+theorem mem_diskFC_reverse {x : α}
+: x ∈ H.diskFC r → x ∈ H.diskFC (r.reverse) := by{
+  intro hx
+  rw[diskFC_reverse_eq]
+  exact hx
+}
+
 theorem cclink_of_dconnect {x y : α} (hd : H.dconnect r x y)
   : H.cclink (H.nodeinv y) x := by{
   unfold dconnect at hd

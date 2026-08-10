@@ -806,6 +806,7 @@ theorem edge_ne {d : GDart} : edge d ≠ d := by{
     | inl hx | inr hx => simp[hx]
   }
 }
+
 theorem face_2_ne {d : GDart} : face (face d) ≠ d := by{
   simp only [face, arc, sub_def, x_ccw, y_mod2, x_mod2, y_ccw, add_def, ne_eq]
   match d with | ⟨dx, dy⟩ => {
