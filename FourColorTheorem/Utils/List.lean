@@ -683,3 +683,65 @@ theorem List.pairmap_cons_cons {β : Type _} {f : α → α → β} {a b : α} {
   rw[List.tail, List.tail]
   rw[List.zipWith_cons_cons]
 }
+
+theorem List.Nodup.pmap' {α : Type u} {β : Type v} {p : α → Prop} {f : (a : α) → p a → β}
+    {l : List α} {H : ∀ (a : α), a ∈ l → p a}
+    -- 核心修改：将单射条件限制在 l 的元素上
+    (hf : ∀ (a b : α), a ∈ l → b ∈ l → (ha : p a) → (hb : p b) → f a ha = f b hb → a = b)
+    (h : l.Nodup) :
+    (List.pmap f l H).Nodup := by
+  induction l with
+  | nil =>
+    -- 空列表的 pmap 为空列表，显然无重复
+    simp
+  | cons x xs ih =>
+    -- 展开 pmap 的定义
+    rw[List.pmap_cons]
+    -- 对 Nodup (x::xs) 进行解构
+    cases h with
+    | cons h_notin h_nodup =>
+      -- 准备头部元素 x 的证据
+      have H_x : p x := H x List.mem_cons_self
+      -- 准备尾部 xs 的证据
+      have H_xs : ∀ (a : α), a ∈ xs → p a :=
+        fun a ha => H a (List.mem_cons_of_mem x ha)
+      -- 尾部的单射条件由原来的 hf 自动推出（因为 xs ⊆ l）
+      have hf_xs : ∀ (a b : α), a ∈ xs → b ∈ xs → (ha : p a) → (hb : p b) →
+          f a ha = f b hb → a = b :=
+        fun a b ha hb => hf a b (List.mem_cons_of_mem x ha) (List.mem_cons_of_mem x hb)
+      -- 对尾部应用归纳假设
+      specialize ih (H := H_xs) hf_xs h_nodup
+      -- 现在证明 (f x H_x) :: (pmap f xs H_xs) 无重复
+      apply List.Nodup.cons
+      · -- 证明头部元素 f x H_x 不在尾部中
+        intro contra
+        -- 利用 mem_pmap 性质：存在 y ∈ xs 使得值相等
+        rw [List.mem_pmap] at contra
+        rcases contra with ⟨y, hy, heq⟩
+        -- heq : f y (H_xs y hy) = f x H_x
+        -- 构造 x 和 y 属于 l 的证据
+        have h_x_in : x ∈ x :: xs := List.mem_cons_self
+        have h_y_in : y ∈ x :: xs := List.mem_cons_of_mem x hy
+        -- 应用局部单射条件 hf
+        specialize hf x y h_x_in h_y_in (H _ h_x_in) (H _ h_y_in) heq.symm
+        have h_notin' : x ∉ xs := by{
+          specialize h_notin x
+          simp at h_notin
+          assumption
+        }
+        rw[hf] at h_notin'
+        contradiction
+      · -- 尾部本身无重复，已由归纳假设给出
+        exact ih
+
+theorem List.Nodup.pmap'' {α : Type u} {β : Type v} {p : α → Prop} {f : (a : α) → p a → β}
+    {l : List α} {H : ∀ (a : α), a ∈ l → p a}
+    -- 核心修改：将单射条件限制在 l 的元素上
+    (hf : ∀ (a b : α), (ha : a ∈ l) → (hb : b ∈ l) → f a (H _ ha) = f b (H _ hb) → a = b)
+    (h : l.Nodup) :
+    (List.pmap f l H).Nodup := by{
+  apply List.Nodup.pmap' ?_ h
+  intro a b ha hb ha' hb' hab
+  specialize hf a b ha hb hab
+  exact hf
+}

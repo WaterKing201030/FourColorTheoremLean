@@ -90,6 +90,11 @@ theorem fband_cface_close {p : List α} {x y : α}
 (hxy : H.cface x y) (hx : x ∈ H.fband p) : y ∈ H.fband p :=by{
   apply fband_closure _ hx _ hxy
 }
+theorem fband_rotate {p : List α} {n : ℕ}
+: H.fband (p.rotate n) = H.fband p := by{
+  ext x
+  simp [H.mem_fband_iff]
+}
 theorem fproj_cface {p : List α} {x : α} :
   H.cface x (H.fproj p x) := by{
     match hf : p.find? (H.cface x) with

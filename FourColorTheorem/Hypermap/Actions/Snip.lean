@@ -87,6 +87,42 @@ theorem mem_diskN_rotate {x : α} {n : ℕ}
   rw[diskN_rotate_eq]
   exact hx
 }
+theorem diskE_rotate_eq (n : ℕ)
+: H.diskE (r.rotate n) = H.diskE r := by{
+  ext x
+  change _ ∧ _ ↔ _ ∧ _
+  simp[diskN_rotate_eq]
+}
+theorem mem_diskE_rotate {x : α} {n : ℕ}
+: x ∈ H.diskE r → x ∈ H.diskE (r.rotate n) := by{
+  intro hx
+  rw[diskE_rotate_eq]
+  exact hx
+}
+theorem diskF_rotate_eq (n : ℕ)
+: H.diskF (r.rotate n) = H.diskF r := by{
+  ext x
+  change _ ∧ _ ↔ _ ∧ _
+  simp[diskN_rotate_eq, fband_rotate]
+}
+theorem mem_diskF_rotate {x : α} {n : ℕ}
+: x ∈ H.diskF r → x ∈ H.diskF (r.rotate n) := by{
+  intro hx
+  rw[diskF_rotate_eq]
+  exact hx
+}
+theorem diskFC_rotate_eq (n : ℕ)
+: H.diskFC (r.rotate n) = H.diskFC r := by{
+  ext x
+  change _ ∧ _ ↔ _ ∧ _
+  simp[diskN_rotate_eq, fband_rotate]
+}
+theorem mem_diskFC_rotate {x : α} {n : ℕ}
+: x ∈ H.diskFC r → x ∈ H.diskFC (r.rotate n) := by{
+  intro hx
+  rw[diskFC_rotate_eq]
+  exact hx
+}
 
 theorem cclink_of_dconnect {x y : α} (hd : H.dconnect r x y)
   : H.cclink (H.nodeinv y) x := by{
@@ -1312,6 +1348,45 @@ lemma snipd_enf_cancel {Hp : H.properSnipRing r}
   enf_cancel := Hp.snipd_enf_cancel
 def snipDiskRing (_ : H.properSnipRing r) : List (H.dDart r) := r.pmap
 (P := (· ∈ H.diskN r)) (fun x hx => ⟨x, hx⟩) (fun _ => H.subset_diskN)
+theorem mem_snipDiskRing_iff {Hp : H.properSnipRing r} {x : H.dDart r}
+: x ∈ Hp.snipDiskRing ↔ x.val ∈ r := by{
+  unfold snipDiskRing
+  rw[List.mem_pmap]
+  constructor
+  · {
+    intro ⟨a, ha, hax⟩
+    rwa[← hax]
+  }
+  · {
+    intro hx
+    use x.val, hx
+  }
+}
+theorem cface_of_snipDisk_cface {Hp : H.properSnipRing r} {x y : H.dDart r}
+: Hp.snipDisk.cface x y → H.cface x y := by{
+  intro h
+  induction h with
+  | refl => apply ReflTransGen.refl
+  | @tail b c hh ht ih => {
+    apply ih.trans
+    change dface _ = _ at ht
+    unfold dface at ht
+    simp only [Subtype.ext_iff, snipd_face] at ht
+    split at ht
+    · {
+      have Hp' := Hp.cycle
+      rw[List.isCycleChain_iff_prev_of_nodup Hp.nodup] at Hp'
+      specialize Hp' b (by assumption)
+      unfold rlink at Hp'
+      rw[← cface_face, ht] at Hp'
+      exact cface_equivalence.symm Hp'
+    }
+    · {
+      apply ReflTransGen.single
+      exact ht
+    }
+  }
+}
 
 def redge {Hp : H.properSnipRing r}
 : H.rDart r → H.rDart r := fun u => ⟨_, redge_subproof Hp (u:=u)⟩
@@ -1353,12 +1428,203 @@ def snipRemRing (_ : H.properSnipRing r) : List (H.rDart r) := r.reverse.pmap
   rw[List.mem_reverse]
   apply H.subset_diskEC
 })
+theorem mem_snipRemRing_iff {Hp : H.properSnipRing r} {x : H.rDart r}
+: x ∈ Hp.snipRemRing ↔ x.val ∈ r := by{
+  unfold snipRemRing
+  rw[List.mem_pmap]
+  simp only [List.mem_reverse]
+  constructor
+  · {
+    intro ⟨a, ha, hax⟩
+    rwa[← hax]
+  }
+  · {
+    intro hx
+    use x.val, hx
+  }
+}
 
--- theorem snip_patch (Hp : H.properSnipRing r)
--- : Patch H Hp.snipDisk Hp.snipRem Subtype.val Subtype.val
---   Hp.snipDiskRing Hp.snipRemRing := by{
---   constructor
--- }
+theorem snip_patch {Hp : H.properSnipRing r}
+: Patch H Hp.snipDisk Hp.snipRem Subtype.val Subtype.val
+  Hp.snipDiskRing Hp.snipRemRing := by{
+  constructor
+  · exact Subtype.val_injective
+  · exact Subtype.val_injective
+  · {
+    change Hp.snipDisk.simpleCycle (fromFun Hp.dedge) _
+    unfold snipDiskRing
+    unfold simpleCycle
+    constructor
+    · {
+      rw[List.isCycleChain_iff_next_of_nodup]
+      · {
+        intro x hx
+        change _ = _
+        apply Subtype.val_injective
+        rw[← List.map_next_apply Subtype.val_injective]
+        simp only [List.map_pmap, List.pmap_eq_map]
+        change _ = (r.map id).next _ _
+        simp only [List.map_id]
+        unfold dedge snipd_edge
+        simp only
+        rw[dif_pos]
+      }
+      · {
+        apply List.Nodup.pmap
+        · simp
+        · exact Hp.nodup
+      }
+    }
+    · {
+      unfold simpleList
+      rw[List.map_pmap]
+      apply List.Nodup.pmap''
+      · {
+        intro a b har hbr hab
+        rw[Quotient.eq] at hab
+        apply cface_of_snipDisk_cface at hab
+        exact Hp.simple.cface_nodup _ har _ hbr hab
+      }
+      · exact Hp.nodup
+    }
+  }
+  · {
+    constructor
+    · {
+      unfold snipRemRing
+      rw[List.isCycleChain_iff_next_of_nodup]
+      · {
+        intro x hx
+        change _ = _
+        apply Subtype.val_injective
+        rw[← List.map_next_apply Subtype.val_injective]
+        simp only [List.map_pmap, List.pmap_eq_map]
+        change _ = (r.reverse.map id).next _ _
+        simp only [List.map_id]
+        rw[List.mem_pmap] at hx
+        rcases hx with ⟨y, hy, hyx⟩
+        rw[List.mem_reverse] at hy
+        simp only [← hyx]
+        rw[List.next_reverse_eq_prev _ Hp.nodup _ hy]
+        change (rnode _).val = _
+        unfold rnode snipr_node
+        simp[hy]
+      }
+      · {
+        apply List.Nodup.pmap
+        · simp
+        · rw[List.nodup_reverse]; exact Hp.nodup
+      }
+    }
+    · {
+      unfold snipRemRing
+      rw[List.pmap_reverse, List.nodup_reverse]
+      apply List.Nodup.pmap''
+      · {
+        intro a b ha hb
+        apply Subtype.ext_iff.mp
+      }
+      · exact Hp.nodup
+    }
+  }
+  · {
+    unfold snipRemRing snipDiskRing
+    rw[List.pmap_reverse, List.map_reverse, List.reverse_inj]
+    rw[List.map_pmap, List.map_pmap]
+    simp only
+    rw[List.pmap_eq_map, List.pmap_eq_map]
+  }
+  · {
+    intro x
+    constructor
+    · {
+      intro ⟨y, hyx⟩
+      have hy := y.prop
+      change ¬(_ ∧ _) at hy
+      rw[not_and_or, not_not] at hy
+      rcases hy with hy | hy
+      · {
+        left
+        intro z hzx
+        have hz := z.prop
+        rw[hzx] at hz
+        rw[hyx] at hy
+        contradiction
+      }
+      · {
+        right
+        rw[List.mem_map]
+        simp only [mem_snipDiskRing_iff]
+        use ⟨y.val, H.subset_diskN hy⟩
+      }
+    }
+    · {
+      intro IH
+      rcases IH with IH | IH
+      · {
+        rcases em (x ∈ H.diskN r) with hx | hx
+        · specialize IH ⟨x, hx⟩; contradiction
+        have hx' : x ∉ H.diskE r := by{
+          contrapose hx
+          exact hx.1
+        }
+        use ⟨x, hx'⟩
+      }
+      · {
+        rw[List.mem_map] at IH
+        simp only [mem_snipDiskRing_iff] at IH
+        rcases IH with ⟨y, hy, hyx⟩
+        rw[hyx] at hy
+        have hy' : x ∉ H.diskE r := by{
+          change ¬(_ ∧ _)
+          simp[hy]
+        }
+        use ⟨x, hy'⟩
+      }
+    }
+  }
+  · {
+    simp only [Hp.mem_snipDiskRing_iff]
+    intro x hx
+    change (dedge _).val = edge _
+    unfold dedge snipd_edge
+    simp only
+    rw[dif_neg hx]
+  }
+  · {
+    intro x
+    change (Hp.dnode _).val = _
+    rw[dnode]
+  }
+  · {
+    intro x
+    change (Hp.redge _).val = _
+    rw[redge]
+  }
+  · {
+    simp only [Hp.mem_snipRemRing_iff]
+    intro x hx
+    change (rnode _).val = node _
+    unfold rnode snipr_node
+    simp only
+    rw[dif_neg hx]
+  }
+}
+
+theorem snipDisk_planar {Hp : H.properSnipRing r}
+: Hp.snipDisk.Planar := by{
+  have Hp' := Hp.toPlanar
+  have Hp'' := Hp.snip_patch
+  rw[Hp''.planar_patch_iff] at Hp'
+  exact Hp'.1
+}
+theorem snipRem_planar {Hp : H.properSnipRing r}
+: Hp.snipRem.Planar := by{
+  have Hp' := Hp.toPlanar
+  have Hp'' := Hp.snip_patch
+  rw[Hp''.planar_patch_iff] at Hp'
+  exact Hp'.2
+}
 end properSnipRing
 end
 end Hypermap
