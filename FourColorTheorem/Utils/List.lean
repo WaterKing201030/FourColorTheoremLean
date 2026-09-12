@@ -745,3 +745,16 @@ theorem List.Nodup.pmap'' {α : Type u} {β : Type v} {p : α → Prop} {f : (a 
   specialize hf a b ha hb hab
   exact hf
 }
+
+theorem List.product_ne_nil_iff {α : Type u} {β : Type v} {l1 : List α} {l2 : List β} :
+  (l1 ×ˢ l2) ≠ [] ↔ l1 ≠ [] ∧ l2 ≠ [] := by{
+  induction l1 with
+  | nil => simp
+  | cons a l1' ih => {
+    rw[List.product_cons]
+    simp only [ne_eq, append_eq_nil_iff, map_eq_nil_iff, not_and, reduceCtorEq, not_false_eq_true,
+      true_and]
+    rw[← ne_eq, ih]
+    aesop
+  }
+}

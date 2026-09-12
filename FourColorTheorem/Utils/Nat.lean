@@ -19,3 +19,7 @@ theorem Nat.exists_le_pow {a : ℕ} (ha : 1 < a) (n : ℕ)
 : ∃ m : ℕ, n ≤ a ^ m := by
   have ⟨m, hm⟩:=exists_lt_pow ha n
   exact ⟨m, le_of_lt hm⟩
+
+theorem Nat.mul_pos_iff {a b : ℕ} : a * b > 0 ↔ a > 0 ∧ b > 0 := by{
+  simp
+}
