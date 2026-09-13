@@ -163,5 +163,28 @@ theorem half_node_mem_equad {d : GDart} : (node d).half ∈ equad d := by{
 theorem half_node_mem_ehex {d : GDart} : (node d).half ∈ ehex d :=
   chopRect_subset_rect half_node_mem_equad
 
+theorem ehex_disjoint_edge_chop {d : GDart} : ∀p ∈ ehex d, p ∉ chop (edge d)
+:= by{
+  apply chopRect_disjoint_edge_chop
+}
+
+theorem mem_ehex_shift_iff_mem_equad_shift {q : GDart} {q' : GPixel} :
+  q' ∈ ehex q ∨ q' ∈ ehex (face (edge (face q)))
+  ↔ q' ∈ equad q ∨ q' ∈ equad (edge (face q))
+  := by{
+  simp only [mem_ehex_cases_iff, mem_equad_cases_iff]
+  simp only [face_3, edge_2, nfe_cancel]
+  simp only [face_half]
+  have h0 : half (node (edge (face (face (edge (face q))))))
+    = half (edge (face (node (edge (face q))))) := by{
+    nth_rw 1 [edge_eq_node_face]
+    rw[face_3]
+    nth_rw 1 [edge_eq_node_face]
+    rw[node_3, face_half]
+  }
+  simp[h0]
+  tauto
+}
+
 end GRectangle
 end GridPlane

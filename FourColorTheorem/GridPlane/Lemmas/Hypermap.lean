@@ -228,8 +228,50 @@ theorem y_succ_end0_eq_or_half_eq {dx dy} : end0 ⟨dx, dy⟩ = end0 ⟨dx, dy +
     omega
   }
 
+theorem edge_face_ne_edge {d : GDart} : edge (face d) ≠ edge d := by{
+  rw[edge_injective.ne_iff]
+  apply face_ne
+}
+theorem fef_ne_edge {d : GDart} : face (edge (face d)) ≠ edge d := by{
+  rw[← node_injective.ne_iff, ← edge_eq_node_face, edge_2]
+  rw[← node_injective.ne_iff, ← edge_eq_node_face]
+  symm
+  apply node_2_ne
+}
+
 theorem mrlink_face {d : GDart} : mrlink d (face d) := by{
   rw[mrlink, face_end0]
+}
+
+theorem half_edge_nodeinvDart_eq_node {q : GPixel} :
+  (edge q.nodeinvDart).half = node q := by{
+  rw[edge_half, nodeinvDart_mod2, ccw_4, nodeinvDart_half]
+  rw[node, arc, ccw_2]
+  ring
+}
+theorem nodeinvDart_node {q : GPixel}
+: (node q).nodeinvDart = edge (node (edge q.nodeinvDart))
+:= by{
+  rw[nodeinvDart, node_mod2, ccw_4]
+  rw[← half_mod2_ext]
+  constructor
+  · {
+    rw[half_add_double, half_mod2, add_zero]
+    rw[← face_3, face_half, face_half, face_half]
+    rw[half_edge_nodeinvDart_eq_node]
+  }
+  · {
+    rw[mod2_add_double, mod2_mod2]
+    rw[edge_mod2, node_mod2, edge_mod2, ccw_4]
+    rw[nodeinvDart_mod2, ccw_4]
+  }
+}
+theorem nodeinvDart_face_edge {q : GPixel}
+: (face (edge q)).nodeinvDart = edge (face q.nodeinvDart)
+:= by{
+  rw[← node_3, nodeinvDart_node]
+  rw[edge_inj, nodeinvDart_node, edge_2]
+  rw[nodeinvDart_node, edge_2, node_3, edge_2]
 }
 
 end GridPlane

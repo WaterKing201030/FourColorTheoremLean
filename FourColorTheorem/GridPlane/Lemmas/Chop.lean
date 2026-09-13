@@ -128,5 +128,8 @@ theorem half_mem_chop_face {d : GDart} : d.half ∈ chop (face d) := by{
   }
 }
 
-
+theorem chopRect_disjoint_edge_chop {d : GDart} {R : GRectangle}
+: ∀p ∈ chopRect R d, p ∉ chop (edge d) := by{
+  simp[mem_edge_chop_iff, mem_chopRect_iff]
+}
 end GridPlane

@@ -8,6 +8,7 @@ import Mathlib.Algebra.Group.TransferInstance
 import Mathlib.Dynamics.PeriodicPts.Defs
 import FourColorTheorem.Utils.Int
 import FourColorTheorem.Utils.List
+import Mathlib.Data.ZMod.Basic
 
 open Function
 open Relation
@@ -40,10 +41,23 @@ theorem half_add_double {p : GPixel} {d : GDart} : (2 • p + d).half = p + d.ha
     simp[half_def]; omega
   }
 }
+theorem half_add_double' {p : GPixel} {d : GDart} : (2 * p + d).half = p + d.half := by{
+  match p, d with
+  | ⟨px, py⟩, ⟨dx, dy⟩ => {
+    simp[half_def]; omega
+  }
+}
 theorem half_double {p : GPixel} : (2 • p).half = p := by{
   match p with | ⟨dx, dy⟩ => simp[half_def]
 }
+theorem half_double' {p : GPixel} : (2 * p).half = p := by{
+  match p with | ⟨dx, dy⟩ => simp[half_def]
+}
 theorem mod2_add_double {p : GPixel} {d : GDart} : (2 • p + d).mod2 = d.mod2 := by{
+  match p, d with
+  | ⟨px, py⟩, ⟨dx, dy⟩ => simp[mod2_def]
+}
+theorem mod2_add_double' {p : GPixel} {d : GDart} : (2 * p + d).mod2 = d.mod2 := by{
   match p, d with
   | ⟨px, py⟩, ⟨dx, dy⟩ => simp[mod2_def]
 }
@@ -51,10 +65,22 @@ theorem mod2_double {p : GPixel} : (2 • p).mod2 = 0 := by{
   match p with
   | ⟨dx, dy⟩ => simp[mod2_def]
 }
+theorem mod2_double' {p : GPixel} : (2 * p).mod2 = 0 := by{
+  match p with
+  | ⟨dx, dy⟩ => simp[mod2_def]
+}
 theorem double_half_add_mod2 (d : GDart) : 2 • d.half + d.mod2 = d := by{
   match d with
   | ⟨dx, dy⟩ => {
     simp[half_def, mod2_def]; omega
+  }
+}
+theorem double_half_add_mod2' (d : GDart) : 2 * d.half + d.mod2 = d := by{
+  match d with
+  | ⟨dx, dy⟩ => {
+    simp[half_def, mod2_def]
+    simp[two_mul]
+    omega
   }
 }
 
@@ -89,6 +115,23 @@ theorem mod2_eq_zero_iff_exists_double {d : GPoint} : d.mod2 = 0 ↔ ∃p, d = 2
   }
 }
 
+theorem half_mod2_sub_unit {d : GPoint} : (d.mod2 - (1, 1)).half = d.mod2 - (1, 1) := by{
+  match d with | ⟨dx, dy⟩ => {
+    simp[half, mod2]
+    omega
+  }
+}
+
+theorem half_mod2_ext {p q : GPoint} : p.half = q.half ∧ p.mod2 = q.mod2 ↔ p = q := by{
+  constructor
+  · {
+    intro ⟨hh, hm⟩
+    rw[← double_half_add_mod2 (d := p), ← double_half_add_mod2 (d := q)]
+    simp[hh, hm]
+  }
+  · intro h; simp[h]
+}
+
 def ccw : GPoint → GPoint
 | ⟨x, y⟩ => ⟨1 - y, x⟩
 theorem ccw_def {p : GPoint} : p.ccw = ⟨1 - p.2, p.1⟩ := rfl
@@ -100,11 +143,11 @@ theorem ccw_ne {p : GPoint} : p.ccw ≠ p := by{
   match p with
   | ⟨x, y⟩ => simp[ccw_def]; omega
 }
-theorem ccw2_ne {p : GPoint} : p.ccw.ccw ≠ p := by{
+theorem ccw_2_ne {p : GPoint} : p.ccw.ccw ≠ p := by{
   match p with
   | ⟨x, y⟩ => simp[ccw_def]; omega
 }
-theorem ccw3_ne {p : GPoint} : p.ccw.ccw.ccw ≠ p := by{
+theorem ccw_3_ne {p : GPoint} : p.ccw.ccw.ccw ≠ p := by{
   match p with
   | ⟨x, y⟩ => simp[ccw_def]; omega
 }

@@ -1,5 +1,4 @@
 import FourColorTheorem.GridPlane.Defs
-import Mathlib.Data.ZMod.Basic
 
 open Function
 open Relation
@@ -73,7 +72,6 @@ def recursion_ccw {motive : GPoint → Prop} (u : UnitSquareDart)
 end GPoint
 
 open GPoint
-
 theorem end0_ccw {d : GPoint} : end0 d.ccw = (end0 d).ccw := by{
   simp[end0, ccw, mod2, half]; omega
 }

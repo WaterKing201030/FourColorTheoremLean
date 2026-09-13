@@ -50,6 +50,10 @@ theorem disjoint_iff {m1 m2 : Matte}
   simp only [List.coe_toFinset, Set.mem_inter_iff, Set.mem_setOf_eq, not_and]
   rfl
 }
+theorem mem_border_iff {m : Matte} {d : GDart} :
+  d ∈ border m.disk.toFinset ↔ d.half ∈ m ∧ (edge d).half ∉ m := by{
+  simp[border, mem_def]
+}
 
 theorem edge_not_mem_ring_of_mem_ring {m : Matte} {p : GPoint} (hp : p ∈ m.ring)
   : edge p ∉ m.ring := by{
