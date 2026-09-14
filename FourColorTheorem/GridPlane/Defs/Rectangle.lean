@@ -166,6 +166,11 @@ theorem proper_iff_nonempty {I : GRectangle} : I.proper ↔ (I : Set GPoint).Non
 }
 theorem proper_of_mem {I : GRectangle} {x : GPoint} (hx : x ∈ I) : I.proper :=
   proper_iff_nonempty.mpr ⟨x, hx⟩
+theorem proper_iff_exists_mem {I : GRectangle} : I.proper ↔ ∃x, x ∈ I := by{
+  rw[proper_iff_nonempty]
+  change Set.Nonempty (I : GRegion) ↔ ∃x, x ∈ (I : GRegion)
+  rw[Set.nonempty_def]
+}
 theorem subrect_iff_subset_of_proper {I1 I2 : GRectangle} (hI1 : I1.proper) :
   I1 <+ I2 ↔ I1 ⊆ I2 := by{
   apply Iff.intro subrect.subset
@@ -410,6 +415,18 @@ theorem coe_eq_of_subset_of_area_eq {I1 I2 : GRectangle} (h1 : I1 ⊆ I2) (h3 : 
   rw[max_eq_left (by{omega}), max_eq_left (by{omega})] at h21' h22'
   simp [mem_iff]
   omega
+}
+
+theorem area_lt_of_missing {s r : GRectangle} (hs : s ⊆ r)
+    {q : GPixel} (hqr : q ∈ r) (hqs : q ∉ s) : s.area < r.area := by{
+  have hle := GRectangle.area_le_area_of_subset hs
+  apply lt_of_le_of_ne hle
+  intro heq
+  have hcoe := GRectangle.coe_eq_of_subset_of_area_eq hs heq
+  apply hqs
+  change q ∈ (s : GRegion)
+  rw [hcoe]
+  exact hqr
 }
 
 def extend (R : GRectangle) (p : GPoint) : GRectangle :=

@@ -186,5 +186,38 @@ theorem mem_ehex_shift_iff_mem_equad_shift {q : GDart} {q' : GPixel} :
   tauto
 }
 
+theorem equad_nodeinvDart_half_eq {p q : GPixel}
+    (hq : q ∈ equad p.nodeinvDart) : q.half = p.half := by {
+  rw [GRectangle.equad, mem_chopRect_iff, GRectangle.ehex, mem_chopRect_iff] at hq
+  simp only [chop, Set.mem_setOf_eq] at hq
+  simp only [face_toUnitSquareDart, face_half, GPoint.nodeinvDart_half] at hq
+  simp only [GPoint.toUnitSquareDart, GPoint.nodeinvDart_mod2] at hq
+  rcases p with ⟨x, y⟩
+  rcases q with ⟨u, v⟩
+  rcases Int.emod_two_eq_zero_or_one x with hx | hx <;>
+  rcases Int.emod_two_eq_zero_or_one y with hy | hy <;>
+  simp [GPoint.half, GPoint.mod2,
+    GPoint.ccw, UnitSquareDart.ccw, hx, hy, GRectangle.touch, GRectangle.mem_iff,
+    Ico.touch] at hq ⊢ <;> omega
+}
+
+theorem touch_remaining_half {p q : GPixel}
+    (ht : q ∈ touch p)
+    (hh : q ∉ ehex p.nodeinvDart)
+    (hq : q ∉ equad (node p).nodeinvDart) :
+    q.half = (node (node p)).half := by {
+  simp only [GRectangle.equad, GRectangle.ehex, mem_chopRect_iff] at hh hq
+  simp only [chop, Set.mem_setOf_eq] at hh hq
+  simp only [face_toUnitSquareDart, face_half, GPoint.nodeinvDart_half] at hh hq
+  simp only [GPoint.toUnitSquareDart, GPoint.nodeinvDart_mod2, node_mod2] at hh hq
+  rcases p with ⟨x, y⟩
+  rcases q with ⟨u, v⟩
+  rcases Int.emod_two_eq_zero_or_one x with hx | hx <;>
+  rcases Int.emod_two_eq_zero_or_one y with hy | hy <;>
+  simp [node, GPoint.arc, GPoint.mod2, GPoint.half, GPoint.ccw,
+    UnitSquareDart.ccw, GRectangle.mem_iff, GRectangle.touch, Ico.touch,
+    Int.add_emod, Int.sub_emod, hx, hy] at ht hh hq ⊢ <;> omega
+}
+
 end GRectangle
 end GridPlane

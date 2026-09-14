@@ -132,4 +132,45 @@ theorem chopRect_disjoint_edge_chop {d : GDart} {R : GRectangle}
 : ∀p ∈ chopRect R d, p ∉ chop (edge d) := by{
   simp[mem_edge_chop_iff, mem_chopRect_iff]
 }
+
+theorem half_mem_rect_of_edge_mem_rect_of_mem_chopRect
+  {r : GRectangle} {d : GDart}
+  (he : (edge d).half ∈ r) {q : GPixel} (hq : q ∈ chopRect r d)
+  : d.half ∈ r := by {
+  rw [mem_chopRect_iff] at hq
+  simp only [GRectangle.mem_iff, edge_half', chop, Set.mem_setOf_eq] at *
+  cases hd : d.toUnitSquareDart <;> simp [hd] at * <;> omega
+}
+
+theorem half_mem_rect_of_edge_mem_rect_of_chopRect_proper
+  {r : GRectangle} {d : GDart}
+  (he : (edge d).half ∈ r) (hq : (chopRect r d).proper)
+  : d.half ∈ r := by {
+  rw[GRectangle.proper_iff_exists_mem] at hq
+  rcases hq with ⟨q, hq⟩
+  exact half_mem_rect_of_edge_mem_rect_of_mem_chopRect he hq
+}
+
+theorem edge_half_mem_inner_of_half_mem_inner_of_mem_rect_of_notMem_chop1
+{r : GRectangle} {d : GDart}
+  (hp : d.half ∈ r.inner) {q : GPixel} (hq : q ∈ r) (hqc : q ∉ chop1 d) :
+  (edge d).half ∈ r.inner := by {
+  simp only [GRectangle.mem_iff, GRectangle.inner, Ico.inner,
+    chop1, chop, Set.mem_setOf_eq, face_toUnitSquareDart, edge_toUnitSquareDart,
+    face_half, edge_half'] at *
+  cases hd : d.toUnitSquareDart <;>
+    simp [hd, UnitSquareDart.ccw, UnitSquareDart.opp] at * <;> omega
+}
+
+theorem touch_iff_four_chop1 {d : GDart} {q : GPixel} :
+    q ∈ GRectangle.touch d.half ↔
+    q ∈ chop1 d ∧ q ∈ chop1 (face d) ∧
+    q ∈ chop1 (face (face d)) ∧ q ∈ chop1 (face (face (face d))) := by{
+  simp only [chop1, chop, Set.mem_setOf_eq, face_toUnitSquareDart,
+    edge_toUnitSquareDart, face_half, edge_half', GRectangle.mem_iff,
+    GRectangle.touch, Ico.touch]
+  cases d.toUnitSquareDart <;>
+    simp [UnitSquareDart.ccw, UnitSquareDart.opp] <;> omega
+}
+
 end GridPlane

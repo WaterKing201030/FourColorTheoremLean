@@ -105,6 +105,10 @@ theorem mem_touch_cases_iff {p q : GPixel}
   · rw[h]; apply fn_mem_touch
 }
 
+theorem node_node_mem_touch {p : GDart} : node (node p) ∈ touch p := by{
+  rw[mem_touch_cases_iff]; simp
+}
+
 theorem half_mem_touch_half_of_mem_touch {p q : GDart} (hpq : q ∈ touch p) :
   q.half ∈ touch p.half := by{
   simp[touch, Ico.touch, mem_iff, half] at *

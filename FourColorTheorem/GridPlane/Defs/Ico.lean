@@ -128,6 +128,12 @@ theorem proper_iff_nonempty {I : Ico} : I.proper ↔ (I : Set ℤ).Nonempty := b
 }
 theorem proper_of_mem {I : Ico} {x : ℤ} (hx : x ∈ I) : I.proper :=
   proper_iff_nonempty.mpr ⟨x, hx⟩
+theorem proper_iff_exists_mem {I : Ico} : I.proper ↔ ∃x, x ∈ I := by{
+  simp only [proper_iff_nonempty, nonempty_Ico, mem_iff]
+  constructor
+  · intro h; use I.inf
+  · intro ⟨_, h0, h1⟩; exact lt_of_le_of_lt h0 h1
+}
 theorem inf_mem_of_proper {I : Ico} (h : I.proper) : I.inf ∈ I := by{
   simpa[mem_iff]
 }

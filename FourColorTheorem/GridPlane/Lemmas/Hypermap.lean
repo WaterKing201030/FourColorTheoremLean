@@ -274,4 +274,39 @@ theorem nodeinvDart_face_edge {q : GPixel}
   rw[nodeinvDart_node, edge_2, node_3, edge_2]
 }
 
+namespace GRectangle
+theorem face_mem_of_mem_of_face_2_mem {r : GRectangle} {p : GPixel}
+    (hp : p ∈ r) (hn : face (face p) ∈ r) : face p ∈ r := by {
+  rcases p with ⟨x, y⟩
+  rcases Int.emod_two_eq_zero_or_one x with hx | hx <;>
+    rcases Int.emod_two_eq_zero_or_one y with hy | hy <;>
+    simp [face, GPoint.arc, GPoint.mod2, GPoint.ccw, GRectangle.mem_iff,
+      Int.add_emod, hx, hy] at * <;> omega
+}
+theorem node_mem_of_mem_of_node_2_mem {r : GRectangle} {p : GPixel}
+    (hp : p ∈ r) (hn : node (node p) ∈ r) : node p ∈ r := by {
+  rcases p with ⟨x, y⟩
+  rcases Int.emod_two_eq_zero_or_one x with hx | hx <;>
+    rcases Int.emod_two_eq_zero_or_one y with hy | hy <;>
+    simp [node, GPoint.arc, GPoint.mod2, GPoint.ccw, GRectangle.mem_iff,
+      Int.add_emod, Int.sub_emod, hx, hy] at * <;> omega
+}
+theorem face_mem_of_mem_of_edge_mem {r : GRectangle} {p : GPixel}
+    (hp : p ∈ r) (hn : edge p ∈ r) : face p ∈ r := by {
+  rcases p with ⟨x, y⟩
+  rcases Int.emod_two_eq_zero_or_one x with hx | hx <;>
+  rcases Int.emod_two_eq_zero_or_one y with hy | hy <;>
+  simp [face, edge, GPoint.arc, GPoint.mod2, GPoint.ccw, GRectangle.mem_iff,
+    hx, hy] at * <;> omega
+}
+theorem face_edge_mem_of_mem_of_edge_mem {r : GRectangle} {p : GPixel}
+    (hp : p ∈ r) (hn : edge p ∈ r) : face (edge p) ∈ r := by {
+  rcases p with ⟨x, y⟩
+  rcases Int.emod_two_eq_zero_or_one x with hx | hx <;>
+  rcases Int.emod_two_eq_zero_or_one y with hy | hy <;>
+  simp [face, edge, GPoint.arc, GPoint.mod2, GPoint.ccw, GRectangle.mem_iff,
+    hx, hy, Int.add_emod] at * <;> omega
+}
+end GRectangle
+
 end GridPlane
