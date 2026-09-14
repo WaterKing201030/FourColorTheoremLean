@@ -307,6 +307,12 @@ theorem zoom_proper_iff {I : GRectangle} : I.zoom.proper ↔ I.proper := by{
   rw[proper_def, proper_def]
   apply and_congr <;> rw[zoom, Ico.zoom_proper_iff]
 }
+theorem mem_zoom_iff {x : GPoint} {R : GRectangle} : x ∈ R.zoom ↔ x.half ∈ R := by{
+  match x, R with | ⟨xx, xy⟩, ⟨⟨Rhl, Rhu⟩, ⟨Rvl, Rvu⟩⟩ => {
+    simp[mem_iff, zoom, Ico.zoom, GPoint.half]
+    omega
+  }
+}
 theorem ltouch_proper {x : GPoint} : (ltouch x).proper := by{
   rw[proper_def]
   exact ⟨Ico.ltouch_proper, Ico.ltouch_proper⟩

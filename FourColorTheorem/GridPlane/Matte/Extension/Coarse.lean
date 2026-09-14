@@ -191,5 +191,55 @@ theorem canExtendIn_of_coarseIn {m : Matte} {r : GRectangle}
     (fun _ h _ => h) (GRectangle.subset_refl r)
 }
 
+theorem exists_adj_matte_of_coarseIn_of_rect_meet_of_matte_disjoint
+  {m m1 : Matte} {r : GRectangle} (rEmh : m.coarseIn r) (rmM : ∃ x ∈ r, x ∈ m)
+  (rim1M : ∃ x ∈ r.inner, x ∈ m1) (mm1D : ∀ x ∈ m, x ∉ m1) :
+  ∃xm : Matte, (m : GRegion) ⊆ xm ∧ (xm : GRegion) ⊆ ((r ∪ m) \ m1) ∧ m1.adj xm := by{
+  classical
+  obtain ⟨p, hpr, hpm1⟩ := rim1M
+  obtain ⟨xm, hext, hxms, hpxm⟩ := canExtendIn_of_coarseIn rEmh rmM p hpr
+  have hmeet : ∃ q ∈ xm, q ∈ m1 := ⟨p, hpxm, hpm1⟩
+  clear hpxm
+  -- Follow the extension up to the first pixel that enters m1, and keep
+  -- the preceding matte. The last added pixel supplies their common edge.
+  revert hxms hmeet
+  induction hext with
+  | refl =>
+      intro _ hmeet
+      obtain ⟨q, hqm, hqm1⟩ := hmeet
+      exact False.elim (mm1D q hqm hqm1)
+  | step d xm0 xm hext hdr hdisk ih =>
+      intro hxms hmeet
+      have hxm0s : xm0.disk ⊆ r.enum ++ m.disk := by
+        intro q hq
+        apply hxms
+        rw [← mem_def]
+        exact (hdisk q).mpr (List.mem_cons.mpr (Or.inr hq))
+      by_cases hmeet0 : ∃ q ∈ xm0, q ∈ m1
+      · exact ih hxm0s hmeet0
+      · have hdisjoint : ∀ q ∈ xm0, q ∉ m1 := by
+          intro q hq hqm1
+          exact hmeet0 ⟨q, hq, hqm1⟩
+        refine ⟨xm0, ?_, ?_, ?_⟩
+        · intro q hqm
+          exact (mem_def xm0 q).mpr (hext.subset ((mem_def m q).mp hqm))
+        · intro q hq
+          refine ⟨?_, hdisjoint q hq⟩
+          have h := hxm0s ((mem_def xm0 q).mp hq)
+          rcases List.mem_append.mp h with hqr | hqm
+          · exact Or.inl (GRectangle.mem_enum_iff.mp hqr)
+          · exact Or.inr ((mem_def m q).mpr hqm)
+        · have hdm1 : d.half ∈ m1 := by
+            obtain ⟨q, hqxm, hqm1⟩ := hmeet
+            rcases List.mem_cons.mp ((hdisk q).mp hqxm) with hqd | hq0
+            · exact hqd ▸ hqm1
+            · exact False.elim (hdisjoint q ((mem_def xm0 q).mpr hq0) hqm1)
+          have hedm0 : (edge d).half ∈ xm0 := by
+            exact (mem_border_iff.mp ((xm0.mem_ring_iff_mem_disk_border _).mp hdr)).1
+          refine ⟨edge d, hdr, ?_⟩
+          rw [edge_2, m1.mem_ring_iff_mem_disk_border, mem_border_iff]
+          exact ⟨hdm1, hdisjoint _ hedm0⟩
+}
+
 end Matte
 end GridPlane

@@ -26,6 +26,11 @@ theorem subset {m xm : Matte} (h : canExtendTo m xm) : m.disk ⊆ xm.disk := by{
     apply Or.inr
   }
 }
+theorem subset' {m xm : Matte} (h : canExtendTo m xm) : ∀x ∈ m, x ∈ xm := by{
+  intro
+  rw[mem_def, mem_def]
+  apply h.subset
+}
 theorem trans {m0 m1 m2 : Matte} (h01 : canExtendTo m0 m1)
   (h12 : canExtendTo m1 m2) : canExtendTo m0 m2 := by{
   induction h12 generalizing m0 with

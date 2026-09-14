@@ -26,6 +26,11 @@ theorem mem_def (M : Matte) x : x ∈ M ↔ x ∈ M.disk := by{
   change x ∈ (M : Set GPoint) ↔ _
   simp
 }
+@[inline] instance instDecidableMem {x : GPoint} {m : Matte} :
+  Decidable (x ∈ m) := by{
+  rw[mem_def]
+  infer_instance
+}
 theorem noempty {m : Matte} : (m : GRegion) ≠ ∅ := by{
   rw[ne_eq, Set.eq_empty_iff_forall_notMem]
   push_neg
