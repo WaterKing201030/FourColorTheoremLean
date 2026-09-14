@@ -277,7 +277,6 @@ theorem width_le_width_of_subset {I1 I2 : Ico} (h : I1 ⊆ I2) : I1.width ≤ I2
   rw[← enum_length, ← enum_length]
   apply List.length_le_length_of_nodup_of_subset
   · apply enum_nodup
-  · apply enum_nodup
   · rwa[← subset_iff_enum]
 }
 theorem coe_eq_of_subset_of_width_eq {I1 I2 : Ico} (h1 : I1 ⊆ I2) (h3 : I1.width = I2.width)

@@ -357,7 +357,6 @@ theorem area_le_area_of_subset {I1 I2 : GRectangle} (h : I1 ⊆ I2) : I1.area �
     rw[←enum_length, ←enum_length]
     apply List.length_le_length_of_nodup_of_subset
     · apply enum_nodup
-    · apply enum_nodup
     rw[←subset_iff_enum]
     exact h
   }
