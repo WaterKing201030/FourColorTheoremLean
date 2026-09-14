@@ -1,6 +1,7 @@
 import Batteries.Data.List.Basic
 import Init.Data.List.Pairwise
 import Mathlib.Data.List.Nodup
+import Mathlib.Data.List.Perm.Subperm
 import Mathlib.Order.Minimal
 import Mathlib.Data.List.Rotate
 import Mathlib.Data.List.Lattice
@@ -63,14 +64,8 @@ theorem List.getLast?_cons_of_ne_nil {a : α} {l : List α} (hl : l ≠ [])
     | _::_ => rw[getLast?_cons_cons]
   }
 theorem List.getLast_cons_eq_getLastD {x : α} {l : List α}
-  : (x::l).getLast (by{simp}) = l.getLastD x:=by{
-    induction l generalizing x with
-    | nil => simp
-    | cons y l' ih => {
-      rw[getLast_cons_cons, getLastD_cons]
-      exact ih
-    }
-  }
+  : (x::l).getLast (by{simp}) = l.getLastD x :=
+  List.getLast_eq_getLastD _
 theorem List.head_concat_eq_headD {l : List α} {x : α}
   : (l ++ [x]).head (by{simp}) = l.headD x := by{
     match l with
@@ -197,15 +192,8 @@ theorem List.idxOf_map_eq_of_inj {β : Type _} [DecidableEq α] [DecidableEq β]
 }
 
 theorem List.concat_dropLast_getLast {p : List α} (hp : p ≠ [])
-  : List.dropLast p ++ [p.getLast hp] = p:=by{
-    match p with
-    | [_] => simp
-    | a::b::p' => {
-      simp only [dropLast_cons₂, ne_eq, reduceCtorEq, not_false_eq_true, getLast_cons, cons_append,
-        cons.injEq, true_and]
-      apply concat_dropLast_getLast
-    }
-  }
+  : List.dropLast p ++ [p.getLast hp] = p :=
+  List.dropLast_concat_getLast hp
 
 theorem List.nodup_attachWith {p : List α} {P : α → Prop} (hp : ∀ x ∈ p, P x)
   : (p.attachWith P hp).Nodup ↔ p.Nodup := by{
@@ -371,55 +359,8 @@ theorem List.take_drop_append_drop_of_le {l : List α} {n m : ℕ} (hnm : m ≤ 
 }
 
 theorem List.rotate_add {l : List α} {n m : ℕ}
-  : l.rotate (n + m) = (l.rotate n).rotate m := by{
-    rw[rotate_eq_drop_append_take_mod]
-    rw[rotate_eq_drop_append_take_mod]
-    rw[rotate_eq_drop_append_take_mod]
-    simp only [length_append, length_drop, length_take]
-    cases em (l = []) with
-    | inl hln => simp[hln]
-    | inr hln => {
-      have hln' : l.length > 0 := length_pos_of_ne_nil hln
-      have hln'' {n : ℕ}: n % l.length < l.length := Nat.mod_lt _ hln'
-      rw[min_eq_left_of_lt hln'', Nat.sub_add_cancel (le_of_lt hln'')]
-      rw[drop_append, drop_drop, take_append]
-      rw[length_drop]
-      rw[Nat.sub_sub_right _ (le_of_lt hln'')]
-      rw[Nat.add_comm (m % l.length)]
-      rw[take_take]
-      rw[min_eq_left (by{
-        apply Nat.sub_le_of_le_add
-        rw[Nat.add_le_add_iff_left]
-        exact le_of_lt hln''
-      })]
-      rw[Nat.mod_add_mod_eq]
-      cases em (n % l.length + m % l.length < l.length) with
-      | inl hnm => {
-        simp only [hnm, ↓reduceIte, Nat.add_zero, append_assoc, append_cancel_left_eq]
-        have h':=Nat.mod_add_mod_eq (a:=n) (b:=m) (c:=l.length)
-        rw[ite_cond_eq_true _ _ (by{simp[hnm]}), Nat.add_zero] at h'
-        rw[Nat.sub_eq_zero_of_le (le_of_lt hln''), drop_zero, take_zero, append_nil]
-        rw[←h']
-        rw[take_add]
-      }
-      | inr hnm => {
-        simp only [hnm, ↓reduceIte, Nat.add_sub_cancel, append_assoc]
-        symm
-        rw[drop_of_length_le (by{simp}), nil_append]
-        rw[←append_assoc]
-        congr 1
-        rw[take_drop, Nat.mod_add_mod_eq]
-        simp only [hnm, ↓reduceIte]
-        nth_rw 2 [take_of_length_le (by{simp})]
-        rw[take_drop_append_drop_of_le]
-        have h':=Nat.mod_add_mod_eq (a:=n) (b:=m) (c:=l.length)
-        rw[ite_cond_eq_false _ _ (by{simp[hnm]})] at h'
-        rw[←Nat.add_le_add_iff_right (n:=l.length), ←h']
-        rw[Nat.add_le_add_iff_left]
-        apply le_of_lt hln''
-      }
-    }
-  }
+  : l.rotate (n + m) = (l.rotate n).rotate m :=
+  (List.rotate_rotate l n m).symm
 
 theorem List.head_rotate_idxOf [DecidableEq α] {l : List α} {x : α} (hx : x ∈ l)
   : (l.rotate (l.idxOf x)).head ((ne_nil_of_mem hx) ∘ rotate_eq_nil_iff.mp) = x := by{
@@ -514,36 +455,8 @@ theorem List.disjoint_tail_right {l1 l2 : List α} (h : l1.Disjoint l2)
 }
 
 theorem List.length_le_length_of_nodup_of_subset {l1 l2 : List α}
-  (h1d : l1.Nodup) (h2d : l2.Nodup) (h12 : l1 ⊆ l2) : l1.length ≤ l2.length := by{
-    match l1 with
-    | [] => simp
-    | a::l1' => {
-      rw[subset_def] at h12
-      have h12':=@h12 a (by{simp})
-      classical
-      have h:=length_rotate l2 (l2.idxOf a)
-      rw[←h]
-      have h2:l2 ≠ []:=by{intro h2; simp[h2] at h12'}
-      have h2':l2.rotate (idxOf a l2) ≠ []:=
-        by{apply ne_nil_of_length_pos; simp[length_pos_of_ne_nil h2]}
-      rw[←cons_head_tail h2']
-      rw[head_rotate_idxOf h12']
-      simp only [←mem_rotate (l:=l2) (n:=idxOf a l2)] at h12
-      rw[←cons_head_tail h2', head_rotate_idxOf h12'] at h12
-      simp only [mem_cons, forall_eq_or_imp, true_or, true_and] at h12
-      simp only [length_cons, Nat.add_le_add_iff_right, ge_iff_le]
-      rw[nodup_cons] at h1d
-      apply length_le_length_of_nodup_of_subset
-      · apply h1d.right
-      · apply Nodup.tail; rw[List.nodup_rotate]; apply h2d
-      intro x hx
-      have h12'':=h12 x hx
-      apply h12''.resolve_left
-      intro hn
-      apply h1d.left
-      exact hn ▸ hx
-    }
-  }
+  (h1d : l1.Nodup) (h12 : l1 ⊆ l2) : l1.length ≤ l2.length :=
+  (h1d.subperm h12).length_le
 
 theorem List.subset_antisymm_of_nodup {l1 l2 : List α} (hl1 : l1.Nodup) (hl2 : l2.Nodup)
   : l1 ⊆ l2 → l2 ⊆ l1 → l1.Perm l2 := by{
@@ -576,61 +489,9 @@ theorem List.subset_rotate {l1 l2 : List α} {n : ℕ}
   }
 
 theorem List.perm_of_nodup_subset_length_eq {l1 l2 : List α}
-  (h1d : l1.Nodup) (h2d : l2.Nodup) (h12 : l1 ⊆ l2) (h12' : l1.length = l2.length) : l1.Perm l2
-  := by{
-    cases em (l1 = []) with
-    | inl hl1 => {simp[hl1, Eq.comm] at h12'; simp[hl1, h12']}
-    | inr hl1 => {
-      have hl2 : l2 ≠ [] := by{intro hl2; simp[hl2] at h12'; contradiction}
-      have h12'':=h12 (List.head_mem hl1)
-      classical
-      have h12_ih : l1 ⊆ l2.rotate (l2.idxOf (l1.head hl1)) := by{
-        rw[subset_rotate]
-        apply h12
-      }
-      have h12'_ih : l1.length = (l2.rotate (l2.idxOf (l1.head hl1))).length := by{
-        rw[length_rotate, h12']
-      }
-      have hl2_ih : l2.rotate (l2.idxOf (l1.head hl1)) ≠ [] := by{
-        simp[hl2]
-      }
-      have h2d_ih : (l2.rotate (l2.idxOf (l1.head hl1))).Nodup := by{
-        rw[nodup_rotate]
-        apply h2d
-      }
-      nth_rw 1 [←cons_head_tail hl1, ←cons_head_tail hl2_ih] at h12_ih h12'_ih
-      rw[←cons_head_tail hl1, nodup_cons] at h1d
-      rw[←cons_head_tail hl2_ih, nodup_cons] at h2d_ih
-      rw[length_cons, length_cons, Nat.succ_inj] at h12'_ih
-      have ih:l1.Perm (l2.rotate (l2.idxOf (l1.head hl1))):=by{
-        nth_rw 1 [←cons_head_tail hl1, ←cons_head_tail hl2_ih]
-        rw[head_rotate_idxOf h12'']
-        rw[perm_cons]
-        have ih':l1.tail.length < l1.length := by{
-          simp only [length_tail]
-          apply Nat.pred_lt
-          simp[hl1]
-        }
-        apply perm_of_nodup_subset_length_eq
-        · apply h1d.right
-        · apply h2d_ih.right
-        · {
-          intro x hx
-          have h12_ih':=@h12_ih x (by{right; exact hx})
-          rw[mem_cons] at h12_ih'
-          apply Or.resolve_left h12_ih'
-          rw[head_rotate_idxOf h12'']
-          intro h
-          apply h1d.left
-          exact h ▸ hx
-        }
-        · apply h12'_ih
-      }
-      apply ih.trans
-      apply rotate_perm
-    }
-  }
-termination_by l1.length
+  (h1d : l1.Nodup) (_h2d : l2.Nodup) (h12 : l1 ⊆ l2) (h12' : l1.length = l2.length) : l1.Perm l2
+  :=
+  (h1d.subperm h12).perm_of_length_le h12'.ge
 
 theorem List.map_next_apply {β : Type _} [DecidableEq α] [DecidableEq β] {l : List α} {x : α}
   {f : α → β} (hf : Injective f) (hxl : x ∈ l)

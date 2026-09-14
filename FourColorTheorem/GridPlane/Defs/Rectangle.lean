@@ -193,11 +193,10 @@ theorem proper_of_subrect {I1 I2 : GRectangle} (h : I1 <+ I2) : I1.proper → I2
   exact h.subset
 }
 
+
 theorem empty_iff_any_empty {R : GRectangle} : (R : Set GPoint) = ∅
-  ↔ (R.hspan : Set ℤ) = ∅ ∨ (R.vspan : Set ℤ) = ∅ := by{
-  rw[← not_iff_not, ← ne_eq, ← proper_iff_ne_empty, not_or]
-  rw[proper_def, Ico.proper_iff_ne_empty, Ico.proper_iff_ne_empty]
-}
+  ↔ (R.hspan : Set ℤ) = ∅ ∨ (R.vspan : Set ℤ) = ∅ :=
+  Set.prod_eq_empty_iff
 
 def enum (R : GRectangle) : List GPixel := R.hspan.enum ×ˢ R.vspan.enum
 theorem enum_length {R : GRectangle} : R.enum.length = R.area := by{
@@ -363,59 +362,13 @@ theorem area_le_area_of_subset {I1 I2 : GRectangle} (h : I1 ⊆ I2) : I1.area �
     exact h
   }
 theorem coe_eq_of_subset_of_area_eq {I1 I2 : GRectangle} (h1 : I1 ⊆ I2) (h3 : I1.area = I2.area)
-: (I1 : Set GPoint) = I2 := by{
-  ext ⟨x, y⟩
-  rcases em' I1.proper with hI1 | hI1
-  · {
-    have hI1a : I1.area = 0 := by{
-      contrapose hI1
-      rw[← ne_eq, Nat.ne_zero_iff_zero_lt, ← gt_iff_lt, ← proper_iff_area_pos] at hI1
-      exact hI1
-    }
-    have hI2 : ¬I2.proper := by{
-      rw[h3] at hI1a
-      contrapose hI1a
-      rwa[← ne_eq, Nat.ne_zero_iff_zero_lt, ← gt_iff_lt, ← proper_iff_area_pos]
-    }
-    rw[proper_iff_ne_empty, not_not] at hI1 hI2
-    simp[hI1, hI2]
-  }
-  change (x, y) ∈ I1 ↔ (x, y) ∈ I2
-  rw[← subrect_iff_subset_of_proper hI1, subrect_def] at h1
-  have hI2 : I2.proper := by{
-    rwa[proper_iff_area_pos, ← h3, ← proper_iff_area_pos]
-  }
-  simp only [area, width, height] at h3
-  rw[Ico.subico_iff_subset_of_proper hI1.1, Ico.subico_iff_subset_of_proper hI1.2] at h1
-  have h2 := h1.imp Ico.width_le_width_of_subset Ico.width_le_width_of_subset
-  have h21 : I1.hspan.width = I2.hspan.width := by{
-    by_contra h21
-    have h21' := lt_of_le_of_ne h2.1 h21
-    have h21'' := Nat.mul_lt_mul_of_lt_of_le h21' h2.2 (height_pos_of_proper hI2)
-    omega
-  }
-  have h22 : I1.vspan.width = I2.vspan.width := by{
-    by_contra h22
-    have h22' := lt_of_le_of_ne h2.2 h22
-    have h22'' := Nat.mul_lt_mul_of_le_of_lt h2.1 h22' (width_pos_of_proper hI2)
-    omega
-  }
-  rw[← Ico.subico_iff_subset_of_proper hI1.1, ← Ico.subico_iff_subset_of_proper hI1.2] at h1
-  simp only [Ico.subico_def] at h1
-  simp only [Ico.width] at h21 h22
-  clear h3
-  have h21' : ((I1.hspan.sup - I1.hspan.inf).toNat : ℤ) = (I2.hspan.sup - I2.hspan.inf).toNat := by{
-    rw[h21]
-  }
-  have h22' : ((I1.vspan.sup - I1.vspan.inf).toNat : ℤ) = (I2.vspan.sup - I2.vspan.inf).toNat := by{
-    rw[h22]
-  }
-  simp only [Int.ofNat_toNat] at h21' h22'
-  rw[proper_iff] at hI1 hI2
-  rw[max_eq_left (by{omega}), max_eq_left (by{omega})] at h21' h22'
-  simp [mem_iff]
-  omega
-}
+: (I1 : Set GPoint) = I2 := by
+  have hperm := (enum_nodup (R := I1)).subperm (subset_iff_enum.mp h1)
+  have hlength : I1.enum.length = I2.enum.length := by
+    simpa only [enum_length] using h3
+  ext p
+  have hmem := (hperm.perm_of_length_le hlength.ge).mem_iff (a := p)
+  exact (mem_enum_iff (R := I1)).symm.trans (hmem.trans (mem_enum_iff (R := I2)))
 
 theorem area_lt_of_missing {s r : GRectangle} (hs : s ⊆ r)
     {q : GPixel} (hqr : q ∈ r) (hqs : q ∉ s) : s.area < r.area := by{
