@@ -123,47 +123,31 @@ theorem jordan_of_planar {α : Type _} [Fintype α] [DecidableEq α] {H : Hyperm
   induction n using Nat.strong_induction_on generalizing α with
   | _ n ih => {
     intro p hj
-    have hn_3 : n ≥ 3 :=by{
-      rw[←hn]
-      apply card_ge_three_of_moebius_path hj
-    }
     have hn_p : n > 0 := by{
       rw[←hn]
       apply card_pos_of_moebius_path hj
     }
-    have hpn:=moebius_path_ne_nil hj
+    -- Share the induction step: every walkup removes exactly one dart.
+    have he (x : α) : (H.WalkupE x).jordan :=
+      ih (n - 1) (Nat.pred_lt_self hn_p) (Planar.walkupe hp) (by simp [hn])
+    have hf (x : α) : (H.WalkupF x).jordan :=
+      ih (n - 1) (Nat.pred_lt_self hn_p) (Planar.walkupf hp) (by simp [hn])
+    have hnode (x : α) : (H.WalkupN x).jordan :=
+      ih (n - 1) (Nat.pred_lt_self hn_p) (Planar.walkupn hp) (by simp [hn])
     cases em (∀x, x ∈ p) with
     | inl hpx => {
       have hp'n := moebius_path_tail_ne_nil hj
       have hp''n := moebius_path_tail_tail_ne_nil hj
-      have hlc:Fintype.card α = p.length:=by{
-        apply Nat.le_antisymm
-        · {
-          have h:=List.toFinset_card_le p
-          have h':p.toFinset.card = Fintype.card α:=by{
-            rw[Finset.card_eq_iff_eq_univ]
-            rw[Finset.eq_univ_iff_forall]
-            simp only [List.mem_toFinset]
-            exact hpx
-          }
-          rw[←h']
-          exact h
-        }
-        · apply (moebius_path_nodup hj).length_le_card
-      }
       match hp_def:p with
       | x::p1 => {
         rw[List.tail_cons] at hp'n hp''n
-        rw[←hn, hlc] at ih
         match hp1_def:p1 with
         | y::p2 => {
           cases em (H.nodeinv x = y) with
           | inl h0 => {
-            have ih':=ih (p2.length + 1) (by{simp}) (H:=H.WalkupE x) (Planar.walkupe hp)
-              (by{simp[hlc]})
             rw[←h0] at hj
             have ⟨q, hq, _⟩:=moebius_path_liftE_of_cons_nodeinv hj
-            exact ih' _ hq
+            exact he x _ hq
           }
           | inr h0 => {
             have h0':H.face x = y:=by{
@@ -181,10 +165,7 @@ theorem jordan_of_planar {α : Type _} [Fintype α] [DecidableEq α] {H : Hyperm
                   simp only [← h0', ← h1] at hj
                   exact hj
                 })
-                have ih':=ih (x::z::p3).length (by{simp})
-                  (H:=H.WalkupF (H.face x)) (Planar.walkupf hp)
-                  (by{simp[hlc]})
-                apply ih' _ hq.left
+                exact hf (H.face x) _ hq.left
               }
               | inr h1 => {
                 have h1':H.face y = z:=by{
@@ -208,40 +189,32 @@ theorem jordan_of_planar {α : Type _} [Fintype α] [DecidableEq α] {H : Hyperm
                       simp only [clink, union_iff, fromFun] at hzwc
                       cases hzwc with
                       | inl hzwc => {
-have ⟨q, hq⟩:=
-  H.moebius_path_liftF_of_cons_face_cons_face_cons_nodeinv_of_face_eq_nodeinv_of_face_eq_node
-  (x:=x) (p:=p4) (by{simp only [hzwc, h1', h0']; exact hj})
-  (by{simp only [hzwc, h1', h0']; exact hynl}) (by{simp[h0', hynh]})
-have ih':=ih (x::y::w::p4).length (by{simp}) (H:=(H.WalkupF (H.face (H.face x))))
-  (Planar.walkupf hp) (by{simp[hlc]})
-apply ih' _ hq.left
+                        have ⟨q, hq⟩:=
+                          H.moebius_path_liftF_of_cons_face_cons_face_cons_nodeinv_of_face_eq_nodeinv_of_face_eq_node
+                          (x:=x) (p:=p4) (by{simp only [hzwc, h1', h0']; exact hj})
+                          (by{simp only [hzwc, h1', h0']; exact hynl}) (by{simp[h0', hynh]})
+                        exact hf (H.face (H.face x)) _ hq.left
                       }
                       | inr hzwc => {
-have ⟨q, hq⟩:=
-  H.moebius_path_liftE_of_cons_face_cons_face_cons_face_of_face_eq_nodeinv_of_face_eq_node
-  (x:=x) (p:=p4) (by{simp only [hzwc, h1', h0']; exact hj})
-  (by{simp only [hzwc, h1', h0']; exact hynl}) (by{simp[h0', hynh]})
-have ih':=ih (x::y::w::p4).length (by{simp}) (H:=(H.WalkupE (H.face (H.face x))))
-  (Planar.walkupe hp) (by{simp[hlc]})
-apply ih' _ hq.left
+                        have ⟨q, hq⟩:=
+                          H.moebius_path_liftE_of_cons_face_cons_face_cons_face_of_face_eq_nodeinv_of_face_eq_node
+                          (x:=x) (p:=p4) (by{simp only [hzwc, h1', h0']; exact hj})
+                          (by{simp only [hzwc, h1', h0']; exact hynl}) (by{simp[h0', hynh]})
+                        exact he (H.face (H.face x)) _ hq.left
                       }
                     }
                   }
                   | inr hynh => {
-have ⟨q, hq⟩:=
-  H.moebius_path_liftN_of_cons_face_cons_face_of_face_eq_nodeinv_last_of_face_ne_node_head
-  (x:=x) (p:=p3) (by{simp[h0', h1', hj]}) (by{simp only [h0', h1']; exact hynl})
-  (by{simp[h0', hynh]})
-have ih':=ih (x::z::p3).length (by{simp}) (H:=H.WalkupN (H.face x))
-  (Planar.walkupn hp) (by{simp[hlc]})
-apply ih' _ hq.left
+                    have ⟨q, hq⟩:=
+                      H.moebius_path_liftN_of_cons_face_cons_face_of_face_eq_nodeinv_last_of_face_ne_node_head
+                      (x:=x) (p:=p3) (by{simp[h0', h1', hj]}) (by{simp only [h0', h1']; exact hynl})
+                      (by{simp[h0', hynh]})
+                    exact hnode (H.face x) _ hq.left
                   }
                 | inr hynl => {
-have ⟨q, hq⟩:=H.moebius_path_liftE_of_cons_face_cons_face_of_face_ne_nodeinv_last (x:=x) (p:=p3)
-  (by{simp[h0', h1', hj]}) (by{simp only [h0', h1', ne_eq, hynl, not_false_iff]})
-have ih':=ih (x::z::p3).length (by{simp}) (H:=H.WalkupE (H.face x))
-  (Planar.walkupe hp) (by{simp[hlc]})
-apply ih' _ hq.left
+                  have ⟨q, hq⟩:=H.moebius_path_liftE_of_cons_face_cons_face_of_face_ne_nodeinv_last (x:=x) (p:=p3)
+                    (by{simp[h0', h1', hj]}) (by{simp only [h0', h1', ne_eq, hynl, not_false_iff]})
+                  exact he (H.face x) _ hq.left
                 }
               }
             }
@@ -252,13 +225,8 @@ apply ih' _ hq.left
     | inr hpx => {
       rw[not_forall] at hpx
       have ⟨x, hpx⟩:=hpx
-      have ih':=ih (n - 1) (Nat.pred_lt_self hn_p)
-        (H:=H.WalkupE x) (Planar.walkupe hp)
-      simp only [ne_eq, Fintype.card_subtype_compl, Fintype.card_unique] at ih'
-      rw[hn] at ih'
-      have ih'':=ih' rfl
       have ⟨q, hq⟩:=moebius_path_liftE_of_not_mem hpx hj
-      apply ih'' q hq.left
+      exact he x q hq.left
     }
   }
 }
@@ -270,26 +238,15 @@ theorem planar_of_jordan {α : Type _} [Fintype α] [DecidableEq α] {H : Hyperm
     simp[planar_def, genus, euler_lhs, euler_rhs, gcomp, Fintype.nComp_eq_zero_iff.mpr ha]
   }
   | inr ha => {
-    have ih:=euler_tree hj ha.some
-    simp only [not_forall, not_and, ←or_iff_not_imp_left] at ih
-    have ⟨b, hb, hb2⟩:=ih
-    have hb':=walkupe_jordan (x:=b) hj
-    have : Fintype.card {a // a ≠ b} < Fintype.card α:=by{
-      simp[Fintype.card_pos_iff, ha]
-    }
-    have ih:=planar_of_jordan hb'
-    rw[planar_def] at ih
-    rw[planar_def]
-    cases hb2 with
-    | inl h => {
-      have h:=glink_self_of_clink_self h
-      rw[walkupe_genus_eq_of_glink h] at ih
-      exact ih
-    }
-    | inr h => {
-      rw[walkupe_genus_eq_of_not_cross_edge h] at ih
-      exact ih
-    }
+    have htree := euler_tree hj ha.some
+    simp only [not_forall, not_and, ←or_iff_not_imp_left] at htree
+    obtain ⟨b, _, hleaf⟩ := htree
+    have hgenus : (H.WalkupE b).genus = H.genus :=
+      hleaf.elim (fun h => walkupe_genus_eq_of_glink (glink_self_of_clink_self h))
+        walkupe_genus_eq_of_not_cross_edge
+    have : Fintype.card {a // a ≠ b} < Fintype.card α := by
+      simp [Fintype.card_pos_iff, ha]
+    simpa only [planar_def, hgenus] using planar_of_jordan (walkupe_jordan (x:=b) hj)
   }
 }
 termination_by Fintype.card α
@@ -297,9 +254,8 @@ termination_by Fintype.card α
 theorem planar_iff_jordan : H.Planar ↔ H.jordan :=
   ⟨jordan_of_planar, planar_of_jordan⟩
 
-theorem Planar.jordan (hp : H.Planar) : H.jordan := by{
-  rwa[← planar_iff_jordan]
-}
+theorem Planar.jordan (hp : H.Planar) : H.jordan :=
+  jordan_of_planar hp
 theorem Planar.of_jordan (hp : H.jordan) : H.Planar :=
   planar_of_jordan hp
 
