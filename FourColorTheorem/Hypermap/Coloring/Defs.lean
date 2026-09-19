@@ -1,6 +1,7 @@
 import FourColorTheorem.Hypermap.Basic
 import FourColorTheorem.Color.FourColor
 import FourColorTheorem.Color.Trace
+import FourColorTheorem.Hypermap.Properties.Composition
 
 open Relation
 open Function
