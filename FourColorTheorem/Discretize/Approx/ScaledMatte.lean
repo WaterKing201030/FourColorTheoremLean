@@ -2,6 +2,8 @@ import FourColorTheorem.Discretize.Approx.ScaledPoint
 import FourColorTheorem.Discretize.Approx.ScaledRectangle
 import FourColorTheorem.GridPlane.Matte
 
+/-! 把Matte放进实平面 -/
+
 namespace RealPlane
 open GridPlane
 
@@ -62,7 +64,7 @@ def refineBy (t : ℕ) (b : ScaledMatte) : ScaledMatte := (refine^[t]) b
   | zero => rfl
   | succ t ih =>
     ext p
-    rw[Set.mem_setOf, Set.mem_setOf, refineBy_fst, refineBy_snd]
+    rw[Set.mem_ofPred, Set.mem_ofPred, refineBy_fst, refineBy_snd]
     rw[Function.iterate_succ_apply', Matte.mem_zoom_iff]
     rw[← add_assoc, approxPoint_half]
     rw[refineBy_fst, refineBy_snd, Set.ext_iff] at ih

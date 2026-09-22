@@ -6,6 +6,8 @@ import Mathlib.Order.Minimal
 import Mathlib.Dynamics.PeriodicPts.Lemmas
 import FourColorTheorem.Utils.Chain
 
+/-! 一些基本的关系，包含从函数获得的fromFun，以及有关自反传递闭包的性质 -/
+
 open Relation
 open Function
 

@@ -1,6 +1,8 @@
 import FourColorTheorem.GridPlane.Matte.Defs
 import FourColorTheorem.GridPlane.Matte.Constructors.Zoom
 
+/-! 一个Matte在某个长方形内是光滑的，是指在这个长方形内的部分(含只重叠了一个像素的部分)都可以被拆成2x2的正方形 -/
+
 open Function
 open Relation
 

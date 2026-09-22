@@ -44,13 +44,13 @@ variable {r : List α}
 @[inline] instance diskN.instDecidableMem {x : α} :
   Decidable (x ∈ H.diskN r) := by{
   unfold diskN
-  rw[Set.mem_setOf]
+  rw[Set.mem_ofPred]
   infer_instance
 }
 @[inline] instance diskE.instDecidableMem {x : α} :
   Decidable (x ∈ H.diskE r) := by{
   unfold diskE
-  rw[Set.mem_setOf]
+  rw[Set.mem_ofPred]
   infer_instance
 }
 
@@ -78,7 +78,7 @@ theorem diskN_rotate_eq (n : ℕ)
 : H.diskN (r.rotate n) = H.diskN r := by{
   ext x
   unfold diskN
-  rw[Set.mem_setOf]
+  rw[Set.mem_ofPred]
   simp[dconnect_rotate_eq]
 }
 theorem mem_diskN_rotate {x : α} {n : ℕ}
@@ -148,7 +148,7 @@ theorem diskN_reverse_eq
 : H.diskN r.reverse = H.diskN r := by{
   ext x
   unfold diskN
-  rw[Set.mem_setOf]
+  rw[Set.mem_ofPred]
   simp[dconnect_reverse_eq]
 }
 theorem mem_diskN_reverse {x : α}
@@ -256,7 +256,7 @@ theorem subset_diskN {x : α} (hx : x ∈ r) : x ∈ H.diskN r := by{
 }
 theorem subset_diskEC {x : α} (hx : x ∈ r) : x ∉ H.diskE r := by{
   unfold diskE
-  rw[Set.mem_setOf]
+  rw[Set.mem_ofPred]
   simp[hx]
 }
 theorem diskE_subset_diskN : H.diskE r ⊆ H.diskN r := by{
@@ -265,7 +265,7 @@ theorem diskE_subset_diskN : H.diskE r ⊆ H.diskN r := by{
 }
 theorem mem_diskN_iff_diskE {x : α} : x ∈ H.diskN r ↔ x ∈ r ∨ x ∈ H.diskE r := by{
   unfold diskE
-  rw[Set.mem_setOf]
+  rw[Set.mem_ofPred]
   constructor
   · intro h; simp only [h, true_and]; apply em
   · intro h; apply h.elim subset_diskN And.left
@@ -295,7 +295,7 @@ theorem diskF_face_closure : Closure (fromFun H.face) (H.diskF r) := by{
     apply funReflTransGen.single
   }
   unfold diskN at *
-  rw[Set.mem_setOf] at *
+  rw[Set.mem_ofPred] at *
   rcases hx with ⟨⟨y, hyr, hxy⟩, hxr⟩
   unfold dconnect at hxy
   use y, hyr
@@ -388,7 +388,7 @@ theorem diskE_edge_closure (Hp : H.properSnipRing r)
   rw[← hxy]
   clear! y
   unfold diskE at *
-  rw[Set.mem_setOf] at *
+  rw[Set.mem_ofPred] at *
   suffices H : ∃x' ∈ H.diskN r, ∃p,
     (x'::p).IsChain (fromFun H.face) ∧
     (x'::p).getLast (by{simp}) = edge x ∧ r.Disjoint (x' :: p) by{
@@ -401,7 +401,7 @@ theorem diskE_edge_closure (Hp : H.properSnipRing r)
       simp
     }
     unfold diskN
-    rw[Set.mem_setOf]
+    rw[Set.mem_ofPred]
     rw[← hpl]
     unfold dconnect
     have ⟨y, hyr, hyx'⟩:=hx'n
@@ -463,7 +463,7 @@ theorem diskE_edge_closure (Hp : H.properSnipRing r)
     use x', hx'n, q, hq.2.1, hq.2.2.1
   }
   rw[List.disjoint_comm, List.Disjoint] at hrq
-  push_neg at hrq
+  push Not at hrq
   rw[List.exists_mem_iff_exists_getElem_minimal] at hrq
   simp only[and_true] at hrq
   rcases hrq with ⟨i, hi, hir, him⟩
@@ -1099,7 +1099,7 @@ theorem diskE_edge_closure (Hp : H.properSnipRing r)
       have cx0 : x0 ∈ z' :: c := sr1c _ rx0
       have : rclink x0 = x0' := by{unfold rclink;rw[if_pos rx0, ← hx0'_def, nodeinv_apply]}
       rw[List.Disjoint]
-      push_neg
+      push Not
       use x0', (by{simp})
       rw[and_true]
       have cycCc' := List.forall_mem_of_isCycleChain cycCc cx0 1
@@ -1370,10 +1370,10 @@ lemma rnode_subproof {u : H.rDart r}
   split
   · apply subset_diskEC; apply List.prev_mem
   change ¬(_ ∧ _)
-  push_neg
+  push Not
   have hu := u.prop
   change ¬(_ ∧ _) at hu
-  push_neg at hu
+  push Not at hu
   intro h
   have h' : u.val ∈ H.diskN r := by{
     apply diskN_cnode_close _ h

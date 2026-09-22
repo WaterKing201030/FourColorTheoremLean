@@ -1,14 +1,16 @@
 import Mathlib.Algebra.Order.Ring.Defs
 import Mathlib.Algebra.Field.Defs
 import Mathlib.Order.ConditionallyCompleteLattice.Defs
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Archimedean
+import Mathlib.Basic.Real.Basic
+import Mathlib.Data.Rat.Floor
 import Mathlib.Algebra.Order.CompleteField
 import Mathlib.Algebra.Group.TransferInstance
 import Mathlib.Dynamics.PeriodicPts.Defs
 import FourColorTheorem.Utils.Int
 import FourColorTheorem.Utils.List
 import Mathlib.Data.ZMod.Basic
+
+/-! 整平面定义。整点实际上可以表示很多东西：向量、边、像素、格点、镖点…… -/
 
 open Function
 open Relation

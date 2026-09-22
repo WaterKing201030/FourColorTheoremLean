@@ -194,7 +194,7 @@ theorem isbarb_iff_all_perm_self {x : α}
   : H.isbarb x ↔ H.edge x = x ∧ H.node x = x ∧ H.face x = x:=by{
     unfold isbarb
     rw[Set.subset_singleton_iff]
-    simp only [Set.mem_setOf_eq]
+    simp only [Set.mem_ofPred_eq]
     unfold clink
     simp only [union_iff]
     unfold fromFun

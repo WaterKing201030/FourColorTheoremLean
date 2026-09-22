@@ -1629,7 +1629,7 @@ theorem euler_tree (hj : H.jordan) (x : α)
   have ⟨l, hl⟩:=List.isChain_exists_shorterChain_option hq2'c
   apply hj (q1 ++ l)
   unfold moebius_path
-  rw[dite_cond_eq_false (by{simp[hq1n]})]
+  rw[dite_eq_right_of_eq_false (by{simp[hq1n]})]
   rw[List.head?_eq_some_head hq2'n, List.getLast?_eq_some_getLast hq2'n] at hl
   have hln : l ≠ [] := by{intro hln; simp[hln] at hl}
   rw[List.head?_eq_some_head hln, Option.some_inj] at hl

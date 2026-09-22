@@ -2,6 +2,8 @@ import FourColorTheorem.GridPlane.Defs.Point
 import FourColorTheorem.GridPlane.Defs.Ico
 import FourColorTheorem.Utils.Nat
 
+/-! 整长方形相关定义 -/
+
 open Function
 open Relation
 

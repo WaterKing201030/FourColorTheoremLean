@@ -14,14 +14,14 @@ def edge_affect_set (H : Hypermap α) (x : α) := {y : α | H.cedge x y ∨ H.ce
 @[inline] instance edge_affect_set.instDecidableMem {x y : α}
   : Decidable (y ∈ H.edge_affect_set x) := by{
     unfold edge_affect_set
-    rw[Set.mem_setOf]
+    rw[Set.mem_ofPred]
     infer_instance
   }
 theorem mem_edge_affect_set_iff {x y : α}
 : y ∈ H.edge_affect_set x ↔ H.cedge x y ∨ H.cedge (H.node x) y
 := by{
   unfold edge_affect_set
-  rw[Set.mem_setOf]
+  rw[Set.mem_ofPred]
 }
 theorem self_mem_edge_affect_set {x : α}
   : x ∈ H.edge_affect_set x := by{

@@ -2,6 +2,8 @@ import FourColorTheorem.GridPlane.Matte.Extension.Defs
 import FourColorTheorem.GridPlane.Matte.Constructors.Extend1
 import FourColorTheorem.GridPlane.Matte.Constructors.Extend2
 
+/-! 可以用两种扩展方式构造Matte的扩展 -/
+
 open Function
 open Relation
 
@@ -16,8 +18,8 @@ theorem extend1 {m : Matte} {d : GDart} (ext1p : Extend1.ext1Hp m d)
     apply canExtendTo.step (d:=d) (xm0:=m)
     · apply canExtendTo.refl
     · {
-      rw[m.mem_ring_iff_mem_disk_border, border, Set.mem_setOf, edge_2]
-      simp only [List.coe_toFinset, Set.mem_setOf_eq]
+      rw[m.mem_ring_iff_mem_disk_border, border, Set.mem_ofPred, edge_2]
+      simp only [List.coe_toFinset, Set.mem_ofPred_eq]
       rw[mem_def] at ext1p
       refine ⟨ext1p.left, ext1p.right.symm ?_⟩
       rw[GRectangle.mem_enum_iff]
@@ -31,8 +33,8 @@ theorem extend2 {m : Matte} {d : GDart} (ext2p : Extend2.ext2Hp m d)
     apply canExtendTo.step (d:=d) (xm0:=m)
     · apply canExtendTo.refl
     · {
-      rw[m.mem_ring_iff_mem_disk_border, border, Set.mem_setOf, edge_2]
-      simp only [List.coe_toFinset, Set.mem_setOf_eq]
+      rw[m.mem_ring_iff_mem_disk_border, border, Set.mem_ofPred, edge_2]
+      simp only [List.coe_toFinset, Set.mem_ofPred_eq]
       rw[mem_def] at ext2p
       refine ⟨ext2p.left, ext2p.right.right.symm ?_⟩
       rw[GRectangle.mem_enum_iff]
@@ -113,7 +115,7 @@ lemma canExtendIn_ehex {m : Matte} {r : GRectangle}
         simp only [hdp, GRectangle.mem_enum_iff, hpr]
       }
       · {
-        apply hxms.trans
+        apply List.Subset.trans hxms
         intro x
         simp only [List.mem_append]
         apply Or.imp_left

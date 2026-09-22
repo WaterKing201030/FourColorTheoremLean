@@ -1,6 +1,8 @@
 import FourColorTheorem.GridPlane.Matte.Defs
 import FourColorTheorem.Utils.List
 
+/-! 定义Matte的扩展，使用递归定义 -/
+
 open Function
 open Relation
 
@@ -19,7 +21,7 @@ theorem subset {m xm : Matte} (h : canExtendTo m xm) : m.disk ⊆ xm.disk := by{
   induction h with
   | refl => apply List.Subset.refl
   | step _ _ _ hme hdr hdisk ih => {
-    apply ih.trans
+    apply List.Subset.trans ih
     intro x
     simp only [mem_def] at hdisk
     simp only [hdisk, List.mem_cons]

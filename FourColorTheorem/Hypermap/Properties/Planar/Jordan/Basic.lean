@@ -106,7 +106,7 @@ theorem moebius_path_head_ne_last {p : List α} (hp : H.moebius_path p) :
     have hpn:=moebius_path_ne_nil hp
     have hp'n:=moebius_path_tail_ne_nil hp
     unfold moebius_path at hp
-    rw[dite_cond_eq_false (by{simp[hpn]})] at hp
+    rw[dite_eq_right_of_eq_false (by{simp[hpn]})] at hp
     have hpd:=hp.left
     rw[←List.cons_head_tail hpn] at hpd
     rw[List.nodup_cons] at hpd

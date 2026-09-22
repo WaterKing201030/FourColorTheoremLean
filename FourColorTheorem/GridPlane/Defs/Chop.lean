@@ -1,6 +1,8 @@
 import FourColorTheorem.GridPlane.Defs.Rectangle
 import FourColorTheorem.GridPlane.Defs.Unitsquare
 
+/-! 整平面上的半平面 -/
+
 open Function
 open Relation
 
@@ -20,13 +22,13 @@ def chop (d : GDart) : GRegion :=
 
 theorem half_mem_chop {d : GDart} : d.half ∈ chop d := by{
   unfold chop
-  rw[Set.mem_setOf]
+  rw[Set.mem_ofPred]
   match d.toUnitSquareDart with
   | gp00 | gp01 | gp10 | gp11 => simp only [ge_iff_le, le_refl]
 }
 theorem mem_edge_chop_iff {d : GDart} {p : GPixel} : p ∈ chop (edge d) ↔ p ∉ chop d := by{
   unfold chop
-  simp only [Set.mem_setOf, edge_toUnitSquareDart, edge_half']
+  simp only [Set.mem_ofPred, edge_toUnitSquareDart, edge_half']
   match d.toUnitSquareDart with
   | gp00 | gp01 | gp10 | gp11 => simp[opp, Int.add_one_le_iff, Int.le_sub_one_iff]
 }
@@ -52,7 +54,7 @@ theorem chopRect_coe {r : GRectangle} {d : GDart}
 : (chopRect r d : GRegion) = (r : GRegion) ∩ chop d := by{
   ext p
   simp only [Set.mem_inter_iff]
-  simp only [chopRect, chop, Set.mem_setOf]
+  simp only [chopRect, chop, Set.mem_ofPred]
   simp only [Set.mem_prod, Set.mem_Ico, ge_iff_le]
   match d.toUnitSquareDart with
   | gp00 | gp01 | gp10 | gp11 => {

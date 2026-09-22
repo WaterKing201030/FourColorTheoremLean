@@ -179,7 +179,7 @@ theorem rem_cface_of_cface {xr yr : αr} (hxryr : G.cface (hr xr) (hr yr)) : Gr.
         simp only [lem, if_true_right]
         intro hdd
         rw[mem_rem_iff_disk] at hdd
-        simp only [Set.mem_setOf_eq, exists_apply_eq_apply, not_true_eq_false, List.mem_map,
+        simp only [Set.mem_ofPred_eq, exists_apply_eq_apply, not_true_eq_false, List.mem_map,
           false_or, patchG.disk_hom_injective.eq_iff, ↓ existsAndEq, and_true] at hdd
         have hxde' := patchG.border_antisymm_disk.mp ⟨_, hxde.symm⟩
         refine (patchG.disk_border_cface_unique hxde' ?_).mp hdd
@@ -188,7 +188,7 @@ theorem rem_cface_of_cface {xr yr : αr} (hxryr : G.cface (hr xr) (hr yr)) : Gr.
       | inr hfxb => {
         have hfi := patchG.rem_face_morph' _ hfxb
         rw[hfi, ind_tmp, ← hfi]
-        simp only [Set.mem_setOf_eq, exists_apply_eq_apply, ↓reduceIte]
+        simp only [Set.mem_ofPred_eq, exists_apply_eq_apply, ↓reduceIte]
       }
     }
     | inr hxr => {
@@ -232,8 +232,8 @@ theorem rem_cedge_close : ∀x ∈ patchG.rem, ∀y, G.cedge x y → y ∈ patch
   intro x hx y hxy
   rw[cedge, funReflTransGen_iff_iterate] at hxy
   have ⟨n, hnxy⟩ := hxy; clear hxy
-  rw[rem, Set.mem_setOf] at hx
-  rw[rem, Set.mem_setOf]
+  rw[rem, Set.mem_ofPred] at hx
+  rw[rem, Set.mem_ofPred]
   have ⟨xr, hxr⟩:=hx
   clear hx
   rw[← hnxy, ← hxr]
@@ -249,8 +249,8 @@ theorem disk_cnode_close : ∀x ∈ patchG.disk, ∀y, G.cnode x y → y ∈ pat
   intro x hx y hxy
   rw[cnode, funReflTransGen_iff_iterate] at hxy
   have ⟨n, hnxy⟩ := hxy; clear hxy
-  rw[disk, Set.mem_setOf] at hx
-  rw[disk, Set.mem_setOf]
+  rw[disk, Set.mem_ofPred] at hx
+  rw[disk, Set.mem_ofPred]
   have ⟨xd, hxd⟩:=hx
   clear hx
   rw[← hnxy, ← hxd]
@@ -274,7 +274,7 @@ theorem rem_cedge_iff {xr yr : αr} : Gr.cedge xr yr ↔ G.cedge (hr xr) (hr yr)
     simp[fromFun, ← patchG.rem_edge_morph, patchG.rem_hom_injective.eq_iff]
   }
   have h' := h.functor xr yr
-  simp only [Set.mem_setOf_eq, exists_apply_eq_apply, forall_const] at h'
+  simp only [Set.mem_ofPred_eq, exists_apply_eq_apply, forall_const] at h'
   exact h'
 }
 
@@ -413,7 +413,7 @@ theorem outerC_face_closure : Closure (fromFun G.face) patchG.outerᶜ :=
   patchG.outerC_cface_close
 theorem rem_subset_outer : patchG.rem ⊆ patchG.outer := by{
   intro x hx
-  rw[rem, Set.mem_setOf] at hx
+  rw[rem, Set.mem_ofPred] at hx
   have ⟨xr, hxr⟩:=hx
   use x
   constructor
@@ -440,7 +440,7 @@ theorem outerC_subset_disk_diff_border : patchG.outerᶜ ⊆ patchG.disk \ patch
 }
 theorem disk_outerC_face_closure : Closure (fromFun Gd.face) {x | hd x ∈ patchG.outerᶜ} := by{
   intro x (hx : _ ∉ _) y (hxy : Gd.cface _ _)
-  rw[Set.mem_setOf, Set.mem_compl_iff]
+  rw[Set.mem_ofPred, Set.mem_compl_iff]
   have hxy' := patchG.cface_of_disk_cface hxy
   contrapose hx
   have ih := patchG.outer_cface_close _ hx _ (G.cface_equivalence.symm hxy')
@@ -501,16 +501,16 @@ theorem mem_borderFband_iff {xd : αd} : xd ∈ patchG.borderFband ↔ hd xd ∈
     have h := patchG.cface_of_disk_cface hxdzd
     have hzdb := patchG.disk_mem_border_iff.mpr hzd
     rw [mem_border_iff_rem] at hzdb
-    rw [outer, Set.mem_setOf]
+    rw [outer, Set.mem_ofPred]
     use hd zd
     constructor
     · exact patchG.border_subset_rem (patchG.mem_border_iff_rem.mpr hzdb)
     · exact G.cface_equivalence.symm h
   · -- 反向：hd xd ∈ outer ⇒ xd ∈ borderFband
     intro hxd_outer
-    rw [outer, Set.mem_setOf] at hxd_outer
+    rw [outer, Set.mem_ofPred] at hxd_outer
     rcases hxd_outer with ⟨y, hyr, hyxd⟩
-    rw [rem, Set.mem_setOf] at hyr
+    rw [rem, Set.mem_ofPred] at hyr
     rcases hyr with ⟨yr, hyr⟩
     rw [← hyr] at hyxd
     -- 现在有 G.cface (hd xd) (hr yr)，对称得 cface (hd xd) y
@@ -523,7 +523,7 @@ theorem mem_borderFband_iff {xd : αd} : xd ∈ patchG.borderFband ↔ hd xd ∈
     -- 反证法：假设对任意 k ≤ n，face^k xd ∉ bGd
     by_contra h_not
     -- 具体否定：存在某个 k≤n 使 face^k xd ∈ bGd
-    push_neg at h_not
+    push Not at h_not
     have h_not' : ∀ k, k ≤ n → Gd.face^[k] xd ∉ bGd := fun k hk => h_not k
     -- 归纳证明：对任意 k ≤ n，G.face^k (hd xd) = hd (Gd.face^k xd)
     have H : ∀ k, k ≤ n → G.face^[k] (hd xd) = hd (Gd.face^[k] xd) := by
@@ -583,8 +583,8 @@ theorem borderFband_face_close
 : ∀x ∈ patchG.borderFband, ∀y, Gd.cface x y → y ∈ patchG.borderFband
 := by{
   intro x hx y hxy
-  simp only [borderFband, fband, List.any_eq_true, decide_eq_true_eq, Set.mem_setOf_eq]
-  simp only [borderFband, fband, List.any_eq_true, decide_eq_true_eq, Set.mem_setOf_eq] at hx
+  simp only [borderFband, fband, List.any_eq_true, decide_eq_true_eq, Set.mem_ofPred_eq]
+  simp only [borderFband, fband, List.any_eq_true, decide_eq_true_eq, Set.mem_ofPred_eq] at hx
   have ⟨x', hx', hxx'⟩:=hx
   exact ⟨x', hx', (Gd.cface_equivalence.symm hxy).trans hxx'⟩
 }
@@ -793,7 +793,7 @@ theorem rem_glink_adjunctionOn_remGClosure :
       rw[← cclink_iff_cglink] at h
       induction h using ReflTransGen.head_induction_on generalizing xr with
       | refl => {
-        simp only [Set.mem_setOf_eq, exists_apply_eq_apply, ↓reduceIte,
+        simp only [Set.mem_ofPred_eq, exists_apply_eq_apply, ↓reduceIte,
         patchG.rem_hom_injective.eq_iff] at hx_ind
         rw[hx_ind]
         apply ReflTransGen.refl
@@ -810,7 +810,7 @@ theorem rem_glink_adjunctionOn_remGClosure :
         rcases em (z ∈ patchG.rem) with hzR | hzR
         · {
           obtain ⟨zr, hzr⟩:=hzR
-          simp only [← hzr, Set.mem_setOf_eq, patchG.rem_hom_injective.eq_iff, exists_eq,
+          simp only [← hzr, Set.mem_ofPred_eq, patchG.rem_hom_injective.eq_iff, exists_eq,
             ↓reduceIte, forall_eq'] at ih
           refine Gr.cglink_equivalence.trans ?_ ih
           rw[← hzr] at hh

@@ -652,7 +652,7 @@ theorem exists_moebius_path_of_not_mem_of_nodup_of_clink1_of_walkupe_cross_nlink
             | inl h1 => {
               use q₁ ++ [x]
               unfold moebius_path
-              rw[dite_cond_eq_false (by{simp})]
+              rw[dite_eq_right_of_eq_false (by{simp})]
               apply And.intro (List.Nodup.of_append_left hqd)
               apply And.intro (List.IsChain.left_of_append hqc)
               rw[List.head_append_left hq₁, hq₁h]
@@ -676,7 +676,7 @@ theorem exists_moebius_path_of_not_mem_of_nodup_of_clink1_of_walkupe_cross_nlink
               have h2:=h2.resolve_left h1
               use q₁ ++ [x] ++ q₂
               unfold moebius_path
-              rw[dite_cond_eq_false (by{simp})]
+              rw[dite_eq_right_of_eq_false (by{simp})]
               simp only [hqd, hqc, true_and]
               simp only [List.append_assoc]
               rw[List.head_append_left hq₁]
@@ -705,7 +705,7 @@ theorem exists_moebius_path_of_not_mem_of_nodup_of_clink1_of_walkupe_cross_nlink
             use q₁ ++ [x] ++ q₂
             unfold moebius_path
             simp only [hqd, hqc, true_and]
-            rw[dite_cond_eq_false (by{simp})]
+            rw[dite_eq_right_of_eq_false (by{simp})]
             simp only [List.append_assoc]
             rw[List.head_append_left hq₁]
             rw[List.tail_append_of_ne_nil hq₁]
@@ -740,7 +740,7 @@ theorem exists_moebius_path_of_not_mem_of_nodup_of_clink1_of_walkupe_cross_nlink
           have h':[x] ++ q₂ ≠ []:=by{simp}
           simp only [List.getLast_append_right h']
           simp only [List.getLast_append_right hq₂, hq₂l]
-          rw[dite_cond_eq_false (by{simp})]
+          rw[dite_eq_right_of_eq_false (by{simp})]
           rw[List.tail_append_of_ne_nil hq₁]
           have h0:H.nodeinv (p.getLast hp) ∈ p.tail:=by{
             have hpm':=List.ne_nil_of_mem hpm
@@ -988,7 +988,7 @@ theorem walkupe_jordan {x : α} (h : H.jordan) : (H.WalkupE x).jordan := by{
         | inl hp₂c => {
           apply h (p₁ ++ [x] ++ p₂)
           unfold moebius_path
-          rw[dite_cond_eq_false (by{simp})]
+          rw[dite_eq_right_of_eq_false (by{simp})]
           apply And.intro hq'd'
           constructor
           · {
@@ -1074,7 +1074,7 @@ theorem walkupe_jordan {x : α} (h : H.jordan) : (H.WalkupE x).jordan := by{
           | inl h2 => {
             apply h (q₁ ++ [x] ++ q₂)
             unfold moebius_path
-            rw[dite_cond_eq_false (by{simp})]
+            rw[dite_eq_right_of_eq_false (by{simp})]
             apply And.intro hq'd
             apply And.intro hqc
             rw[List.getLast_append_right hq₂]
@@ -1136,7 +1136,7 @@ theorem walkupe_jordan {x : α} (h : H.jordan) : (H.WalkupE x).jordan := by{
               }
               apply h ((q₁.take (q₁.idxOf (H.node (p'.head hp'n)) + 1)) ++ p₁ ++ [x] ++ q₂)
               unfold moebius_path
-              rw[dite_cond_eq_false (by{simp})]
+              rw[dite_eq_right_of_eq_false (by{simp})]
               constructor
               · {
                 rw[List.append_assoc, List.append_assoc, List.nodup_append']
@@ -1193,7 +1193,7 @@ theorem walkupe_jordan {x : α} (h : H.jordan) : (H.WalkupE x).jordan := by{
             | inr h4 => {
               apply h (p₁ ++ [x] ++ q₂)
               unfold moebius_path
-              rw[dite_cond_eq_false (by{simp})]
+              rw[dite_eq_right_of_eq_false (by{simp})]
               apply And.intro hd
               apply And.intro hc
               rw[List.getLast_append_right hq₂]
@@ -1270,7 +1270,7 @@ theorem walkupe_jordan {x : α} (h : H.jordan) : (H.WalkupE x).jordan := by{
         | inl h2 => {
           apply h (q₁ ++ [x] ++ q₂)
           unfold moebius_path
-          rw[dite_cond_eq_false (by{simp})]
+          rw[dite_eq_right_of_eq_false (by{simp})]
           apply And.intro hq'd
           apply And.intro hqc
           simp only [List.append_assoc]
@@ -1318,7 +1318,7 @@ theorem walkupe_jordan {x : α} (h : H.jordan) : (H.WalkupE x).jordan := by{
             }
             apply h (q₁ ++ [x] ++ p₂ ++ (q₂.drop (q₂.idxOf (H.nodeinv (p'.getLast hp'n)))))
             unfold moebius_path
-            rw[dite_cond_eq_false (by{simp})]
+            rw[dite_eq_right_of_eq_false (by{simp})]
             have h5:(q₂.drop (q₂.idxOf (H.nodeinv (p'.getLast hp'n)))) ≠ []:=by{
               simp[List.idxOf_lt_length_iff, h3]
             }
@@ -1382,7 +1382,7 @@ theorem walkupe_jordan {x : α} (h : H.jordan) : (H.WalkupE x).jordan := by{
           | inr h3 => {
             apply h (q₁ ++ [x] ++ p₂)
             unfold moebius_path
-            rw[dite_cond_eq_false (by{simp})]
+            rw[dite_eq_right_of_eq_false (by{simp})]
             apply And.intro hd
             constructor
             · {

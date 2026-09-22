@@ -63,14 +63,14 @@ section fband
 theorem subset_fband {p : List α} {x : α} : x ∈ p → x ∈ H.fband p :=by{
   intro h
   unfold fband
-  simp only [List.any_eq_true, decide_eq_true_eq, Set.mem_setOf_eq]
+  simp only [List.any_eq_true, decide_eq_true_eq, Set.mem_ofPred_eq]
   use x
   simp only [h, true_and]
   apply ReflTransGen.refl
 }
 theorem fband_close {p : List α} {x : α} (hx : x ∈ H.fband p) : H.face x ∈ H.fband p:=by{
   unfold fband at *
-  simp only [List.any_eq_true, decide_eq_true_eq, Set.mem_setOf_eq] at *
+  simp only [List.any_eq_true, decide_eq_true_eq, Set.mem_ofPred_eq] at *
   have ⟨k, hk⟩:=hx
   use k
   apply hk.imp_right
@@ -125,7 +125,7 @@ theorem fproj_spec_of_mem_hband {p : List α} {x : α} (hx : x ∈ H.fband p)
     have h:(p.find? (H.cface x)).isSome:=by{
       simp only [List.find?_isSome, decide_eq_true_eq]
       unfold fband at hx
-      simp only [List.any_eq_true, decide_eq_true_eq, Set.mem_setOf_eq] at hx
+      simp only [List.any_eq_true, decide_eq_true_eq, Set.mem_ofPred_eq] at hx
       exact hx
     }
     have ⟨y, hy⟩:∃y, p.find? (H.cface x) = some y:=Option.isSome_iff_exists.mp h
@@ -160,7 +160,7 @@ theorem simpleList.cface_nodup {p : List α}
     intro ⟨ihl, ihr⟩
     specialize ih ihr
     rw[List.mem_map] at ihl
-    push_neg at ihl
+    push Not at ihl
     simp only [ne_eq, Quotient.eq] at ihl
     change ∀ a_1 ∈ p, ¬H.cface a_1 a at ihl
     intro x hx y hy hxy
@@ -268,9 +268,9 @@ theorem chordless_rotate {r : List α} {n : ℕ} (hr : r.Nodup)
   intro r n hr hrc
   unfold chordless at *
   simp only [Set.disjoint_iff, Set.subset_empty_iff, Set.eq_empty_iff_forall_notMem,
-  Set.mem_inter_iff, Set.mem_setOf]; push_neg
+  Set.mem_inter_iff, Set.mem_ofPred]; push Not
   simp only[Set.disjoint_iff, Set.subset_empty_iff, Set.eq_empty_iff_forall_notMem,
-  Set.mem_inter_iff, Set.mem_setOf] at hrc; push_neg at hrc
+  Set.mem_inter_iff, Set.mem_ofPred] at hrc; push Not at hrc
   intro x hx
   have ihp := List.isRotated_prev_eq (l := r) (l' := r.rotate n)
     (List.IsRotated.symm (List.IsRotated.forall _ _)) hr hx

@@ -1,5 +1,7 @@
 import FourColorTheorem.Utils.Relations.Basic
 
+/-! 有关等价的引理 -/
+
 open Relation
 open Function
 
@@ -23,10 +25,7 @@ variable {α : Type _}
       exact this
     }
 
-theorem Equiv.ofBijective_coe {β : Type _} {f : α → β} (hf : Bijective f)
-  : ofBijective _ hf = f := rfl
-
-@[inline] def Equivalence.ofSubtype {p : α → Prop} {r : α → α → Prop}
+theorem Equivalence.ofSubtype {p : α → Prop} {r : α → α → Prop}
   (e : Equivalence r) : Equivalence (α:={a // p a}) (InvImage r Subtype.val)
   where
     refl:=fun ⟨x, _⟩ => e.refl x
@@ -79,7 +78,7 @@ theorem Std.Symm.comm {r : α → α → Prop} (e : Std.Symm r) {a b : α}
 
 theorem Setoid.equivalence {r : Setoid α} : Equivalence r := r.iseqv
 
-@[inline] noncomputable instance Equiv.subtype_em {P : α → Prop} :
+noncomputable def Equiv.subtype_em {P : α → Prop} :
   α ≃ {a // P a} ⊕ {a // ¬P a} := by{
   classical
   let f : α → {a // P a} ⊕ {a // ¬P a} :=

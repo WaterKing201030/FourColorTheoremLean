@@ -1,6 +1,8 @@
 import FourColorTheorem.GridPlane.Lemmas.Chop
 import FourColorTheorem.GridPlane.Lemmas.Touch
 
+/-! 有关Matte扩展的一些引理 -/
+
 open Function
 open Relation
 
@@ -17,19 +19,19 @@ p = (edge (face (face d))).half ∨ p = (edge (face (node d))).half ∨ p = (nod
   | base d hd => {
     rw[ehex, mem_chopRect_iff]
     unfold chop
-    simp only [hd, Set.mem_setOf]
+    simp only [hd, Set.mem_ofPred]
     rw[mem_touch_half_cases_iff]
     simp only [toUnitSquare_eq_gp00, mod2, Prod.mk.injEq] at hd
     constructor
     · {
       intro ⟨hl, hr⟩
       suffices H : ¬(p = half (node (node d)) ∨ p = half (edge d) ∨ p = half (node (edge d))) by{
-        push_neg at H
+        push Not at H
         simp only [H, or_self, or_false] at hl
         rcases hl with hl | hl | hl | hl | hl | hl <;> simp[hl]
       }
       match p, d with | ⟨px, py⟩, ⟨dx, dy⟩ => {
-        push_neg
+        push Not
         split_ands <;> {
           contrapose hr
           simp[half, node, edge, hd, arc, mod2, GPoint.ccw, Int.sub_one_emod_two,
@@ -60,13 +62,13 @@ p = (edge (face (face d))).half ∨ p = (edge (face (node d))).half ∨ p = (nod
   induction d using recursion_ccw_00 generalizing p with
   | base d hd => {
     simp only [equad, mem_chopRect_iff, mem_ehex_cases_iff, chop, face_toUnitSquareDart,
-      UnitSquareDart.ccw, hd, ge_iff_le, Set.mem_setOf_eq, face_half]
+      UnitSquareDart.ccw, hd, ge_iff_le, Set.mem_ofPred_eq, face_half]
     constructor
     · {
       intro ⟨hl, hr⟩
       rw[or_left_comm, or_left_comm (a := p = d.half), ← or_assoc] at hl
       apply hl.resolve_left
-      push_neg
+      push Not
       clear hl
       constructor <;> {
         match p with | ⟨px, py⟩ => {
@@ -189,7 +191,7 @@ theorem mem_ehex_shift_iff_mem_equad_shift {q : GDart} {q' : GPixel} :
 theorem equad_nodeinvDart_half_eq {p q : GPixel}
     (hq : q ∈ equad p.nodeinvDart) : q.half = p.half := by {
   rw [GRectangle.equad, mem_chopRect_iff, GRectangle.ehex, mem_chopRect_iff] at hq
-  simp only [chop, Set.mem_setOf_eq] at hq
+  simp only [chop, Set.mem_ofPred_eq] at hq
   simp only [face_toUnitSquareDart, face_half, GPoint.nodeinvDart_half] at hq
   simp only [GPoint.toUnitSquareDart, GPoint.nodeinvDart_mod2] at hq
   rcases p with ⟨x, y⟩
@@ -207,7 +209,7 @@ theorem touch_remaining_half {p q : GPixel}
     (hq : q ∉ equad (node p).nodeinvDart) :
     q.half = (node (node p)).half := by {
   simp only [GRectangle.equad, GRectangle.ehex, mem_chopRect_iff] at hh hq
-  simp only [chop, Set.mem_setOf_eq] at hh hq
+  simp only [chop, Set.mem_ofPred_eq] at hh hq
   simp only [face_toUnitSquareDart, face_half, GPoint.nodeinvDart_half] at hh hq
   simp only [GPoint.toUnitSquareDart, GPoint.nodeinvDart_mod2, node_mod2] at hh hq
   rcases p with ⟨x, y⟩

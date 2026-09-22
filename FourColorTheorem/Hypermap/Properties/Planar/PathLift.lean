@@ -176,8 +176,8 @@ theorem moebius_path_liftE_of_not_mem {x : α} {p : List α} (hpx : x ∉ p) (hp
     refine ⟨?_, hqp⟩
     have hqn : q ≠ []:=by{intro h; simp[h] at hqp; contradiction}
     unfold moebius_path
-    rw[dite_cond_eq_false (by{simp[hqn]})]
-    rw[moebius_path, dite_cond_eq_false (by{simp[hpn]})] at hp
+    rw[dite_eq_right_of_eq_false (by{simp[hqn]})]
+    rw[moebius_path, dite_eq_right_of_eq_false (by{simp[hpn]})] at hp
     simp only[hpd, hpc, true_and] at hp
     have hqd: q.Nodup := by{rw[←List.nodup_map_iff Subtype.val_injective, hqp]; exact hpd}
     refine ⟨hqd, hq, ?_⟩
@@ -235,7 +235,7 @@ theorem moebius_path_liftE_of_cons_nodeinv {x : α} {p : List α}
   nth_rw 2 [←List.cons_head_tail hqn] at hq
   rw[List.map_cons, List.cons_eq_cons] at hq
   unfold moebius_path
-  rw[dite_cond_eq_false (by{simp[hqn]})]
+  rw[dite_eq_right_of_eq_false (by{simp[hqn]})]
   refine ⟨hqd, hq.left, ?_⟩
   rw[walkupe_nodeinv, walkupe_node]
   rw[←List.idxOf_map_eq_of_inj Subtype.val_injective, hq.right.right]
@@ -279,7 +279,7 @@ theorem moebius_path_liftF_of_cons_face_cons_nodeinv {x : α} {p : List α}
   constructor
   · rw[List.map_cons, hqp]
   unfold moebius_path
-  rw[dite_cond_eq_false (by{simp})]
+  rw[dite_eq_right_of_eq_false (by{simp})]
   constructor
   · {
     rw[←List.nodup_map_iff Subtype.val_injective, List.map_cons, hqp, List.nodup_cons]
@@ -350,7 +350,7 @@ theorem moebius_path_liftE_of_cons_face_cons_face_of_face_ne_nodeinv_last {x : �
   constructor
   · rw[List.map_cons, hqp]
   unfold moebius_path
-  rw[dite_cond_eq_false (by{simp})]
+  rw[dite_eq_right_of_eq_false (by{simp})]
   constructor
   · {
     rw[←List.nodup_map_iff Subtype.val_injective, List.map_cons, hqp, List.nodup_cons]
@@ -408,7 +408,7 @@ theorem moebius_path_liftN_of_cons_face_cons_face_of_face_eq_nodeinv_last_of_fac
   constructor
   · rw[List.map_cons, hqp]
   unfold moebius_path
-  rw[dite_cond_eq_false (by{simp})]
+  rw[dite_eq_right_of_eq_false (by{simp})]
   constructor
   · {
     rw[←List.nodup_map_iff Subtype.val_injective, List.map_cons, hqp, List.nodup_cons]
@@ -494,7 +494,7 @@ theorem moebius_path_liftF_of_cons_face_cons_face_cons_nodeinv_of_face_eq_nodein
   constructor
   · rw[List.map_cons, List.map_cons, hqp]
   unfold moebius_path
-  rw[dite_cond_eq_false (by{simp})]
+  rw[dite_eq_right_of_eq_false (by{simp})]
   constructor
   · {
     rw[←List.nodup_map_iff Subtype.val_injective, List.map_cons, List.map_cons,
@@ -573,7 +573,7 @@ theorem moebius_path_liftE_of_cons_face_cons_face_cons_face_of_face_eq_nodeinv_o
   constructor
   · rw[List.map_cons, List.map_cons, hqp]
   unfold moebius_path
-  rw[dite_cond_eq_false (by{simp})]
+  rw[dite_eq_right_of_eq_false (by{simp})]
   constructor
   · {
     rw[←List.nodup_map_iff Subtype.val_injective, List.map_cons, List.map_cons,

@@ -1,5 +1,7 @@
 import FourColorTheorem.GridPlane.Defs
 
+/-! 一个新的旋转定义（绕(0,0)），用来去除部分分类讨论 -/
+
 open Function
 open Relation
 
@@ -31,7 +33,7 @@ theorem ccw_half {d : GPoint} : d.ccw.half = d.half.rot := by{
   omega
 }
 
-def recursion_ccw_00 {motive : GPoint → Prop}
+theorem recursion_ccw_00 {motive : GPoint → Prop}
   (base : ∀ d, d.toUnitSquareDart = UnitSquareDart.gp00 → motive d)
   (ind : ∀ d, motive d.ccw → motive d) (d : GPoint) : motive d := by{
   match hd : d.toUnitSquareDart with
@@ -46,7 +48,7 @@ def recursion_ccw_00 {motive : GPoint → Prop}
     exact ind _ (ind _ (ind _ (base d.ccw.ccw.ccw (by{simp[ccw_toUnitSquareDart, hd]; rfl}))))
   }
 }
-def recursion_ccw {motive : GPoint → Prop} (u : UnitSquareDart)
+theorem recursion_ccw {motive : GPoint → Prop} (u : UnitSquareDart)
   (base : ∀ d, d.toUnitSquareDart = u → motive d)
   (ind : ∀ d, motive d.ccw → motive d) (d : GPoint) : motive d := by{
     match u with
@@ -149,7 +151,7 @@ open UnitSquareDart
 theorem chop_ccw {d : GPoint} : chop d.ccw = (chop d).rot := by{
   ext p
   rw[GRegion.mem_rot_iff]
-  simp only [chop, ccw_toUnitSquareDart, ge_iff_le, Set.mem_setOf_eq]
+  simp only [chop, ccw_toUnitSquareDart, ge_iff_le, Set.mem_ofPred_eq]
   match hd : d.toUnitSquareDart with
   | gp00 | gp01 | gp10 | gp11 => {
     simp only [UnitSquareDart.ccw, ccw_half, rot]

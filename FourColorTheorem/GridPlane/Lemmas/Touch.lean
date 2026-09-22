@@ -2,6 +2,8 @@ import FourColorTheorem.GridPlane.Defs
 import FourColorTheorem.GridPlane.Lemmas.Hypermap
 import FourColorTheorem.GridPlane.Lemmas.Rotation
 
+/-! 有关touch的引理 -/
+
 open Function
 open Relation
 

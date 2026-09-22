@@ -229,7 +229,7 @@ theorem rem_ncomp : Gr.ncomp = Fintype.nCompSet G.nsetoid patchG.diskᶜ + if bG
       ext x
       rw[Set.mem_compl_iff]
       simp only [Set.mem_compl_iff, patchG.mem_disk_iff, not_or, not_not]
-      simp only [Set.mem_setOf]
+      simp only [Set.mem_ofPred]
       have h : ∃xr, hr xr = hr x := ⟨x, rfl⟩
       rw[eq_true h, true_and, not_iff_not, ← patchG.mem_border_iff_disk, patchG.rem_mem_border_iff]
     }
@@ -266,7 +266,7 @@ theorem rem_ncomp : Gr.ncomp = Fintype.nCompSet G.nsetoid patchG.diskᶜ + if bG
     simp only [hbn, ↓ reduceIte]
     unfold Fintype.nCompSet
     simp only [Fintype.nComp_eq_one_iff_exists_all]
-    simp only [Set.mem_setOf_eq, Subtype.forall, Subtype.exists]
+    simp only [Set.mem_ofPred_eq, Subtype.forall, Subtype.exists]
     have ⟨a, l, ha⟩:=List.exists_cons_of_ne_nil hbn
     refine ⟨a, (by{simp[ha]}), ?_⟩
     simp only [LiftOn]
@@ -295,7 +295,7 @@ theorem disk_ecomp : Gd.ecomp = Fintype.nCompSet G.esetoid patchG.remᶜ + if bG
       ext x
       rw[Set.mem_compl_iff]
       simp only [Set.mem_compl_iff, patchG.mem_rem_iff, not_or, not_not]
-      simp only [Set.mem_setOf]
+      simp only [Set.mem_ofPred]
       have h : ∃xd, hd xd = hd x := ⟨x, rfl⟩
       rw[eq_true h, true_and, not_iff_not, ← patchG.mem_border_iff_disk, patchG.disk_mem_border_iff]
     }
@@ -332,7 +332,7 @@ theorem disk_ecomp : Gd.ecomp = Fintype.nCompSet G.esetoid patchG.remᶜ + if bG
     simp only [hbn, ↓ reduceIte]
     unfold Fintype.nCompSet
     simp only [Fintype.nComp_eq_one_iff_exists_all]
-    simp only [Set.mem_setOf_eq, Subtype.forall, Subtype.exists]
+    simp only [Set.mem_ofPred_eq, Subtype.forall, Subtype.exists]
     have ⟨a, l, ha⟩:=List.exists_cons_of_ne_nil hbn
     refine ⟨a, (by{simp[ha]}), ?_⟩
     simp only [LiftOn]
@@ -450,14 +450,14 @@ theorem disk_gcomp : Gd.gcomp = Fintype.nCompSet G.gsetoid patchG.remGClosureᶜ
       ext x
       simp
     }
-    simp only [hset, remGClosure, Set.mem_setOf]
+    simp only [hset, remGClosure, Set.mem_ofPred]
     rcases eq_or_ne bGr [] with bGrn | bGrn
     · {
       simp only [bGrn, ↓reduceIte]
       unfold Fintype.nCompSet
       simp only
       rw[Fintype.nComp_eq_zero_iff]
-      simp only [Set.mem_setOf_eq]
+      simp only [Set.mem_ofPred_eq]
       rw[isEmpty_iff]
       intro ⟨a, b, hb⟩
       have ⟨c, hc, _⟩ := patchG.exists_border_of_cglink_rem_disk (by{simp}) (by{simp}) hb
@@ -469,7 +469,7 @@ theorem disk_gcomp : Gd.gcomp = Fintype.nCompSet G.gsetoid patchG.remGClosureᶜ
     unfold Fintype.nCompSet
     simp only
     rw[Fintype.nComp_eq_one_iff_nonempty_all]
-    simp only [Set.mem_setOf_eq, nonempty_subtype, LiftOn, Subtype.forall, forall_exists_index]
+    simp only [Set.mem_ofPred_eq, nonempty_subtype, LiftOn, Subtype.forall, forall_exists_index]
     constructor
     · {
       have ⟨a, l, hal⟩:=List.exists_cons_of_ne_nil bGrn

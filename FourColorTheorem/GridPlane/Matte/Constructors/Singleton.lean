@@ -1,6 +1,8 @@
 import FourColorTheorem.GridPlane.Basic
 import FourColorTheorem.GridPlane.Matte.Defs
 
+/-! 起点：单个像素可以作为一个Matte -/
+
 open Function
 open Relation
 
@@ -21,7 +23,7 @@ theorem ringOf_ne_nil {p : GPixel} : ringOf p ≠ [] := by{
 }
 theorem ringOf_cycle {p : GPoint}
   : (ringOf p).IsCycleChain mrlink := by{
-    rw[List.IsCycleChain, dite_cond_eq_false (eq_false ringOf_ne_nil)]
+    rw[List.IsCycleChain, dite_eq_right_of_eq_false (eq_false ringOf_ne_nil)]
     simp only [ringOf_eq_tuple_4, List.isChain_cons_cons, mrlink_face,
       List.IsChain.singleton, and_self, ne_eq, reduceCtorEq, not_false_eq_true, List.getLast_cons,
       List.cons_ne_self, List.getLast_singleton, List.head_cons, true_and]
@@ -35,7 +37,7 @@ theorem ringOf_simple {p : GPoint} : ((ringOf p).map end0).Nodup := by{
   simp[GPoint.zero_def, GPoint.ccw]
 }
 theorem ringOf_def' {p : GPoint} : ∀d, d ∈ ringOf p ↔ d ∈ {d | d.half = p} := by{
-  simp only [ringOf_eq_tuple_4, List.mem_cons, List.not_mem_nil, or_false, Set.mem_setOf_eq]
+  simp only [ringOf_eq_tuple_4, List.mem_cons, List.not_mem_nil, or_false, Set.mem_ofPred_eq]
   intro d
   constructor
   · {
@@ -52,9 +54,8 @@ theorem ringOf_def' {p : GPoint} : ∀d, d ∈ ringOf p ↔ d ∈ {d | d.half = 
     have hy:=Int.mul_ediv_add_emod d.2 2
     simp only [GPoint.half] at h
     simp only [← h, Prod.smul_mk, Int.nsmul_eq_mul, Nat.cast_ofNat, face, arc, ccw, mod2,
-      nsmul_eq_smul, Int.mul_emod_right, sub_zero, Prod.mk_sub_mk, sub_self, Prod.mk_add_mk,
-      add_zero, Int.mul_add_emod_self_left, Int.one_emod_two, zero_sub, Int.reduceNeg,
-      add_neg_cancel_right]
+      Int.mul_emod_right, sub_zero, Prod.mk_sub_mk, sub_self, Prod.mk_add_mk, add_zero,
+      Int.mul_add_emod_self_left, Int.one_emod_two, zero_sub, Int.reduceNeg, add_neg_cancel_right]
     cases Int.emod_two_eq d.1 with | inl hx' | inr hx' =>
     cases Int.emod_two_eq d.2 with | inl hy' | inr hy' =>
       simp[hx'] at hx
@@ -64,8 +65,8 @@ theorem ringOf_def' {p : GPoint} : ∀d, d ∈ ringOf p ↔ d ∈ {d | d.half = 
 }
 theorem ringOf_def {p : GPoint} : ∀d, d ∈ ringOf p ↔ d ∈ border (diskOf p).toFinset
 := by{
-  simp only [ringOf_def', Set.mem_setOf, border]
-  simp only [List.coe_toFinset, Set.mem_setOf_eq]
+  simp only [ringOf_def', Set.mem_ofPred, border]
+  simp only [List.coe_toFinset, Set.mem_ofPred_eq]
   simp only [diskOf, List.mem_singleton]
   intro d
   constructor

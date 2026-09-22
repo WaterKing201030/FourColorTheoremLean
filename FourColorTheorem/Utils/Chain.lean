@@ -3,6 +3,8 @@ import Mathlib.Data.List.Chain
 import Mathlib.Data.List.Cycle
 import FourColorTheorem.Utils.List
 
+/-! 一些有关于 List.IsChain 的引理-/
+
 open Relation
 open Function
 
@@ -459,7 +461,7 @@ theorem List.isCycleChain_iff_getElem {r : α → α → Prop} {l : List α} (hl
   (l[i % l.length]'(by{apply Nat.mod_lt; apply length_pos_of_ne_nil hln}))
   (l[(i + 1) % l.length]'(by{apply Nat.mod_lt; apply length_pos_of_ne_nil hln}))
   := by{
-    rw[IsCycleChain, dite_cond_eq_false (by{simp[hln]})]
+    rw[IsCycleChain, dite_eq_right_of_eq_false (by{simp[hln]})]
     rw[isChain_iff_getElem, getLast_eq_getElem, head_eq_getElem]
     constructor
     · {
@@ -520,8 +522,8 @@ theorem List.IsCycleChain.rotate {r : α → α → Prop} {l : List α} (hlk : l
       | [a] => simp[hlk]
       | a :: b :: l' => {
         rw[rotate_cons_succ, rotate_zero]
-        rw[IsCycleChain, dite_cond_eq_false (by{simp})]
-        rw[IsCycleChain, dite_cond_eq_false (by{simp})] at hlk
+        rw[IsCycleChain, dite_eq_right_of_eq_false (by{simp})]
+        rw[IsCycleChain, dite_eq_right_of_eq_false (by{simp})] at hlk
         rw[getLast_cons_cons, head_cons] at hlk
         rw[getLast_append_singleton]
         simp only [cons_append, head_cons]
@@ -592,7 +594,7 @@ theorem List.isChain_disjoint_iff {r : α → α → Prop} {l1 l2 : List α} (ns
 theorem List.IsCycleChain_map {β : Type _} {r : α → α → Prop} {f : β → α} {l : List β}
   : IsCycleChain r (l.map f) ↔ IsCycleChain (InvImage r f) l := by{
     unfold IsCycleChain
-    simp only [map_eq_nil_iff, getLast_map, head_map, dite_then_true]
+    simp only [map_eq_nil_iff, getLast_map, head_map, dite_true_left]
     rcases eq_or_ne l [] with hln | hln
     · simp[hln]
     · simp[hln, InvImage, IsChain_map]

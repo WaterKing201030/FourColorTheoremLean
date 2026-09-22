@@ -2,6 +2,8 @@ import FourColorTheorem.Utils.Relations.Basic
 import FourColorTheorem.Utils.Relations.Chain
 import Mathlib.Order.BooleanAlgebra.Basic
 
+/-! 伴随关系 -/
+
 open Relation
 open Function
 
@@ -81,14 +83,14 @@ theorem Relation.closure_union {e : α → α → Prop} {D1 D2 : Set α} (eClo1 
 theorem Relation.reflTransGen_closure_iff {e : α → α → Prop} {D : Set α}
   : Closure (ReflTransGen e) D ↔ Closure e D := by{
     unfold Closure
-    simp only [reflTransGen_idem]
+    simp only [reflTransGen_idem']
   }
 abbrev Relation.ClosureBorder (r : α → α → Prop) (D : Set α) : Set α :=
   {x | (∃y ∈ D, ReflTransGen r y x) ∧ (∃y ∈ Dᶜ, ReflTransGen r y x)}
 
 theorem Relation.closure_iff_border_empty {r : α → α → Prop} {D : Set α} (rEquiv : Equivalence r)
   : Closure r D ↔ ClosureBorder r D = ∅ := by{
-    simp only [Set.mem_compl_iff, Set.eq_empty_iff_forall_notMem, Set.mem_setOf_eq, not_and,
+    simp only [Set.mem_compl_iff, Set.eq_empty_iff_forall_notMem, Set.mem_ofPred_eq, not_and,
       not_exists, forall_exists_index, and_imp]
     unfold Closure
     constructor
@@ -219,19 +221,19 @@ theorem Relation.adjunctionOn_reflTransGen_left_iff
     · {
       intro h
       apply AdjunctionOn.mk
-      · have h' := h.unit; simp only [reflTransGen_idem] at h'; exact h'
-      · have h' := h.functor; simp only [reflTransGen_idem] at h'; exact h'
-      · have h' := h.closure; unfold Closure at h'; simp only [reflTransGen_idem] at h'; exact h'
-      · have h' := h.symm_e; simp only [reflTransGen_idem] at h'; exact h'
+      · have h' := h.unit; simp only [reflTransGen_idem'] at h'; exact h'
+      · have h' := h.functor; simp only [reflTransGen_idem'] at h'; exact h'
+      · have h' := h.closure; unfold Closure at h'; simp only [reflTransGen_idem'] at h'; exact h'
+      · have h' := h.symm_e; simp only [reflTransGen_idem'] at h'; exact h'
       · have h' := h.symm_e'; exact h'
     }
     · {
       intro h
       apply AdjunctionOn.mk
-      · have h' := h.unit; simp only [reflTransGen_idem]; exact h'
-      · have h' := h.functor; simp only [reflTransGen_idem]; exact h'
-      · have h' := h.closure; unfold Closure; simp only [reflTransGen_idem]; exact h'
-      · have h' := h.symm_e; simp only [reflTransGen_idem]; exact h'
+      · have h' := h.unit; simp only [reflTransGen_idem']; exact h'
+      · have h' := h.functor; simp only [reflTransGen_idem']; exact h'
+      · have h' := h.closure; unfold Closure; simp only [reflTransGen_idem']; exact h'
+      · have h' := h.symm_e; simp only [reflTransGen_idem']; exact h'
       · have h' := h.symm_e'; exact h'
     }
   }
@@ -244,19 +246,19 @@ theorem Relation.adjunctionOn_reflTransGen_right_iff
       intro h
       apply AdjunctionOn.mk
       · have h' := h.unit; exact h'
-      · have h' := h.functor; simp only [reflTransGen_idem] at h'; exact h'
+      · have h' := h.functor; simp only [reflTransGen_idem'] at h'; exact h'
       · have h' := h.closure; exact h'
       · have h' := h.symm_e; exact h'
-      · have h' := h.symm_e'; simp only [reflTransGen_idem] at h'; exact h'
+      · have h' := h.symm_e'; simp only [reflTransGen_idem'] at h'; exact h'
     }
     · {
       intro h
       apply AdjunctionOn.mk
       · have h' := h.unit; exact h'
-      · have h' := h.functor; simp only [reflTransGen_idem]; exact h'
+      · have h' := h.functor; simp only [reflTransGen_idem']; exact h'
       · have h' := h.closure; exact h'
       · have h' := h.symm_e; exact h'
-      · have h' := h.symm_e'; simp only [reflTransGen_idem]; exact h'
+      · have h' := h.symm_e'; simp only [reflTransGen_idem']; exact h'
     }
   }
 
@@ -267,13 +269,13 @@ theorem Relation.AdjunctionOn.closure' {h : β → α} {e : α → α → Prop} 
     apply A.closure _ hx (h y)
     exact (A.functor _ y hx).mp hxy
   }
-instance Relation.AdjunctionOn.equivalence_reflTransGen_e {h : β → α}
+theorem Relation.AdjunctionOn.equivalence_reflTransGen_e {h : β → α}
   {e : α → α → Prop} {e' : β → β → Prop}
   {D : Set α} (A : AdjunctionOn h e e' D) : Equivalence (ReflTransGen e) where
   refl := fun _ => ReflTransGen.refl
   trans := ReflTransGen.trans
   symm := fun {_ _} => A.symm_e.symm _ _
-instance Relation.AdjunctionOn.equivalence_reflTransGen_e' {h : β → α}
+theorem Relation.AdjunctionOn.equivalence_reflTransGen_e' {h : β → α}
   {e : α → α → Prop} {e' : β → β → Prop}
   {D : Set α} (A : AdjunctionOn h e e' D) : Equivalence (ReflTransGen e') where
   refl := fun _ => ReflTransGen.refl

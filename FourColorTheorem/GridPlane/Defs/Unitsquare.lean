@@ -1,5 +1,7 @@
 import FourColorTheorem.GridPlane.Defs.Darts
 
+/-! 标记每个像素四个角点 -/
+
 open Function
 open Relation
 
@@ -120,25 +122,28 @@ theorem toUnitSquareDart_eq_iff_mod2_eq {d1 d2 : GDart}
 theorem toUnitSquare_eq_gp00 {d : GDart} : d.toUnitSquareDart = gp00 ↔ d.mod2 = (0, 0) := by{
   match d with | ⟨dx, dy⟩ => {
     simp only [toUnitSquareDart, mod2, Prod.mk.injEq]
-    split_ifs <;> simp <;> omega
+    split_ifs with h <;> simp[h] <;> split_ifs with h <;> simp[h]
   }
 }
 theorem toUnitSquare_eq_gp10 {d : GDart} : d.toUnitSquareDart = gp10 ↔ d.mod2 = (1, 0) := by{
   match d with | ⟨dx, dy⟩ => {
     simp only [toUnitSquareDart, mod2, Prod.mk.injEq]
-    split_ifs <;> simp <;> omega
+    split_ifs with h <;> simp[h] <;> split_ifs with h <;> simp[h]
+    omega
   }
 }
 theorem toUnitSquare_eq_gp11 {d : GDart} : d.toUnitSquareDart = gp11 ↔ d.mod2 = (1, 1) := by{
   match d with | ⟨dx, dy⟩ => {
     simp only [toUnitSquareDart, mod2, Prod.mk.injEq]
-    split_ifs <;> simp <;> omega
+    split_ifs with h <;> simp[h] <;> split_ifs with h <;> simp[h]
+    omega
   }
 }
 theorem toUnitSquare_eq_gp01 {d : GDart} : d.toUnitSquareDart = gp01 ↔ d.mod2 = (0, 1) := by{
   match d with | ⟨dx, dy⟩ => {
     simp only [toUnitSquareDart, mod2, Prod.mk.injEq]
-    split_ifs <;> simp <;> omega
+    split_ifs with h <;> simp[h] <;> split_ifs with h <;> simp[h]
+    omega
   }
 }
 

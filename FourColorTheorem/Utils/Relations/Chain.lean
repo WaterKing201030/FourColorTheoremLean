@@ -8,10 +8,17 @@ import FourColorTheorem.Utils.Chain
 import FourColorTheorem.Utils.Relations.Basic
 import FourColorTheorem.Utils.Relations.Equiv
 
+/-! ReflTransGen和List.IsChain 的关系 -/
+
 open Relation
 open Function
 
 variable {α : Type _}
+
+theorem Relation.reflTransGen_idem' {α : Type u_1} {r : α → α → Prop}
+: ReflTransGen (ReflTransGen r) = ReflTransGen r := by{
+  apply reflTransGen_eq_self
+}
 
 theorem Relation.ReflTransGen.of_eq (r : α → α → Prop) {a b : α}
   (hab : a = b) : ReflTransGen r a b := by{simp[hab]; rfl}
@@ -74,7 +81,7 @@ theorem Relation.ReflTransGen_union_eq_ReflTransGen_union_ReflTransGen {r1 r2 : 
   }
   · {
     intro h
-    rw[←Relation.reflTransGen_idem]
+    rw[←Relation.reflTransGen_idem']
     exact ReflTransGen_subset ReflTransGen_union_subset h
   }
   }
@@ -416,7 +423,7 @@ theorem Relation.ReflTransGen_of_isChain_of_mem_drop [DecidableEq α]
     simp only [and_true, Nat.add_assoc, Nat.lt_add_right_iff_pos, Nat.zero_lt_succ, true_and]
     apply And.intro (List.isChain_drop (List.isChain_take hl))
     rw[List.getLast?_drop]
-    rw[ite_cond_eq_false]
+    rw[ite_eq_right_of_eq_false]
     · {
       rw[List.getLast?_take]
       simp only [Nat.add_eq_zero_iff, Nat.succ_ne_self, and_false, ↓reduceIte, Nat.add_succ_sub_one,
@@ -611,7 +618,7 @@ theorem List.tail_eq_dropLast_map_of_isChain_fromFun {p : List α}
         rw[List.isChain_cons_iff_of_ne_nil hp'] at hp
         have ih':=ih hp.right
         rw[List.tail_cons, ←List.cons_head_tail hp', ih']
-        rw[List.dropLast_cons₂, List.map_cons, hp.left]
+        rw[dropLast_cons_cons, List.map_cons, hp.left]
         congr
         rw[←ih', List.cons_head_tail]
       }

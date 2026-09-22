@@ -385,7 +385,7 @@ def fband (H : Hypermap α) (p : List α) : Set α :=
   {x | p.any (H.cface x) }
 @[inline] instance instMemFbandDecidable {p : List α} : DecidablePred (· ∈ H.fband p) :=
   fun x => by{
-    simp only [fband, Set.mem_setOf]
+    simp only [fband, Set.mem_ofPred]
     infer_instance
   }
 theorem mem_fband_iff {p : List α} {x : α} : x ∈ H.fband p ↔ ∃y ∈ p, H.cface x y := by{
@@ -415,7 +415,7 @@ theorem simpleList.rec_def_iff {p : List α}
     | nil => simp[rec_def, simpleList]
     | cons x p' ih => {
       simp only [rec_def, ih, simpleList, List.map_cons, List.nodup_cons, List.mem_map, not_exists,
-        not_and, and_congr_left_iff, fband, Set.mem_setOf, List.any_eq_true, decide_eq_true_eq,
+        not_and, and_congr_left_iff, fband, Set.mem_ofPred, List.any_eq_true, decide_eq_true_eq,
         not_exists, not_and, Quotient.eq_iff_equiv, H.cface_equivalence.comm (a:=x)]
       intro _
       rfl
@@ -446,7 +446,7 @@ theorem chordless_def {r : List α} :
   := by{
   unfold chordless
   simp only [Set.disjoint_iff, Set.subset_empty_iff, Set.eq_empty_iff_forall_notMem,
-  Set.mem_inter_iff, Set.mem_setOf]; push_neg
+  Set.mem_inter_iff, Set.mem_ofPred]; push Not
   constructor
   · intro ih x h y hxy; exact ih x h y hxy h
   · intro ih x h y hxy _; exact ih x h y hxy

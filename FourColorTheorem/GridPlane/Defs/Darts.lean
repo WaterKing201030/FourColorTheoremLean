@@ -1,6 +1,8 @@
 import FourColorTheorem.GridPlane.Defs.Point
 import FourColorTheorem.Utils.Relations
 
+/-! 像素的四个镖点对应的函数。end0 end1对应起终点，enf对应像素里的置换 -/
+
 open Function
 open Relation
 

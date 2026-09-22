@@ -2,6 +2,8 @@ import Mathlib.Algebra.Order.Ring.Defs
 import Mathlib.Algebra.Ring.Int.Defs
 import Mathlib.Algebra.Order.Ring.Int
 
+/-! 一些整数引理 -/
+
 theorem Int.mul_le_zero_of_neg_of_nonneg {a b : ℤ} (ha : a < 0) (hb : b ≥ 0) : a * b ≤ 0 :=
   mul_nonpos_of_nonpos_of_nonneg (le_of_lt ha) hb
 

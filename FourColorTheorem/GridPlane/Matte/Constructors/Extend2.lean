@@ -1,5 +1,8 @@
 import FourColorTheorem.GridPlane.Matte.Defs
 import FourColorTheorem.GridPlane.Basic
+
+/-! 扩展方式2：位于一个角上的像素可扩展 -/
+
 open Function
 open Relation
 
@@ -22,28 +25,28 @@ theorem ext2Hp.half_not_mem {m : Matte} {d : GDart} (h : ext2Hp m d)
   }
 theorem ext2Hp.edge_face_mem_ring {m : Matte} {d : GDart} (h : ext2Hp m d)
   : edge (face d) ∈ m.ring := by{
-    rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf, edge_2, face_half]
+    rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred, edge_2, face_half]
     rw[ext2Hp] at h
     apply And.intro h.right.left
     apply half_not_mem h
   }
 theorem ext2Hp.edge_mem_ring {m : Matte} {d : GDart} (h : ext2Hp m d)
   : edge d ∈ m.ring := by{
-    rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf, edge_2]
+    rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred, edge_2]
     rw[ext2Hp] at h
     apply And.intro h.left
     apply half_not_mem h
   }
 theorem ext2Hp.face_not_mem_ring {m : Matte} {d : GDart} (h : ext2Hp m d)
 : face d ∉ m.ring:= by{
-  rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf, not_and, face_half]
+  rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred, not_and, face_half]
   have h:=half_not_mem h
   rw[mem_def] at h
   simp[h]
 }
 theorem ext2Hp.node_2_face_not_mem_ring {m : Matte} {d : GDart} (h : ext2Hp m d)
 : node (node (face d)) ∉ m.ring:= by{
-  rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf, not_and]
+  rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred, not_and]
   intro _
   rw[not_not]
   rw[←face_half, fen_cancel, ←edge_eq_node_face]
@@ -143,8 +146,8 @@ theorem ext2Hp.end0_face_3_not_mem_ring_end0 {m : Matte} {d : GDart} (hc : ext2H
   simp only [not_and]
   intro x hx hxf
   rw[ext2Hp] at hc
-  rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf] at hx
-  simp only [List.coe_toFinset, Set.mem_setOf_eq] at hx
+  rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred] at hx
+  simp only [List.coe_toFinset, Set.mem_ofPred_eq] at hx
   have hc':=hc.right.right hx.left
   apply hc'
   rw[GRectangle.mem_enum_iff]
@@ -187,11 +190,11 @@ theorem half_ext2loop_edge_mem_equad {d : GDart}
 theorem ext2Hp.ext2loop_disjoint_ring {m : Matte} {d : GDart} (hc : ext2Hp m d)
   : (ext2loop d).Disjoint m.ring := by{
     intro x hx
-    rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf]
+    rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred]
     simp only [imp_false, not_and, Decidable.not_not]
     rw[ext2Hp] at hc
     intro hx'
-    simp only [List.coe_toFinset, Set.mem_setOf_eq] at hx'
+    simp only [List.coe_toFinset, Set.mem_ofPred_eq] at hx'
     have hx'':=hc.right.right hx'
     simp only [ext2loop, List.mem_cons, List.not_mem_nil, or_false] at hx
     exfalso
@@ -223,7 +226,6 @@ List.take 2 (m.ring.rotate (List.idxOf (edge (face d)) m.ring))
   have h0 := List.head_rotate_idxOf h.edge_face_mem_ring
   apply Eq.mp ?_ h0
   congr
-  apply lawful_beq_subsingleton
 }
 
 def ext2Disk (m : Matte) (d : GDart) := d.half :: m.disk
@@ -255,7 +257,7 @@ theorem ext2Ring_chain {m : Matte} {d : GDart} (h : ext2Hp m d)
   have hc := m.ring_cycle
   have hc':=m.ring_cycle.rotate (m.ring.idxOf (edge (face d)))
   rw[List.IsCycleChain] at hc'
-  rw[dite_cond_eq_false (by{simp[m.ring_ne_nil]})] at hc'
+  rw[dite_eq_right_of_eq_false (by{simp[m.ring_ne_nil]})] at hc'
   apply And.intro (hc'.left.drop _)
   rw[List.getLast?_eq_some_getLast ext2loop_ne_nil]
   simp only [Option.mem_def, Option.some.injEq, List.head?_drop, forall_eq']
@@ -275,19 +277,18 @@ theorem ext2Ring_chain {m : Matte} {d : GDart} (h : ext2Hp m d)
 theorem ext2Ring_cycleChain {m : Matte} {d : GDart} (h : ext2Hp m d)
   : (ext2Ring m d).IsCycleChain mrlink := by{
     rw[List.IsCycleChain]
-    rw[dite_cond_eq_false (by{simp[ext2Ring_ne_nil]})]
+    rw[dite_eq_right_of_eq_false (by{simp[ext2Ring_ne_nil]})]
     apply And.intro (ext2Ring_chain h)
     rw[ext2Ring_getLast h, ext2Ring_head]
     have hc := m.ring_cycle
     have hc':=m.ring_cycle.rotate (m.ring.idxOf (edge (face d)))
     rw[List.IsCycleChain] at hc'
-    rw[dite_cond_eq_false (by{simp[m.ring_ne_nil]})] at hc'
+    rw[dite_eq_right_of_eq_false (by{simp[m.ring_ne_nil]})] at hc'
     have hc'':=hc'.right
     have h0 := List.head_rotate_idxOf (ext2Hp.edge_face_mem_ring h)
     rw[mrlink] at hc''
     rw[mrlink, hc'', face_end0, ← edge_end0, ← h0]
     congr
-    apply lawful_beq_subsingleton
   }
 
 theorem ext2Ring_simple {m : Matte} {d : GDart} (h : ext2Hp m d)
@@ -328,8 +329,8 @@ theorem ext2Ring_simple {m : Matte} {d : GDart} (h : ext2Hp m d)
         rw[ext2Hp] at h
         have hy':=List.mem_rotate.mp (List.mem_of_mem_drop hy)
         have hy'':=hy'
-        rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf] at hy'
-        simp only [List.coe_toFinset, Set.mem_setOf_eq] at hy'
+        rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred] at hy'
+        simp only [List.coe_toFinset, Set.mem_ofPred_eq] at hy'
         have hc':=h.right.right hy'.left
         rw[GRectangle.mem_enum_iff] at hc'
         rw[ext2loop] at hx'
@@ -375,8 +376,8 @@ theorem mem_ext2Ring_iff {m : Matte} {d : GDart} (h : ext2Hp m d)
   : ∀x, x ∈ ext2Ring m d ↔ x ∈ border (ext2Disk m d).toFinset := by{
     intro x
     rw[ext2Ring, List.mem_append]
-    rw[ext2Disk, border, Set.mem_setOf, List.coe_toFinset, Set.mem_setOf_eq, List.mem_cons]
-    rw[Set.mem_setOf, List.mem_cons, not_or]
+    rw[ext2Disk, border, Set.mem_ofPred, List.coe_toFinset, Set.mem_ofPred_eq, List.mem_cons]
+    rw[Set.mem_ofPred, List.mem_cons, not_or]
     constructor
     · {
       intro h'
@@ -414,8 +415,8 @@ theorem mem_ext2Ring_iff {m : Matte} {d : GDart} (h : ext2Hp m d)
       | inr h' => {
         have h'':=List.mem_rotate.mp (List.mem_of_mem_drop h')
         have h''':=h''
-        rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf] at h''
-        simp only [List.coe_toFinset, Set.mem_setOf_eq] at h''
+        rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred] at h''
+        simp only [List.coe_toFinset, Set.mem_ofPred_eq] at h''
         refine ⟨Or.inr h''.left, ?_⟩
         rw[ext2Hp] at h
         constructor

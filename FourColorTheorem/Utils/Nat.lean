@@ -1,6 +1,8 @@
 import Mathlib.Data.Nat.Log
 import Mathlib.Algebra.Order.Archimedean.Basic
 
+/-! 一些自然数引理 -/
+
 instance Nat.instMulArchimedean : MulArchimedean ℕ where
   arch := by{
     intro x y hy

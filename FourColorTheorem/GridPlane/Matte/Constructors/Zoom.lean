@@ -1,5 +1,7 @@
 import FourColorTheorem.GridPlane.Matte.Constructors.Singleton
 
+/-! 一个Matte放大两倍依然是Matte -/
+
 open Function
 open Relation
 
@@ -87,8 +89,8 @@ theorem ringOf_cycle_of_cycle {l : List GDart} (hl : l.IsCycleChain mrlink)
     cases em (l = []) with
     | inl hln => simp[hln]
     | inr hln => {
-      rw[List.IsCycleChain, dite_cond_eq_false (by{simp[ringOf_eq_nil_iff, hln]})]
-      rw[List.IsCycleChain, dite_cond_eq_false (by{simp[hln]})] at hl
+      rw[List.IsCycleChain, dite_eq_right_of_eq_false (by{simp[ringOf_eq_nil_iff, hln]})]
+      rw[List.IsCycleChain, dite_eq_right_of_eq_false (by{simp[hln]})] at hl
       apply And.intro (ringOf_chain_of_chain hl.left)
       rw[ringOf_head hln, ringOf_getLast hln]
       rw[mrlink, end1_add_double, end0_add_double, end1_mod2, end0_mod2]
@@ -240,7 +242,7 @@ theorem ringOf_def {lr : List GDart} {ld : List GPixel}
     simp[hlp]
   }
   change _ ↔ _ ∧ _
-  simp only [List.coe_toFinset, Set.mem_setOf_eq]
+  simp only [List.coe_toFinset, Set.mem_ofPred_eq]
   rw[diskOf, List.mem_flatMap, List.mem_flatMap, not_exists]
   simp only [Singleton.mem_ringOf_iff_half_eq]
   simp only [↓existsAndEq, and_true, not_and]
@@ -262,7 +264,7 @@ theorem ringOf_def {lr : List GDart} {ld : List GPixel}
       rcases hd02 with hd02 | hd02
       all_goals
       rw[hd02]
-      simp only [List.coe_toFinset, Set.mem_setOf_eq] at hd00
+      simp only [List.coe_toFinset, Set.mem_ofPred_eq] at hd00
       try rw[face_half]
       exact hd00.left
     }
@@ -275,7 +277,7 @@ theorem ringOf_def {lr : List GDart} {ld : List GPixel}
         rw[add_assoc (c:=d0.mod2), ←two_nsmul, ←nsmul_add, add_sub_assoc, GPoint.half_add_double]
         rw[GPoint.mod2_ccw, GPoint.half_mod2_sub_unit, ←add_sub_assoc, add_right_comm]
         rw[←GPoint.mod2_ccw, ←edge_half]
-        simp only [List.coe_toFinset, Set.mem_setOf_eq] at hd00
+        simp only [List.coe_toFinset, Set.mem_ofPred_eq] at hd00
         exact hd00.right
       }
       | inr hd02 => {
@@ -284,7 +286,7 @@ theorem ringOf_def {lr : List GDart} {ld : List GPixel}
         nth_rw 1 [←GPoint.double_half_add_mod2 (d:=d0)]
         rw[add_right_comm, ←nsmul_add, add_sub_assoc, GPoint.half_add_double]
         rw[GPoint.half_mod2_sub_unit, ←add_sub_assoc, ←edge_half]
-        simp only [List.coe_toFinset, Set.mem_setOf_eq] at hd00
+        simp only [List.coe_toFinset, Set.mem_ofPred_eq] at hd00
         exact hd00.right
       }
     }
@@ -319,7 +321,7 @@ theorem ringOf_def {lr : List GDart} {ld : List GPixel}
       rw[h5]
       refine ⟨?_, rfl, Or.inl rfl⟩
       rw[hld]
-      simp only [List.coe_toFinset, Set.mem_setOf_eq]
+      simp only [List.coe_toFinset, Set.mem_ofPred_eq]
       refine ⟨h0, ?_⟩
       rw[edge, GPoint.arc, GPoint.arc, h5]
       nth_rw 1 [←GPoint.double_half_add_mod2 (d:=x.half)]
@@ -342,7 +344,7 @@ theorem ringOf_def {lr : List GDart} {ld : List GPixel}
         rw[face_half]
       }
       rw[hld, h6]
-      simp only [List.coe_toFinset, Set.mem_setOf_eq]
+      simp only [List.coe_toFinset, Set.mem_ofPred_eq]
       refine ⟨h0, ?_⟩
       rw[edge_half, h6, edge_mod2, node_mod2, h5, GPoint.ccw_4, GPoint.ccw_4]
       rw[edge_half] at h1
@@ -395,8 +397,8 @@ theorem mem_zoom_iff {m : Matte} {p : GPixel} :
 
 theorem zoom_coe {m : Matte} : (m.zoom : GRegion) = GRegion.zoom m := by{
   ext x
-  simp only [List.coe_toFinset, Set.mem_setOf_eq]
-  rw[GRegion.zoom, Set.mem_setOf, Set.mem_setOf, ← mem_def, mem_zoom_iff, mem_def]
+  simp only [List.coe_toFinset, Set.mem_ofPred_eq]
+  rw[GRegion.zoom, Set.mem_ofPred, Set.mem_ofPred, ← mem_def, mem_zoom_iff, mem_def]
 }
 end Matte
 end GridPlane

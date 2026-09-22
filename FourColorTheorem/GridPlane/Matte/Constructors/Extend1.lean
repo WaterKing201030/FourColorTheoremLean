@@ -1,5 +1,8 @@
 import FourColorTheorem.GridPlane.Matte.Defs
 import FourColorTheorem.GridPlane.Basic
+
+/-! 扩展方式1：当一个像素是在一边时，可以扩展 -/
+
 open Function
 open Relation
 
@@ -65,7 +68,7 @@ theorem ext1Ring_chain {m : Matte} {d : GDart} (h : ext1Hp m d)
     rw[ext1Ring, List.isChain_append]
     have hlc':=hlc.rotate (m.ring.idxOf (edge d))
     rw[List.IsCycleChain] at hlc'
-    simp only [List.rotate_eq_nil_iff, dite_then_true] at hlc'
+    simp only [List.rotate_eq_nil_iff, dite_true_left] at hlc'
     have hlc'':=hlc' hln
     apply And.intro ext1loop_isChain_mrlink
     apply And.intro hlc''.left.tail
@@ -87,7 +90,6 @@ theorem ext1Ring_chain {m : Matte} {d : GDart} (h : ext1Hp m d)
         have h' := List.head_rotate_idxOf he
         apply Eq.mp ?_ h'
         congr
-        apply lawful_beq_subsingleton
       }
       rw[List.getElem_zero_eq_head, h'] at hlc'''
       rw[mrlink] at hlc'''
@@ -104,7 +106,7 @@ theorem ext1Ring_cycleChain {m : Matte} {d : GDart} (h : ext1Hp m d)
   have hlc:=m.ring_cycle
   have he:=h.edge_mem_ring
   rw[List.IsCycleChain]
-  rw[dite_cond_eq_false (by{simp[ext1Ring_ne_nil]})]
+  rw[dite_eq_right_of_eq_false (by{simp[ext1Ring_ne_nil]})]
   constructor
   · apply ext1Ring_chain h
   simp only [ext1Ring, List.head_append_of_ne_nil ext1loop_ne_nil, head_ext1loop]
@@ -119,7 +121,7 @@ theorem ext1Ring_cycleChain {m : Matte} {d : GDart} (h : ext1Hp m d)
   rw[List.getLast_tail]
   have hlc':=hlc.rotate (m.ring.idxOf (edge d))
   rw[List.IsCycleChain] at hlc'
-  simp only [List.rotate_eq_nil_iff, dite_then_true] at hlc'
+  simp only [List.rotate_eq_nil_iff, dite_true_left] at hlc'
   have hlc'':=(hlc' hln).right
   rw[mrlink] at hlc''
   rw[mrlink]
@@ -129,7 +131,6 @@ theorem ext1Ring_cycleChain {m : Matte} {d : GDart} (h : ext1Hp m d)
   have h' := List.head_rotate_idxOf he
   apply Eq.mp ?_ h'
   congr
-  apply lawful_beq_subsingleton
 }
 
 theorem end0_face_2_not_mem_ring_end0 {m : Matte} {d : GDart} (hc : ext1Hp m d)
@@ -138,8 +139,8 @@ theorem end0_face_2_not_mem_ring_end0 {m : Matte} {d : GDart} (hc : ext1Hp m d)
   simp only [not_and]
   intro x hx hxf
   rw[ext1Hp] at hc
-  rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf] at hx
-  simp only [List.coe_toFinset, Set.mem_setOf_eq] at hx
+  rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred] at hx
+  simp only [List.coe_toFinset, Set.mem_ofPred_eq] at hx
   have hc':=hc.right hx.left
   apply hc'
   rw[GRectangle.mem_enum_iff]
@@ -152,8 +153,8 @@ theorem end0_face_3_not_mem_ring_end0 {m : Matte} {d : GDart} (hc : ext1Hp m d)
   simp only [not_and]
   intro x hx hxf
   rw[ext1Hp] at hc
-  rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf] at hx
-  simp only [List.coe_toFinset, Set.mem_setOf_eq] at hx
+  rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred] at hx
+  simp only [List.coe_toFinset, Set.mem_ofPred_eq] at hx
   have hc':=hc.right hx.left
   apply hc'
   rw[GRectangle.mem_enum_iff]
@@ -163,11 +164,11 @@ theorem end0_face_3_not_mem_ring_end0 {m : Matte} {d : GDart} (hc : ext1Hp m d)
 theorem ext1loop_disjoint_ring {m : Matte} {d : GDart} (hc : ext1Hp m d)
   : (ext1loop d).Disjoint m.ring := by{
     intro x hx
-    rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf]
+    rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred]
     simp only [imp_false, not_and, Decidable.not_not]
     rw[ext1Hp] at hc
     intro hx'
-    simp only [List.coe_toFinset, Set.mem_setOf_eq] at hx'
+    simp only [List.coe_toFinset, Set.mem_ofPred_eq] at hx'
     have hx'':=hc.right hx'
     simp only [ext1loop, List.mem_cons, List.not_mem_nil, or_false] at hx
     exfalso
@@ -235,8 +236,8 @@ theorem ext1Ring_simple {m : Matte} {d : GDart} (hc : ext1Hp m d)
         rw[ext1Hp] at hc
         have hy':=List.mem_rotate.mp (List.mem_of_mem_tail hy)
         have hy'':=hy'
-        rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf] at hy'
-        simp only [List.coe_toFinset, Set.mem_setOf_eq] at hy'
+        rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred] at hy'
+        simp only [List.coe_toFinset, Set.mem_ofPred_eq] at hy'
         have hc':=hc.right hy'.left
         rw[GRectangle.mem_enum_iff] at hc'
         rw[ext1loop] at hx'
@@ -270,9 +271,6 @@ theorem ext1Ring_simple {m : Matte} {d : GDart} (hc : ext1Hp m d)
           rw[← h']
           change _ = (a :: l').head (by{simp})
           congr
-          apply Eq.mp ?_ hal'
-          congr
-          apply lawful_beq_subsingleton
         }
         · {
           exfalso
@@ -307,9 +305,9 @@ theorem mem_ext1Ring_iff {m : Matte} {d : GDart} (hc : ext1Hp m d) :
   ∀x, x ∈ ext1Ring m d ↔ x ∈ border (ext1Disk m d).toFinset := by{
     intro x
     rw[ext1Ring, List.mem_append]
-    rw[ext1Disk, border, Set.mem_setOf]
+    rw[ext1Disk, border, Set.mem_ofPred]
     simp only [List.toFinset_cons, Finset.coe_insert, List.coe_toFinset, Set.mem_insert_iff,
-      Set.mem_setOf_eq, not_or]
+      Set.mem_ofPred_eq, not_or]
     constructor
     · {
       intro h
@@ -347,8 +345,8 @@ theorem mem_ext1Ring_iff {m : Matte} {d : GDart} (hc : ext1Hp m d) :
       | inr h => {
         have h':=List.mem_rotate.mp (List.mem_of_mem_tail h)
         have h'':=h'
-        rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf] at h'
-        simp only [List.coe_toFinset, Set.mem_setOf_eq] at h'
+        rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred] at h'
+        simp only [List.coe_toFinset, Set.mem_ofPred_eq] at h'
         refine ⟨Or.inr h'.left, ?_⟩
         rw[ext1Hp] at hc
         constructor
@@ -366,7 +364,6 @@ theorem mem_ext1Ring_iff {m : Matte} {d : GDart} (hc : ext1Hp m d) :
             have h0 := List.head_rotate_idxOf (ext1Hp.edge_mem_ring hc)
             apply Eq.mp ?_ h0
             congr
-            apply lawful_beq_subsingleton
           }
           rw[List.map_cons, List.nodup_cons, h0] at hls'
           have hls'':=hls'.left
@@ -394,7 +391,7 @@ theorem mem_ext1Ring_iff {m : Matte} {d : GDart} (hc : ext1Hp m d) :
             rw[edge_2] at h
             rw[h] at h''
             unfold border at h''
-            rw[Set.mem_setOf, List.coe_toFinset, Set.mem_setOf_eq] at h''
+            rw[Set.mem_ofPred, List.coe_toFinset, Set.mem_ofPred_eq] at h''
             have hc':=hc.right h''.left
             apply hc'
             rw[GRectangle.mem_enum_iff]
@@ -408,7 +405,7 @@ theorem mem_ext1Ring_iff {m : Matte} {d : GDart} (hc : ext1Hp m d) :
             rw[edge_2] at h
             rw[h] at h''
             unfold border at h''
-            rw[Set.mem_setOf, List.coe_toFinset, Set.mem_setOf_eq] at h''
+            rw[Set.mem_ofPred, List.coe_toFinset, Set.mem_ofPred_eq] at h''
             have hc':=hc.right h''.left
             apply hc'
             rw[GRectangle.mem_enum_iff]
@@ -421,7 +418,7 @@ theorem mem_ext1Ring_iff {m : Matte} {d : GDart} (hc : ext1Hp m d) :
             rw[edge_2, face_3, edge_2] at h
             rw[h] at h''
             unfold border at h''
-            rw[Set.mem_setOf, List.coe_toFinset, Set.mem_setOf_eq] at h''
+            rw[Set.mem_ofPred, List.coe_toFinset, Set.mem_ofPred_eq] at h''
             have hc':=hc.right h''.left
             apply hc'
             rw[GRectangle.mem_enum_iff]
@@ -463,7 +460,6 @@ theorem mem_ext1Ring_iff {m : Matte} {d : GDart} (hc : ext1Hp m d) :
           have h4 := List.head_rotate_idxOf (ext1Hp.edge_mem_ring hc)
           apply Eq.mp ?_ h4
           congr
-          apply lawful_beq_subsingleton
         }
         rw[h4]
         intro h

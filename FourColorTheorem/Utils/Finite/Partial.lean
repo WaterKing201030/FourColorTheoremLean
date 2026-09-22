@@ -10,7 +10,7 @@ variable {α : Type _} [Fintype α]
   [DecidableRel r] {D : Set α} [DecidablePred (· ∈ D)] : DecidablePred (· ∈ ClosureBorder r D)
   := by{
     intro x
-    simp only[ClosureBorder, Set.mem_setOf]
+    simp only[ClosureBorder, Set.mem_ofPred]
     apply instDecidableAnd (dp := by{
       apply @Fintype.decidableExistsFintype _ _ (by{
         intro x
@@ -233,7 +233,7 @@ theorem nCompSet_sum_of_closure {r : Setoid α} [DecidableRel r] {D1 D2 : Set α
           | Sum.inr qy => {
             use ⟦⟨qy.out.val, Or.inr qy.out.prop⟩⟧
             unfold f
-            rw[dite_cond_eq_false, Sum.inr.injEq, Quotient.mk_eq_iff_out]
+            rw[dite_eq_right_of_eq_false, Sum.inr.injEq, Quotient.mk_eq_iff_out]
             · {
               change LiftOn _ _ _ _
               unfold LiftOn

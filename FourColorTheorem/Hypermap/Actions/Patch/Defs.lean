@@ -384,7 +384,7 @@ theorem exists_galois_en_of_mem_bGd {xd : αd} (b_xd : xd ∈ bGd) :
     simp only [patchG.galois_connect_edge_node, and_self]
     have xdP : hd xd ∈ patchG.rem
       := by{rw[mem_rem_iff_disk]; right; exact List.mem_map_of_mem b_xd}
-    rw[rem, Set.mem_setOf] at xdP
+    rw[rem, Set.mem_ofPred] at xdP
     have ⟨xr, hxrd⟩:=xdP
     use Gr.face (Gr.edge xr)
     rw[nfe_cancel, hxrd]
@@ -394,7 +394,7 @@ theorem exists_galois_en_of_mem_bGr {xr : αr} (b_xr : xr ∈ bGr) :
     simp only [patchG.galois_connect_edge_node, and_self]
     have xrP : hr xr ∈ patchG.disk
       := by{rw[mem_disk_iff_rem]; right; exact List.mem_map_of_mem b_xr}
-    rw[disk, Set.mem_setOf] at xrP
+    rw[disk, Set.mem_ofPred] at xrP
     have ⟨xd, hxdr⟩:=xrP
     use Gd.node (Gd.face xd)
     rw[← patchG.galois_connect_edge_node, enf_cancel, hxdr]

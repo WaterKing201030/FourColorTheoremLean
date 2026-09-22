@@ -96,7 +96,7 @@ theorem zoom_mcorner {m : Matte} {r : GRectangle} {q : GPoint}
           q.half - (0, 1) ∉ m := by
         rw [mcorner_eq] at mp_gt0
         by_contra h
-        push_neg at h
+        push Not at h
         simp [h.1, h.2.1, h.2.2] at mp_gt0
       rcases hmissing with h | h | h
       · exact ⟨(1, 1), by decide, by simpa [GPoint.mod2] using h⟩

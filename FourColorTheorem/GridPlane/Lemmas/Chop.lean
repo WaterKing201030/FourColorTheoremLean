@@ -2,6 +2,8 @@ import FourColorTheorem.GridPlane.Defs
 import FourColorTheorem.GridPlane.Lemmas.Hypermap
 import FourColorTheorem.GridPlane.Lemmas.Rotation
 
+/-! 半平面相关引理 -/
+
 open Function
 open Relation
 
@@ -38,10 +40,10 @@ theorem touch_subset_chop1_iff_mem_chop {p : GPixel} {d : GDart} :
     clear d
     intro d hd p
     unfold chop
-    simp only [hd, Set.mem_setOf_eq]
+    simp only [hd, Set.mem_ofPred_eq]
     simp only [Set.subset_def, Set.mem_prod, Set.mem_Ico, and_imp, Prod.forall, chop1,
     GRectangle.touch, chop, face_toUnitSquareDart, edge_toUnitSquareDart, hd, opp,
-    UnitSquareDart.ccw, Set.mem_setOf, face_half, Ico.touch]
+    UnitSquareDart.ccw, Set.mem_ofPred, face_half, Ico.touch]
     simp only [tsub_le_iff_right]
     rw[toUnitSquare_eq_gp00] at hd
     simp only [mod2, Prod.mk.injEq] at hd
@@ -87,7 +89,7 @@ theorem mem_chop1Rect_inner_iff_mem_inner_chopRect {r : GRectangle} {p : GPixel}
 
 theorem fn_chop_eq_ff_chop {d : GDart} : chop (face (node d)) = chop (face (face d)) := by{
   ext p
-  simp only [chop, ge_iff_le, Set.mem_setOf_eq]
+  simp only [chop, ge_iff_le, Set.mem_ofPred_eq]
   simp only [face_toUnitSquareDart, node_toUnitSquareDart]
   match d with | ⟨dx, dy⟩ => {
     simp only [face_half, node_half, Prod.snd_add, Prod.snd_sub, Prod.fst_add, Prod.fst_sub]
@@ -119,7 +121,7 @@ theorem node_half_mem_chop {d : GDart} : (node d).half ∈ chop d := by{
 theorem half_mem_chop_face {d : GDart} : d.half ∈ chop (face d) := by{
   induction d using recursion_ccw gp01 with
   | base d hd => {
-    simp only [chop, face_toUnitSquareDart, UnitSquareDart.ccw, hd, face_half, Set.mem_setOf_eq,
+    simp only [chop, face_toUnitSquareDart, UnitSquareDart.ccw, hd, face_half, Set.mem_ofPred_eq,
       Std.le_refl]
   }
   | ind d ih => {
@@ -138,7 +140,7 @@ theorem half_mem_rect_of_edge_mem_rect_of_mem_chopRect
   (he : (edge d).half ∈ r) {q : GPixel} (hq : q ∈ chopRect r d)
   : d.half ∈ r := by {
   rw [mem_chopRect_iff] at hq
-  simp only [GRectangle.mem_iff, edge_half', chop, Set.mem_setOf_eq] at *
+  simp only [GRectangle.mem_iff, edge_half', chop, Set.mem_ofPred_eq] at *
   cases hd : d.toUnitSquareDart <;> simp [hd] at * <;> omega
 }
 
@@ -156,7 +158,7 @@ theorem edge_half_mem_inner_of_half_mem_inner_of_mem_rect_of_notMem_chop1
   (hp : d.half ∈ r.inner) {q : GPixel} (hq : q ∈ r) (hqc : q ∉ chop1 d) :
   (edge d).half ∈ r.inner := by {
   simp only [GRectangle.mem_iff, GRectangle.inner, Ico.inner,
-    chop1, chop, Set.mem_setOf_eq, face_toUnitSquareDart, edge_toUnitSquareDart,
+    chop1, chop, Set.mem_ofPred_eq, face_toUnitSquareDart, edge_toUnitSquareDart,
     face_half, edge_half'] at *
   cases hd : d.toUnitSquareDart <;>
     simp [hd, UnitSquareDart.ccw, UnitSquareDart.opp] at * <;> omega
@@ -166,7 +168,7 @@ theorem touch_iff_four_chop1 {d : GDart} {q : GPixel} :
     q ∈ GRectangle.touch d.half ↔
     q ∈ chop1 d ∧ q ∈ chop1 (face d) ∧
     q ∈ chop1 (face (face d)) ∧ q ∈ chop1 (face (face (face d))) := by{
-  simp only [chop1, chop, Set.mem_setOf_eq, face_toUnitSquareDart,
+  simp only [chop1, chop, Set.mem_ofPred_eq, face_toUnitSquareDart,
     edge_toUnitSquareDart, face_half, edge_half', GRectangle.mem_iff,
     GRectangle.touch, Ico.touch]
   cases d.toUnitSquareDart <;>

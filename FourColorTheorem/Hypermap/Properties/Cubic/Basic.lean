@@ -143,7 +143,7 @@ theorem ncomp_triple (hC : H.Cubic) : Fintype.card α = H.ncomp * 3 := by{
       | isTrue hq' => exact Sum.inr (Sum.inl ⟨x, hq'⟩)
       | isFalse hq' => {
         have hq' : ∃q : Quotient H.nsetoid, node (node (q.out)) = x := by{
-          push_neg at hq hq'
+          push Not at hq hq'
           have ⟨q, hq''⟩ := hC'.quotient_cases x
           use q
           simp[hq, hq'] at hq''
@@ -188,7 +188,7 @@ theorem ncomp_triple (hC : H.Cubic) : Fintype.card α = H.ncomp * 3 := by{
       set inst : Decidable (∃q : Quotient H.nsetoid, q.out = x) := inferInstance
       set inst' : Decidable (∃q : Quotient H.nsetoid, node (q.out) = x) := inferInstance
       have hinstp : ¬∃q : Quotient H.nsetoid, q.out = x := by{
-        push_neg
+        push Not
         intro q hq
         have ⟨q', hq'⟩ := hx
         have hqq' : H.nsetoid q.out q'.out := by{
@@ -220,7 +220,7 @@ theorem ncomp_triple (hC : H.Cubic) : Fintype.card α = H.ncomp * 3 := by{
       set inst : Decidable (∃q : Quotient H.nsetoid, q.out = x) := inferInstance
       set inst' : Decidable (∃q : Quotient H.nsetoid, node (q.out) = x) := inferInstance
       have hinstp : ¬∃q : Quotient H.nsetoid, q.out = x := by{
-        push_neg
+        push Not
         intro q hq
         have ⟨q', hq'⟩ := hx
         have hqq' : H.nsetoid q.out q'.out := by{
@@ -236,7 +236,7 @@ theorem ncomp_triple (hC : H.Cubic) : Fintype.card α = H.ncomp * 3 := by{
         exact hC'.node_2_ne _ hq'
       }
       have hinstp' : ¬∃q : Quotient H.nsetoid, node (q.out) = x := by{
-        push_neg
+        push Not
         intro q hq
         have ⟨q', hq'⟩ := hx
         have hqq' : H.nsetoid q.out q'.out := by{

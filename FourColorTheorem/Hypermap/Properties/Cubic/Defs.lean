@@ -16,12 +16,12 @@ theorem cubicSubset_subset_precubicSubset : H.cubicSubset ⊆ H.precubicSubset :
   intro x h
   unfold cubicSubset at h
   unfold precubicSubset
-  simp only [Set.mem_setOf] at h
-  simp only [Set.mem_setOf]
+  simp only [Set.mem_ofPred] at h
+  simp only [Set.mem_ofPred]
   intro a ha
-  simp only [Set.mem_setOf]
+  simp only [Set.mem_ofPred]
   have h':=h ha
-  simp only [Set.mem_setOf] at h'
+  simp only [Set.mem_ofPred] at h'
   rw[h']
 }
 

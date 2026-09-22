@@ -3,6 +3,8 @@ import FourColorTheorem.GridPlane.Matte.Constructors.Zoom
 import FourColorTheorem.GridPlane.Matte.Extension.Extend
 import FourColorTheorem.GridPlane.Matte.Coarse
 
+/-! 光滑的Matte可以扩展（2x2留足了空间） -/
+
 open Function
 open Relation
 

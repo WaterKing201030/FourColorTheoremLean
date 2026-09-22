@@ -15,14 +15,14 @@ def skip_edge'_remain_set (H : Hypermap α) (x : α) :=
 @[inline] instance skip_edge'_remain_set.instDecidableMem
   {x : α} {y : {a // a ≠ x}} : Decidable (y ∈ H.skip_edge'_remain_set x) := by{
     unfold skip_edge'_remain_set
-    rw[Set.mem_setOf_eq]
+    rw[Set.mem_ofPred_eq]
     infer_instance
   }
 
 theorem mem_skip_edge'_remain_set_iff_cclink {x : α} {y : {a // a ≠ x}}
   : y ∈ skip_edge'_remain_set H x ↔ H.cclink x y :=by{
     unfold skip_edge'_remain_set
-    rw[Set.mem_setOf_eq]
+    rw[Set.mem_ofPred_eq]
     unfold clink
     simp only [union_iff, fromFun, nodeinv_eq_iff_eq_node]
     constructor
@@ -109,7 +109,7 @@ theorem isbarb_iff_skip_edge'_set_remain_ncomp {x : α}
     unfold skip_edge'_remain_subtype
     rw[isEmpty_subtype]
     unfold skip_edge'_remain_set
-    simp only [Set.mem_setOf_eq]
+    simp only [Set.mem_ofPred_eq]
     constructor
     · {
       intro h y ⟨z, hxz, hzy⟩
@@ -524,7 +524,7 @@ theorem walkupe_gcomp_eq_skip_edge'_remain_add_complement {x : α}
               have h':=cclink_of_cclink_WalkupE h
               rw[mem_skip_edge'_remain_set_iff_cclink] at hq'
               have h'':=fun h => hq' (ReflTransGen.trans h h')
-              rw[dite_cond_eq_false]
+              rw[dite_eq_right_of_eq_false]
               · {
                 simp only [ne_eq, Sum.inr.injEq, Quotient.mk_eq_iff_out]
                 simp only [skip_edge'_complement_csetoid_iff_csetoid]
@@ -612,7 +612,7 @@ theorem walkupe_skip_edge'_complement_ncomp_succ {x : α} :
             | Sum.inl q' => {
               simp only [ne_eq]
               unfold toFun
-              rw[dite_cond_eq_false]
+              rw[dite_eq_right_of_eq_false]
               · {
                 simp only [ne_eq, Sum.inl.injEq, Quotient.mk_eq_iff_out]
                 simp only [skip_edge'_complement_csetoid_iff_csetoid, ne_eq]

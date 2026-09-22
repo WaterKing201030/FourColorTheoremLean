@@ -2,6 +2,8 @@ import Mathlib.Algebra.Group.Action.Basic
 import FourColorTheorem.Utils.Chain
 import FourColorTheorem.GridPlane.Basic
 
+/-! 面片相关定义 -/
+
 open Function
 open Relation
 
@@ -33,8 +35,8 @@ theorem mem_def (M : Matte) x : x ∈ M ↔ x ∈ M.disk := by{
 }
 theorem noempty {m : Matte} : (m : GRegion) ≠ ∅ := by{
   rw[ne_eq, Set.eq_empty_iff_forall_notMem]
-  push_neg
-  simp only [List.coe_toFinset, Set.mem_setOf_eq]
+  push Not
+  simp only [List.coe_toFinset, Set.mem_ofPred_eq]
   have h := m.disk_ne_nil
   apply List.exists_mem_of_ne_nil at h
   exact h
@@ -42,17 +44,17 @@ theorem noempty {m : Matte} : (m : GRegion) ≠ ∅ := by{
 theorem exists_mem {m : Matte} : ∃p, p ∈ m := by{
   have h := m.noempty
   rw[ne_eq, Set.eq_empty_iff_forall_notMem] at h
-  push_neg at h
+  push Not at h
   rcases h with ⟨z, hz⟩
   use z
-  simp only [List.coe_toFinset, Set.mem_setOf_eq] at hz
+  simp only [List.coe_toFinset, Set.mem_ofPred_eq] at hz
   rwa[mem_def]
 }
 theorem disjoint_iff {m1 m2 : Matte}
 : Disjoint (m1 : GRegion) (m2 : GRegion) ↔ m1.disk.Disjoint m2.disk
 := by{
   rw[Set.disjoint_iff, Set.subset_empty_iff, Set.eq_empty_iff_forall_notMem]
-  simp only [List.coe_toFinset, Set.mem_inter_iff, Set.mem_setOf_eq, not_and]
+  simp only [List.coe_toFinset, Set.mem_inter_iff, Set.mem_ofPred_eq, not_and]
   rfl
 }
 theorem mem_border_iff {m : Matte} {d : GDart} :
@@ -62,7 +64,7 @@ theorem mem_border_iff {m : Matte} {d : GDart} :
 
 theorem edge_not_mem_ring_of_mem_ring {m : Matte} {p : GPoint} (hp : p ∈ m.ring)
   : edge p ∉ m.ring := by{
-    rw[mem_ring_iff_mem_disk_border, border, Set.mem_setOf] at *
+    rw[mem_ring_iff_mem_disk_border, border, Set.mem_ofPred] at *
     intro ⟨hl, _⟩
     apply hp.right
     exact hl
@@ -91,7 +93,7 @@ lemma exists_border_of_disk_ne_nil {l : List GPixel} (hln : l ≠ [])
   }
   have ⟨d, hd, hd0⟩:=ih
   use 2 • d
-  rw[border, Set.mem_setOf, GPoint.half_double, edge_half, GPoint.mod2_double, GPoint.half_double]
+  rw[border, Set.mem_ofPred, GPoint.half_double, edge_half, GPoint.mod2_double, GPoint.half_double]
   rw[add_zero, GPoint.zero_def, GPoint.ccw]
   match d with | ⟨dx, dy⟩ => simp[hd, hd0]
 }
@@ -118,9 +120,9 @@ theorem adj_Irrefl : Std.Irrefl adj where
     rw[not_exists]
     intro p hp
     rw[mem_ring_iff_mem_disk_border] at hp
-    rw[border, Set.mem_setOf] at hp
+    rw[border, Set.mem_ofPred] at hp
     rw[mem_ring_iff_mem_disk_border] at hp
-    rw[border, Set.mem_setOf] at hp
+    rw[border, Set.mem_ofPred] at hp
     exact hp.left.right hp.right.left
   }
 theorem adj_irrefl : ∀m : Matte, ¬m.adj m := adj_Irrefl.irrefl

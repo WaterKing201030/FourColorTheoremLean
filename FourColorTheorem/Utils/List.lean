@@ -7,6 +7,8 @@ import Mathlib.Data.List.Rotate
 import Mathlib.Data.List.Lattice
 import Mathlib.Data.List.Cycle
 
+/-! 列表相关引理 -/
+
 open Relation
 open Function
 
@@ -58,11 +60,7 @@ theorem List.head?_concat_eq_headD {a : α} {l : List α}
   | nil => rfl
   | cons b bs ih => simp
 }
-theorem List.getLast?_cons_of_ne_nil {a : α} {l : List α} (hl : l ≠ [])
-  : (a::l).getLast? = l.getLast? := by{
-    match l with
-    | _::_ => rw[getLast?_cons_cons]
-  }
+
 theorem List.getLast_cons_eq_getLastD {x : α} {l : List α}
   : (x::l).getLast (by{simp}) = l.getLastD x :=
   List.getLast_eq_getLastD _
@@ -369,11 +367,6 @@ theorem List.head_rotate_idxOf [DecidableEq α] {l : List α} {x : α} (hx : x �
     rw[←head?_eq_some_head hx']
     rw[head?_rotate (idxOf_lt_length_of_mem hx), getElem?_idxOf hx]
   }
-
-theorem List.Nodup.tail {l : List α} (hl : l.Nodup) : l.tail.Nodup := by{
-  rw[←drop_one]
-  apply hl.drop
-}
 
 theorem List.Disjoint.rotate_right {l1 l2 : List α} (h : l1.Disjoint l2) (k : ℕ)
   : l1.Disjoint (l2.rotate k) := by{

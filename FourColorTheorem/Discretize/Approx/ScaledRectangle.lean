@@ -1,5 +1,7 @@
 import FourColorTheorem.Discretize.Approx.ScaledPoint
 
+/-! 把整长方形放进实平面 -/
+
 namespace RealPlane
 open GridPlane
 
@@ -82,7 +84,7 @@ def refineBy (t : ℕ) (b : ScaledRectangle) : ScaledRectangle := (refine^[t]) b
   | zero => rfl
   | succ t ih =>
     ext p
-    rw[Set.mem_setOf, Set.mem_setOf, refineBy_fst, refineBy_snd]
+    rw[Set.mem_ofPred, Set.mem_ofPred, refineBy_fst, refineBy_snd]
     rw[Function.iterate_succ_apply', GRectangle.mem_zoom_iff]
     rw[← add_assoc, approxPoint_half]
     rw[refineBy_fst, refineBy_snd, Set.ext_iff] at ih
@@ -144,7 +146,7 @@ theorem Rectangle.exists_rect_approx {R : Rectangle} {z : Point} (hz : z ∈ R) 
       hs.trans_le (mul_le_mul_of_nonneg_left hbounds.2.2.2 (by{simp} : (2 : ℝ) ^ s > 0).le)⟩
   refine ⟨ScaledRectangle.touch s (approxPoint s z), ScaledRectangle.approx_mem_touch_inner s z, ?_⟩
   intro t ht
-  rw [Set.mem_setOf] at ht
+  rw [Set.mem_ofPred] at ht
   simp only [ScaledRectangle.touch, approxPoint,
   GRectangle.touch, GRectangle.mem_iff, Ico.touch] at ht
   change (R.hspan.inf < t.1 ∧ t.1 < R.hspan.sup) ∧

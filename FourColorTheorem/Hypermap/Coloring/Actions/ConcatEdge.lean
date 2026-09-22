@@ -81,10 +81,10 @@ theorem fourColorable_of_concatEdge_fourColorable
     simp only [H.cface_face]
     congr 1
     ext hb
-    push_neg at hb
+    push Not at hb
     have ha : a = x ∨ a = node x := by{
       by_contra ha
-      push_neg at ha
+      push Not at ha
       specialize hb ⟨⟨a, ha.left⟩, by{simp[ha.right]}⟩
       apply hb
       simp only
@@ -92,7 +92,7 @@ theorem fourColorable_of_concatEdge_fourColorable
     }
     have hfa : face a = x ∨ face a = node x := by{
       by_contra hfa
-      push_neg at hfa
+      push Not at hfa
       specialize hb ⟨⟨face a, hfa.left⟩, by{simp[hfa.right]}⟩
       apply hb
       simp only
@@ -233,7 +233,7 @@ theorem fourColorable_of_concatEdge_fourColorable
       rw[ih]
       apply hk2f
     }
-    push_neg at ha
+    push Not at ha
     let a' : {a : {a // a ≠ x} // a ≠ ⟨node x, hxv.node_ne⟩} := ⟨⟨a, ha.1⟩, by{simp[ha.2]}⟩
     have hz0 : ∃ z : {a : {a // a ≠ x} // a ≠ ⟨node x, hxv.node_ne⟩}, H.cface a ↑↑z :=
       ⟨a', by{simp[cface, funReflTransGen]; rfl}⟩
@@ -290,7 +290,7 @@ theorem fourColorable_of_concatEdge_fourColorable
       rw[ih]
       apply hk2f
     }
-    push_neg at hea
+    push Not at hea
     unfold k
     have h0 :=
       H.concatedge_edge_val_of_plain_of_subdiv Hp hxv (a:=⟨⟨a, ha.1⟩, by{simp[ha.2]}⟩)

@@ -6,6 +6,8 @@ import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Ring
 
+/-! 整平面和实平面之间的转化 -/
+
 @[simp] lemma exp2_pos (s : ℕ) : (2 : ℝ) ^ s > 0 := by{simp}
 
 noncomputable def approx (s : ℕ) (x : ℝ) : ℤ := ⌊2 ^ s * x⌋
