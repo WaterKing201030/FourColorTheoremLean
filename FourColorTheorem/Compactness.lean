@@ -1,6 +1,8 @@
 import FourColorTheorem.RealPlane.Coloring
 import FourColorTheorem.ErdosCompactness
 
+/-! 紧致性定理：将平面上任意简单地图的问题规约成任意简单有限有限地图的定理 -/
+
 namespace RealPlane
 namespace Map
 abbrev CoveredPoint (m : Map) := {p : Point // m.cover p}
@@ -39,7 +41,8 @@ def adjacent (m : Map) [IsPlainMap m]
       rw[Map.boundary, eq_ab, eq_ab']
       rfl
     )
-theorem adjacent_symm {m : Map} [IsPlainMap m] : Symmetric (adjacent m) := by{
+theorem adjacent_Symm {m : Map} [IsPlainMap m] : Std.Symm (adjacent m) := by{
+  apply Std.Symm.mk
   intro a b
   rw[←Quotient.out_eq a, ←Quotient.out_eq b]
   unfold adjacent
@@ -52,6 +55,10 @@ theorem adjacent_symm {m : Map} [IsPlainMap m] : Symmetric (adjacent m) := by{
   rw[Map.boundary] at *
   rw[Set.inter_comm]
   exact h1
+}
+@[symm] theorem adjacent_symm {m : Map} [IsPlainMap m]
+:∀{x y}, adjacent m x y → adjacent m y x := by{
+  apply adjacent_Symm.symm
 }
 theorem adjacent_irrefl {m : Map} [IsPlainMap m] : Std.Irrefl (adjacent m) := ⟨by{
   intro a
@@ -66,7 +73,7 @@ end CoveredPointQuotient
 
 def simpleGraph (m : Map) [IsPlainMap m] : SimpleGraph (CoveredPointQuotient m) where
   Adj := CoveredPointQuotient.adjacent m
-  symm := CoveredPointQuotient.adjacent_symm
+  symm := CoveredPointQuotient.adjacent_Symm
   loopless := CoveredPointQuotient.adjacent_irrefl
 
 theorem simpleGraph_colorable_iff {m : Map} [IsPlainMap m] {n : ℕ}
@@ -90,12 +97,12 @@ theorem simpleGraph_colorable_iff {m : Map} [IsPlainMap m] {n : ℕ}
       apply IsPlainMap.mk
       · {
         intro p1 p2 hk
-        simp only [dite_else_false, k] at *
+        simp only [dite_false_right, k] at *
         aesop
       }
       · {
         intro p1 p2 p3 hk1 hk2
-        simp only [dite_else_false, k] at *
+        simp only [dite_false_right, k] at *
         aesop
       }
     }
@@ -111,7 +118,7 @@ theorem simpleGraph_colorable_iff {m : Map} [IsPlainMap m] {n : ℕ}
       · {
         intro z (hz : k z z)
         unfold k at hz
-        simp only [dite_eq_ite, if_false_right, and_true, ite_then_self, imp_false,
+        simp only [dite_eq_ite, ite_false_right, and_true, ite_self_left, imp_false,
           Decidable.not_not] at hz
         exact hz
       }
@@ -146,7 +153,7 @@ theorem simpleGraph_colorable_iff {m : Map} [IsPlainMap m] {n : ℕ}
       intro p hp
       use f ⟦⟨p, hp⟩⟧
       simp only [f']
-      rw[dif_pos ⟨⟨p, hp⟩, rfl⟩]
+      rw[dite_eq_left ⟨⟨p, hp⟩, rfl⟩]
       have hp' := Classical.choose_spec (⟨⟨p, hp⟩, rfl⟩ : ∃ p_1, f ⟦p_1⟧ = f ⟦⟨p, hp⟩⟧)
       unfold k
       simpa[hp, (Classical.choose (⟨⟨p, hp⟩, rfl⟩ : ∃ p_1, f ⟦p_1⟧ = f ⟦⟨p, hp⟩⟧)).prop]
@@ -191,7 +198,12 @@ theorem finiteSubmap_submap {m : Map} [IsPlainMap m] {s : Finset m.CoveredPointQ
   intro z y
   change m.finiteSubmap _ _ _ → m z _
   simp only [finiteSubmap]
-  split_ifs <;> simp
+  split_ifs with h
+  · {
+    simp only [h, ↓reduceDIte]
+    split_ifs with h' <;> simp[h']
+  }
+  · simp[h]
 }
 
 instance finiteSubmap_plain {m : Map} [IsPlainMap m] {s : Finset m.CoveredPointQuotient}
@@ -200,23 +212,36 @@ instance finiteSubmap_plain {m : Map} [IsPlainMap m] {s : Finset m.CoveredPointQ
   · {
     intro p1 p2 hp12
     simp only [finiteSubmap] at *
-    split_ifs at hp12 <;> try contradiction
-    simp only [cover_of_rel_right hp12, dite_true]
-    rw[if_pos]
-    · rwa[@comm m]
-    apply (Eq.mp · (by assumption : ⟦⟨p1, _⟩⟧ ∈ s))
-    congr 1
-    rw[Quotient.eq]
-    change m _ _
-    simpa
+    rcases em' (m.cover p1) with hp12' | hp12'
+    · simp[hp12'] at hp12
+    simp only [hp12', ↓reduceDIte] at hp12
+    rcases em' (⟦⟨p1, hp12'⟩⟧ ∈ s) with hp12'' | hp12''
+    · simp[hp12''] at hp12
+    simp only [hp12'', ↓reduceIte] at hp12
+    simp only [cover_of_rel_right hp12, ↓reduceDIte]
+    have hp21 : m p2 p1 := Map.symm hp12
+    have hp2s : ⟦⟨p2, cover_of_rel_right hp12⟩⟧ ∈ s := by
+      have hq : (⟦⟨p2, cover_of_rel_right hp12⟩⟧ : m.CoveredPointQuotient) =
+          ⟦⟨p1, hp12'⟩⟧ := by
+        rw [Quotient.eq]
+        exact hp21
+      rw [hq]
+      exact hp12''
+    simp [hp2s, hp21]
   }
   · {
     intro p1 p2 p3 hp12 hp23
     simp only [finiteSubmap] at *
-    split_ifs at hp12 <;> try contradiction
-    split_ifs at hp23 <;> try contradiction
-    simp only [cover_of_rel_left hp12, dite_true]
-    simp only [if_pos (by assumption : ⟦⟨p1, _⟩⟧ ∈ s)]
+    split_ifs at hp12 with hp12'
+      <;> try simp only [hp12', ↓reduceDIte] at hp12
+    split_ifs at hp12 with hp12''
+      <;> try simp only [hp12'', ↓reduceIte] at hp12
+    split_ifs at hp23 with hp23'
+      <;> try simp only [hp23', ↓reduceDIte] at hp23
+    split_ifs at hp23 with hp23''
+      <;> try simp only [hp23'', ↓reduceIte] at hp23
+    simp only [cover_of_rel_left hp12, ↓reduceDIte]
+    simp only [hp12'', ↓reduceIte]
     exact trans hp12 hp23
   }
 }
@@ -335,14 +360,26 @@ instance finiteSubmap_finiteSimple {m : Map} [IsSimpleMap m] {s : Finset m.Cover
   simp only [finiteSubmap_iff]
   simp only [h1, h0, exists_const, true_and]
   unfold f
-  simp only [Fin.getElem_fin, Subtype.coe_eta, Quotient.out_eq, exists_prop]
-  simp only [← Finset.mem_toList, List.getElem_mem, and_true]
-  simp only [Subtype.prop, true_and]
+  simp only [Fin.getElem_fin]
+  simp only [← Finset.mem_toList]
+  simp only [Subtype.prop]
   rw[← Finset.mem_toList, List.mem_iff_getElem] at h1
   have ⟨i, hi, hig⟩ := h1
   use ⟨i, by{simp at hi; simp[hi]}⟩
   simp only [hig]
   have h := Quotient.mk_out (s := m.CoveredPointSetoid) ⟨p, h0⟩
+  simp only [Finset.mem_toList, exists_true_left]
+  refine ⟨?_, h⟩
+  have h2 : ⟦⟨p, h0⟩⟧ ∈ s := by{
+    rw[← hig]
+    rw[← Finset.mem_toList]
+    apply List.getElem_mem
+  }
+  apply Eq.mpr ?_ h2
+  congr 1
+  rw[Quotient.eq]
+  change m _ _
+  simp only
   exact h
 }
 
@@ -388,7 +425,6 @@ theorem finiteSubmap_adj_of_adj {m : Map} [IsPlainMap m]
   constructor
   · {
     rw[finiteSubmap_iff]
-    push_neg
     simp[h12.1]
   }
   rcases h12.2 with ⟨z, hzc, hzb⟩
@@ -443,27 +479,43 @@ theorem induce_subgraph_finiteSubmap {m : Map} [IsPlainMap m]
   rw[SimpleGraph.map_adj]
   let u'' : (m.finiteSubmap s).CoveredPointQuotient := ⟦⟨u.out.val, by{
     rw[finiteSubmap_cover_iff]
-    simp only [Subtype.coe_eta, Quotient.out_eq, cover_of_adjacent_left hu'v', exists_const]
-    rw[← hu']
-    exact u'.prop
+    simp only [cover_of_adjacent_left hu'v']
+    simp only [exists_true_left]
+    simp only [← hu']
+    have hup := u'.prop
+    apply Eq.mpr ?_ hup
+    congr 1
+    rw[Quotient.mk_eq_iff_out]
   }⟩⟧
   let v'' : (m.finiteSubmap s).CoveredPointQuotient := ⟦⟨v.out.val, by{
     rw[finiteSubmap_cover_iff]
-    simp only [Subtype.coe_eta, Quotient.out_eq, cover_of_adjacent_right hu'v', exists_const]
-    rw[← hv']
-    exact v'.prop
+    simp only [cover_of_adjacent_right hu'v']
+    simp only [exists_true_left]
+    simp only [← hv']
+    have hvp := v'.prop
+    apply Eq.mpr ?_ hvp
+    congr 1
+    rw[Quotient.mk_eq_iff_out]
   }⟩⟧
   have hu'' := Quotient.mk_out (s := (m.finiteSubmap s).CoveredPointSetoid) ⟨u.out.val, by{
     rw[finiteSubmap_cover_iff]
-    simp only [Subtype.coe_eta, Quotient.out_eq, cover_of_adjacent_left hu'v', exists_const]
-    rw[← hu']
-    exact u'.prop
+    simp only [cover_of_adjacent_left hu'v']
+    simp only [exists_true_left]
+    simp only [← hu']
+    have hup := u'.prop
+    apply Eq.mpr ?_ hup
+    congr 1
+    rw[Quotient.mk_eq_iff_out]
   }⟩
   have hv'' := Quotient.mk_out (s := (m.finiteSubmap s).CoveredPointSetoid) ⟨v.out.val, by{
     rw[finiteSubmap_cover_iff]
-    simp only [Subtype.coe_eta, Quotient.out_eq, cover_of_adjacent_right hu'v', exists_const]
-    rw[← hv']
-    exact v'.prop
+    simp only [cover_of_adjacent_right hu'v']
+    simp only [exists_true_left]
+    simp only [← hv']
+    have hvp := v'.prop
+    apply Eq.mpr ?_ hvp
+    congr 1
+    rw[Quotient.mk_eq_iff_out]
   }⟩
   change m.finiteSubmap s u''.out _ at hu''
   change m.finiteSubmap s v''.out _ at hv''
@@ -492,7 +544,8 @@ theorem induce_subgraph_finiteSubmap {m : Map} [IsPlainMap m]
   constructor
   · {
     unfold finiteSubmap_embedding
-    simp only [Function.Embedding.coeFn_mk]
+    simp only
+    change ⟦_⟧ = u
     rw[Quotient.mk_eq_iff_out]
     change m _ _
     simp only
@@ -500,7 +553,8 @@ theorem induce_subgraph_finiteSubmap {m : Map} [IsPlainMap m]
   }
   · {
     unfold finiteSubmap_embedding
-    simp only [Function.Embedding.coeFn_mk]
+    simp only
+    change ⟦_⟧ = v
     rw[Quotient.mk_eq_iff_out]
     change m _ _
     simp only

@@ -1,7 +1,10 @@
-import Mathlib.Combinatorics.SimpleGraph.Coloring
+import Mathlib.Combinatorics.SimpleGraph.Coloring.Vertex
 import Mathlib.Topology.Instances.Discrete
 import Mathlib.Topology.Sets.Compacts
 import Mathlib.Topology.Compactness.Compact
+
+/-! de Brujin-Erdos图染色定理 -/
+/- 使用拓扑学的紧致性定理证明 -/
 
 namespace SimpleGraph
 
@@ -92,7 +95,7 @@ theorem isClosed_coloringConstraint {V : Type*} {G : SimpleGraph V} {k : ℕ}
   have h_eq : coloringConstraint G k S =
       ⋂ (u ∈ S) (v ∈ S) (_ : G.Adj u v), { c | c u ≠ c v } := by{
     ext c
-    simp only [coloringConstraint, ne_eq, Set.mem_setOf_eq, Set.mem_iInter]
+    simp only [coloringConstraint, ne_eq, Set.mem_ofPred_eq, Set.mem_iInter]
     aesop
   }
   rw [h_eq]
@@ -124,24 +127,24 @@ theorem inter_coloringConstraint {V : Type*} [Nonempty V]
     if hv : v ∈ S_all then c_ind ⟨v, hv⟩ else ⟨0, hk⟩
   use c
   simp only [Set.mem_iInter]
-  simp only [coloringConstraint, Set.mem_setOf]
+  simp only [coloringConstraint, Set.mem_ofPred]
   intro S hS u v hu hv hadj
   have hu_all : u ∈ S_all := by{
     unfold S_all
     apply Set.mem_of_subset_of_mem (s₁ := S) ?_ hu
-    simp only [SetLike.coe_subset_coe, Finset.le_eq_subset]
+    simp only [SetLike.coe_subset_coe]
     change id S ≤ _
     apply Finset.le_sup hS
   }
   have hv_all : v ∈ S_all := by{
     unfold S_all
     apply Set.mem_of_subset_of_mem (s₁ := S) ?_ hv
-    simp only [SetLike.coe_subset_coe, Finset.le_eq_subset]
+    simp only [SetLike.coe_subset_coe]
     change id S ≤ _
     apply Finset.le_sup hS
   }
-  have hu_if : c u = c_ind ⟨u, hu_all⟩ := dif_pos hu_all
-  have hv_if : c v = c_ind ⟨v, hv_all⟩ := dif_pos hv_all
+  have hu_if : c u = c_ind ⟨u, hu_all⟩ := dite_eq_left hu_all
+  have hv_if : c v = c_ind ⟨v, hv_all⟩ := dite_eq_left hv_all
   rw [hu_if, hv_if]
   apply hc_ind
   simpa

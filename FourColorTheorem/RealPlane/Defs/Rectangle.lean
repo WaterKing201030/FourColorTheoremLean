@@ -1,6 +1,8 @@
 import FourColorTheorem.RealPlane.Defs.Point
 import FourColorTheorem.RealPlane.Defs.Ioo
 
+/-! 实平面上的开长方形 -/
+
 namespace RealPlane
 
 open Set

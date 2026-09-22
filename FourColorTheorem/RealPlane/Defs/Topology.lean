@@ -5,6 +5,8 @@ import Mathlib.Topology.Connected.Basic
 import Mathlib.Topology.Instances.Real.Lemmas
 import Mathlib.Topology.Connected.PathConnected
 
+/-! 拓扑性质：开集、闭集；在这里定义了相邻 -/
+
 theorem exists_Ioo_subset_of_isOpen {s : Set ℝ} (hs : IsOpen s) {x : ℝ} (hx : x ∈ s) :
     ∃ a b, x ∈ Set.Ioo a b ∧ Set.Ioo a b ⊆ s := by{
   rw[Metric.isOpen_iff] at hs
@@ -15,7 +17,7 @@ theorem exists_Ioo_subset_of_isOpen {s : Set ℝ} (hs : IsOpen s) {x : ℝ} (hx 
   intro y hy
   apply hball
   unfold Metric.ball
-  rw[Set.mem_setOf]
+  rw[Set.mem_ofPred]
   rw[Real.dist_eq, abs_lt]
   split_ands <;> linarith [hy.1, hy.2]
 }
@@ -103,7 +105,7 @@ theorem closure_eq_closure' (R : Region) : closure R = R.closure' := by{
   ext x
   rw[mem_closure_iff_nhds]
   unfold closure'
-  simp only [Set.mem_setOf]
+  simp only [Set.mem_ofPred]
   constructor
   · {
     intro hx u hu hxu
@@ -126,7 +128,7 @@ theorem meet_of_open_of_meet_closure {R1 R2 : Region} (h1 : IsOpen R1)
 (h12 : R1.meet (closure R2)) : R1.meet R2 := by {
   have ⟨z, hz1, hz2⟩ := h12
   rw[closure_eq_closure', closure'] at hz2
-  rw[Set.mem_setOf] at hz2
+  rw[Set.mem_ofPred] at hz2
   specialize hz2 _ h1 hz1
   symm
   assumption

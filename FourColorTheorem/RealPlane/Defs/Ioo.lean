@@ -1,6 +1,8 @@
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.Order.Interval.Set.Basic
 import Mathlib.Tactic.Linarith
+
+/-! 开区间接口，类似Set.Ioo -/
 
 namespace RealPlane
 

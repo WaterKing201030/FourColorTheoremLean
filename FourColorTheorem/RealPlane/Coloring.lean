@@ -1,5 +1,7 @@
 import FourColorTheorem.RealPlane.Defs
 
+/-! 地图的染色的定义 -/
+
 namespace RealPlane
 
 open Set

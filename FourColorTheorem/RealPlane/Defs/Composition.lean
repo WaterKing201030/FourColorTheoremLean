@@ -1,11 +1,14 @@
 import FourColorTheorem.RealPlane.Defs.Point
 import FourColorTheorem.RealPlane.Defs.Topology
 
+/-! 地图的属性 -/
+
 namespace RealPlane
 
 open Set
 
 class IsPlainMap (m : Map) : Prop where
+  /- 我们讨论的任何地图实际上都应该是朴素地图 -/
   map_symm {p1 p2 : Point}: m p1 p2 → m p2 p1
   map_trans {p1 p2 p3 : Point} : m p1 p2 → m p2 p3 → m p1 p3
 
@@ -79,7 +82,7 @@ theorem cover_of_adjacent_left {p1 p2 : Point} (h12 : m.adjacent p1 p2) :
   apply And.left at hkb
   rw[Region.closure_eq_closure'] at hkb
   unfold Region.closure' at hkb
-  rw[Set.mem_setOf] at hkb
+  rw[Set.mem_ofPred] at hkb
   specialize hkb Set.univ (by{simp}) (by{simp})
   have ⟨q, hq, _⟩ := hkb
   exact cover_of_rel_left hq
@@ -91,7 +94,7 @@ theorem cover_of_adjacent_right {p1 p2 : Point} (h12 : m.adjacent p1 p2) :
   apply And.right at hkb
   rw[Region.closure_eq_closure'] at hkb
   unfold Region.closure' at hkb
-  rw[Set.mem_setOf] at hkb
+  rw[Set.mem_ofPred] at hkb
   specialize hkb Set.univ (by{simp}) (by{simp})
   have ⟨q, hq, _⟩ := hkb
   exact cover_of_rel_left hq
