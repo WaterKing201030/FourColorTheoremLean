@@ -44,24 +44,20 @@ class hasColoring (m k : PlainMap) : Prop where
 
 def colorableWith (m : PlainMap) (n : ℕ) : Prop :=
   ∃ k, m.hasColoring k ∧ k.at_most_regions n
-end PlainMap
 
-
-def allColorable (nc : ℕ) := ∀ m : PlainMap,
+def simpleColorable (nc : ℕ) := ∀ m : PlainMap,
 m.allOpen → m.allPreconnected
 → m.colorableWith nc
-def allFinColorable (nc : ℕ) := ∀ m : PlainMap,
+def simpleFinColorable (nc : ℕ) := ∀ m : PlainMap,
 m.allOpen → m.allPreconnected → m.isFinite
 → m.colorableWith nc
 
-theorem allFinColorable_of_allColorable {nc : ℕ}
-  (hnc : allColorable nc) : allFinColorable nc :=by{
+theorem simpleFinColorable_of_simpleColorable {nc : ℕ}
+  (hnc : simpleColorable nc) : simpleFinColorable nc :=by{
   intro m hmO hmC _
   exact hnc m hmO hmC
 }
-
-open PlainMap in
-theorem allFinColorable_pos {nc : ℕ} (h : allFinColorable nc) : nc > 0 := by {
+theorem simpleFinColorable_pos {nc : ℕ} (h : simpleFinColorable nc) : nc > 0 := by {
   specialize h ⊤ univ_allOpen univ_allPreconnected univ_isFinite
   by_contra hnc
   simp only [gt_iff_lt, not_lt, nonpos_iff_eq_zero] at hnc
@@ -79,5 +75,7 @@ theorem allFinColorable_pos {nc : ℕ} (h : allFinColorable nc) : nc > 0 := by {
   apply hf 0 0
   trivial
 }
+
+end PlainMap
 
 end RealPlane

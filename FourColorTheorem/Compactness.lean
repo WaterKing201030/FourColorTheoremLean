@@ -1154,12 +1154,12 @@ theorem induce_subgraph_finiteSubmap {m : PlainMap}
 }
 
 theorem compactness {nc : ℕ}
-(fin_colorable : allFinColorable nc)
-: allColorable nc := by{
+(fin_colorable : simpleFinColorable nc)
+: simpleColorable nc := by{
   intro m hmO hmC
   rw[← simpleGraph_colorable_iff, ← SimpleGraph.deBruijn_erdos_iff]
   intro s
-  have hnc : nc > 0 := finColorable_pos fin_colorable
+  have hnc : nc > 0 := simpleFinColorable_pos fin_colorable
   let neznc : NeZero nc := by{simp[neZero_iff]; omega}
   suffices ((SimpleGraph.induce (↑s) m.simpleGraph).map
     (Function.Embedding.subtype _)).Colorable nc by{
@@ -1175,9 +1175,9 @@ theorem compactness {nc : ℕ}
 }
 
 theorem compactness_iff {nc : ℕ} :
-  allColorable nc ↔ allFinColorable nc := by{
+  simpleColorable nc ↔ simpleFinColorable nc := by{
   apply Iff.intro ?_ compactness
-  apply allFinColorable_of_allColorable
+  apply simpleFinColorable_of_simpleColorable
 }
 
 end PlainMap
