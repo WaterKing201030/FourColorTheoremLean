@@ -238,4 +238,125 @@ instance instConnectedSpace : ConnectedSpace Point := by{
   apply @instConnectedSpaceProd
 }
 
+namespace PlainMap
+def boundary (m : PlainMap) (p0 p1 : Point) : Region := closure (m p0) ∩ closure (m p1)
+theorem mem_boundary_iff {m : PlainMap} {p0 p1 : Point} {p : Point} :
+  p ∈ boundary m p0 p1 ↔ (p ∈ closure (m p0) ∧ p ∈ closure (m p1)) := Iff.rfl
+theorem boundary_comm {m : PlainMap} {p0 p1 : Point} : boundary m p0 p1 = boundary m p1 p0
+  := Set.inter_comm _ _
+def corner_map (m : PlainMap) (p : Point) : PlainMap where
+  getRegion := fun q0 => {q1 | p ∈ closure (m q0) ∧ m q0 q1}
+  getRegion_symm := by{
+    intro x y ⟨hl, hr⟩
+    change _ ∧ _
+    constructor
+    · {
+      apply Eq.mp ?_ hl
+      congr 2
+      apply m.eq_of_rel
+      exact hr
+    }
+    · symm; assumption
+  }
+  getRegion_trans := by{
+    intro x y ⟨h0l, h0r⟩ z ⟨h1l, h1r⟩
+    change _ ∧ _
+    constructor
+    · exact h0l
+    · exact trans h0r h1r
+  }
+theorem corner_map_def_iff {m : PlainMap} {p q0 : Point} :
+  m.corner_map p q0 = {q1 | p ∈ closure (m q0) ∧ m q0 q1} := by rfl
+theorem mem_corner_map_iff {m : PlainMap} {p q0 q1 : Point} :
+  q1 ∈ m.corner_map p q0 ↔ p ∈ closure (m q0) ∧ m q0 q1 := by rfl
+def not_corner (m : PlainMap) : Region := {p | at_most_regions (m.corner_map p) 2}
+theorem not_corner_def_iff {m : PlainMap} :
+  m.not_corner = {p | at_most_regions (m.corner_map p) 2} := by rfl
+theorem mem_not_corner_iff {m : PlainMap} {p : Point} :
+  p ∈ m.not_corner ↔ at_most_regions (m.corner_map p) 2 := by rfl
+def adjacent (m : PlainMap) (p0 p1 : Point) : Prop :=
+  ¬m p0 p1 ∧ m.not_corner.meet (m.boundary p0 p1)
+
+def allOpen (m : PlainMap) : Prop :=
+  ∀p, IsOpen (m p)
+def allPreconnected (m : PlainMap) : Prop :=
+  ∀p, IsPreconnected (m p)
+theorem empty_allOpen : allOpen empty := by{
+  intro p
+  simp[empty]
+}
+theorem univ_allOpen : allOpen univ := by{
+  intro p
+  simp[univ]
+}
+theorem empty_allPreconnected : allPreconnected empty := by{
+  intro p
+  simp[empty, IsPreconnected]
+}
+theorem univ_allPreconnected : allPreconnected univ := by{
+  intro p
+  change IsPreconnected Set.univ
+  apply isPreconnected_univ
+}
+
+theorem adjacent_Symm {m : PlainMap} : Std.Symm m.adjacent := ⟨by{
+  intro p0 p1 hp0
+  rw[adjacent] at *
+  rwa[m.comm, boundary_comm]
+}⟩
+@[symm] theorem adjacent_symm
+{m : PlainMap} {z1 z2 : Point} : m.adjacent z1 z2 → m.adjacent z2 z1 :=
+  m.adjacent_Symm.symm _ _
+theorem adjacent_comm {m : PlainMap} {z1 z2 : Point} : m.adjacent z1 z2 ↔ m.adjacent z2 z1 :=
+  ⟨m.adjacent_symm, m.adjacent_symm⟩
+theorem cover_of_adjacent_left {m : PlainMap} {p1 p2 : Point} (h12 : m.adjacent p1 p2) :
+  m.cover p1 := by{
+  have ⟨h12m, ⟨k, hkc, hkb⟩⟩ := h12
+  rw[mem_boundary_iff] at hkb
+  apply And.left at hkb
+  rw[Region.closure_eq_closure'] at hkb
+  unfold Region.closure' at hkb
+  rw[Set.mem_ofPred] at hkb
+  specialize hkb Set.univ (by{simp}) (by{simp})
+  have ⟨q, hq, _⟩ := hkb
+  exact cover_of_rel_left hq
+}
+theorem cover_of_adjacent_right {m : PlainMap} {p1 p2 : Point} (h12 : m.adjacent p1 p2) :
+  m.cover p2 := by{
+  have ⟨h12m, ⟨k, hkc, hkb⟩⟩ := h12
+  rw[mem_boundary_iff] at hkb
+  apply And.right at hkb
+  rw[Region.closure_eq_closure'] at hkb
+  unfold Region.closure' at hkb
+  rw[Set.mem_ofPred] at hkb
+  specialize hkb Set.univ (by{simp}) (by{simp})
+  have ⟨q, hq, _⟩ := hkb
+  exact cover_of_rel_left hq
+}
+
+theorem congr_adjacent_left_of_rel {m : PlainMap} {z1 z2 : Point} (h12 : m z1 z2)
+  : ∀z, m.adjacent z1 z ↔ m.adjacent z2 z:=by{
+  intro z
+  unfold adjacent
+  rw[congr_left_of_rel h12, and_congr_right_iff]
+  intro mz2
+  apply propext_iff.mp
+  congr 1
+  unfold boundary
+  congr 2
+  rw[eq_of_rel h12]
+}
+theorem adjacent_eq_of_rel {m : PlainMap} {z1 z2 : Point} (h12 : m z1 z2)
+  : m.adjacent z1 = m.adjacent z2 := by{
+  ext z
+  rw[congr_adjacent_left_of_rel h12]
+}
+theorem congr_adjacent_right_of_rel {m : PlainMap} {z1 z2 : Point} (h12 : m z1 z2)
+  : ∀z, m.adjacent z z1 ↔ m.adjacent z z2:=by{
+  simp only [adjacent_comm]
+  apply congr_adjacent_left_of_rel h12
+}
+
+end PlainMap
+
 end RealPlane

@@ -17,6 +17,4 @@ theorem IsFiniteSimpleMap.exists_mapRepr {m0 : Map}
   sorry
 }
 
-theorem IsFiniteSimpleMap.exists_adjBox {m0 : Map}
-
 end RealPlane
