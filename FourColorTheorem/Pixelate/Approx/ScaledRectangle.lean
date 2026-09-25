@@ -1,4 +1,4 @@
-import FourColorTheorem.Discretize.Approx.ScaledPoint
+import FourColorTheorem.Pixelate.Approx.ScaledPoint
 
 /-! 把整长方形放进实平面 -/
 
@@ -42,6 +42,12 @@ theorem inner_subset' (b : ScaledRectangle) : ∀p ∈ b.inner, p ∈ b := by{
   change approxPoint (b.1 + 1) z ∈ b.2.zoom ↔
     approxPoint b.1 z ∈ b.2
   rw [GRectangle.mem_zoom_iff, approxPoint_half]
+@[simp] theorem mem_refine {p : Point} {b : ScaledRectangle} :
+  p ∈ b.refine ↔ p ∈ b := by{
+  rw[mem_def]
+  rw[refine_coe]
+  rfl
+}
 
 theorem inner_subset_refine_inner (b : ScaledRectangle)
 : (b.inner : Region) ⊆ b.refine.inner := by
@@ -90,8 +96,14 @@ def refineBy (t : ℕ) (b : ScaledRectangle) : ScaledRectangle := (refine^[t]) b
     rw[refineBy_fst, refineBy_snd, Set.ext_iff] at ih
     simp at ih
     simp[ih]
+@[simp] theorem mem_refineBy {p : Point} {b : ScaledRectangle} {s : ℕ} :
+  p ∈ b.refineBy s ↔ p ∈ b := by{
+  rw[mem_def]
+  rw[refineBy_coe]
+  rfl
+}
 
-theorem inset_subset_refineBy_inset (t : ℕ) (b : ScaledRectangle) :
+theorem inner_subset_refineBy_inner (t : ℕ) (b : ScaledRectangle) :
     (b.inner : Region) ⊆ (b.refineBy t).inner := by
   induction t with
   | zero => exact Set.Subset.refl _
@@ -117,6 +129,17 @@ theorem approx_mem_touch_inner (s : ℕ) (z : Point) :
   simp only [touch, GRectangle.inner, GridPlane.Ico.inner, GRectangle.mem_iff]
   simp only [GRectangle.touch, Ico.touch]
   omega
+
+theorem disjoint_of_grect_disjoint {b1 b2 : ScaledRectangle}
+  (hb121 : b1.1 = b2.1) (hb122 : ∀ {p}, p ∈ b1.2 → p ∉ b2.2)
+  : Disjoint (b1 : Region) b2 := by{
+  rw[Set.disjoint_iff, Set.subset_empty_iff, Set.eq_empty_iff_forall_notMem]
+  intro p
+  rw[Set.mem_inter_iff, not_and, Set.mem_ofPred, Set.mem_ofPred]
+  intro h1 h2
+  rw[← hb121] at h2
+  exact hb122 h1 h2
+}
 
 end ScaledRectangle
 

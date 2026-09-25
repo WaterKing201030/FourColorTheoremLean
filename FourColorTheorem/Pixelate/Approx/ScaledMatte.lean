@@ -1,5 +1,5 @@
-import FourColorTheorem.Discretize.Approx.ScaledPoint
-import FourColorTheorem.Discretize.Approx.ScaledRectangle
+import FourColorTheorem.Pixelate.Approx.ScaledPoint
+import FourColorTheorem.Pixelate.Approx.ScaledRectangle
 import FourColorTheorem.GridPlane.Matte
 
 /-! 把Matte放进实平面 -/
@@ -36,6 +36,12 @@ def refine (b : ScaledMatte) : ScaledMatte :=
   change approxPoint (b.1 + 1) z ∈ b.2.zoom ↔
     approxPoint b.1 z ∈ b.2
   rw [Matte.mem_zoom_iff, approxPoint_half]
+@[simp] theorem mem_refine {p : Point} {b : ScaledMatte} :
+  p ∈ b.refine ↔ p ∈ b := by{
+  rw[mem_def]
+  rw[refine_coe]
+  rfl
+}
 
 def refineBy (t : ℕ) (b : ScaledMatte) : ScaledMatte := (refine^[t]) b
 @[simp] theorem refineBy_fst (t : ℕ) (b : ScaledMatte) :
@@ -70,6 +76,12 @@ def refineBy (t : ℕ) (b : ScaledMatte) : ScaledMatte := (refine^[t]) b
     rw[refineBy_fst, refineBy_snd, Set.ext_iff] at ih
     simp at ih
     simp[ih]
+@[simp] theorem mem_refineBy {p : Point} {b : ScaledMatte} {s : ℕ} :
+  p ∈ b.refineBy s ↔ p ∈ b := by{
+  rw[mem_def]
+  rw[refineBy_coe]
+  rfl
+}
 
 end ScaledMatte
 

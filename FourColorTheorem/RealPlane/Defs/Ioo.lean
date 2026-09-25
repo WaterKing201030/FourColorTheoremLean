@@ -108,6 +108,35 @@ theorem subioo_inter_right {I1 I2 : Ioo} (h : I1 <+ I2) : I2 ∩ I1 = I1 := by{
   apply subioo_inter_left h
 }
 
+def Nonempty (I : Ioo) : Prop :=
+  I.inf < I.sup
+theorem nonempty_def {I : Ioo}
+: I.Nonempty ↔ I.inf < I.sup := by rfl
+theorem nonempty_iff_coe {I : Ioo}
+: I.Nonempty ↔ Set.Nonempty (I : Set ℝ) := by{
+  simp[Nonempty]
+}
+theorem nonempty_of_mem {I : Ioo} {x : ℝ}
+  (hx : x ∈ I) : I.Nonempty := by{
+  rw[nonempty_iff_coe]
+  apply Set.nonempty_of_mem hx
+}
+theorem nonempty_iff_exists_mem {I : Ioo}
+: I.Nonempty ↔ ∃x, x ∈ I := by{
+  constructor
+  · {
+    intro h
+    use (I.inf + I.sup) / 2
+    simp[Nonempty] at h
+    simp only [mem_def, mem_Ioo]
+    split_ands <;> linarith
+  }
+  · {
+    intro ⟨x, hx⟩
+    apply nonempty_of_mem hx
+  }
+}
+
 end Ioo
 
 noncomputable def sepIoo (x1 x2 : ℝ) : Ioo :=

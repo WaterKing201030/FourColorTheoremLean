@@ -7,6 +7,9 @@ import Mathlib.Topology.Connected.PathConnected
 
 /-! 拓扑性质：开集、闭集；在这里定义了相邻 -/
 
+open Function
+open Relation
+
 theorem exists_Ioo_subset_of_isOpen {s : Set ℝ} (hs : IsOpen s) {x : ℝ} (hx : x ∈ s) :
     ∃ a b, x ∈ Set.Ioo a b ∧ Set.Ioo a b ⊆ s := by{
   rw[Metric.isOpen_iff] at hs
@@ -212,27 +215,6 @@ theorem isPreconnected_iff_connected'_of_isOpen {R : Region} (hR : IsOpen R) :
 
 end Region
 
-namespace Map
-def boundary (m : Map) (p0 p1 : Point) : Region := closure (m p0) ∩ closure (m p1)
-theorem mem_boundary_iff {m : Map} {p0 p1 : Point} {p : Point} :
-  p ∈ boundary m p0 p1 ↔ (p ∈ closure (m p0) ∧ p ∈ closure (m p1)) := Iff.rfl
-theorem boundary_comm {m : Map} {p0 p1 : Point} : boundary m p0 p1 = boundary m p1 p0
-  := Set.inter_comm _ _
-def corner_map (m : Map) (p : Point) : Map :=
-  fun q0 q1 => p ∈ closure (m q0) ∧ m q0 q1
-theorem corner_map_def_iff {m : Map} {p q0 : Point} :
-  m.corner_map p q0 = {q1 | p ∈ closure (m q0) ∧ m q0 q1} := by rfl
-theorem mem_corner_map_iff {m : Map} {p q0 q1 : Point} :
-  q1 ∈ m.corner_map p q0 ↔ p ∈ closure (m q0) ∧ m q0 q1 := by rfl
-def not_corner (m : Map) : Region := {p | at_most_regions (m.corner_map p) 2}
-theorem not_corner_def_iff {m : Map} :
-  m.not_corner = {p | at_most_regions (m.corner_map p) 2} := by rfl
-theorem mem_not_corner_iff {m : Map} {p : Point} :
-  p ∈ m.not_corner ↔ at_most_regions (m.corner_map p) 2 := by rfl
-def adjacent (m : Map) (p0 p1 : Point) : Prop :=
-  ¬m p0 p1 ∧ m.not_corner.meet (m.boundary p0 p1)
-end Map
-
 instance instConnectedSpace : ConnectedSpace Point := by{
   unfold Point
   apply @instConnectedSpaceProd
@@ -240,6 +222,23 @@ instance instConnectedSpace : ConnectedSpace Point := by{
 
 namespace PlainMap
 def boundary (m : PlainMap) (p0 p1 : Point) : Region := closure (m p0) ∩ closure (m p1)
+theorem open_meet_of_mem_boundary {m : PlainMap} {p0 p1 z : Point} :
+  z ∈ m.boundary p0 p1 → ∀R : Region, IsOpen R → z ∈ R → R.meet (m p0) ∧ R.meet (m p1)
+:= by{
+  intro ⟨h0, h1⟩ R hR hzR
+  have h0' : R.meet (closure (m p0)) := ⟨z, hzR, h0⟩
+  have h1' : R.meet (closure (m p1)) := ⟨z, hzR, h1⟩
+  apply Region.meet_of_open_of_meet_closure hR at h0'
+  apply Region.meet_of_open_of_meet_closure hR at h1'
+  exact ⟨h0', h1'⟩
+}
+theorem rect_meet_of_mem_boudnary {m : PlainMap} {p0 p1 z : Point} :
+  z ∈ m.boundary p0 p1 → ∀R : Rectangle, z ∈ R → (∃z' ∈ R, z' ∈ m p0) ∧ (∃z' ∈ R, z' ∈ m p1) := by{
+  intro h R hzR
+  apply open_meet_of_mem_boundary at h
+  specialize h R R.isOpen hzR
+  exact h
+}
 theorem mem_boundary_iff {m : PlainMap} {p0 p1 : Point} {p : Point} :
   p ∈ boundary m p0 p1 ↔ (p ∈ closure (m p0) ∧ p ∈ closure (m p1)) := Iff.rfl
 theorem boundary_comm {m : PlainMap} {p0 p1 : Point} : boundary m p0 p1 = boundary m p1 p0
@@ -269,6 +268,12 @@ theorem corner_map_def_iff {m : PlainMap} {p q0 : Point} :
   m.corner_map p q0 = {q1 | p ∈ closure (m q0) ∧ m q0 q1} := by rfl
 theorem mem_corner_map_iff {m : PlainMap} {p q0 q1 : Point} :
   q1 ∈ m.corner_map p q0 ↔ p ∈ closure (m q0) ∧ m q0 q1 := by rfl
+theorem corner_map_submap {m : PlainMap} {p : Point} :
+  m.corner_map p ≤ m := by{
+  apply submap_iff.mpr
+  intro q0 q1 ⟨hpq0, hq01⟩
+  exact hq01
+}
 def not_corner (m : PlainMap) : Region := {p | at_most_regions (m.corner_map p) 2}
 theorem not_corner_def_iff {m : PlainMap} :
   m.not_corner = {p | at_most_regions (m.corner_map p) 2} := by rfl
@@ -276,29 +281,6 @@ theorem mem_not_corner_iff {m : PlainMap} {p : Point} :
   p ∈ m.not_corner ↔ at_most_regions (m.corner_map p) 2 := by rfl
 def adjacent (m : PlainMap) (p0 p1 : Point) : Prop :=
   ¬m p0 p1 ∧ m.not_corner.meet (m.boundary p0 p1)
-
-def allOpen (m : PlainMap) : Prop :=
-  ∀p, IsOpen (m p)
-def allPreconnected (m : PlainMap) : Prop :=
-  ∀p, IsPreconnected (m p)
-theorem empty_allOpen : allOpen empty := by{
-  intro p
-  simp[empty]
-}
-theorem univ_allOpen : allOpen univ := by{
-  intro p
-  simp[univ]
-}
-theorem empty_allPreconnected : allPreconnected empty := by{
-  intro p
-  simp[empty, IsPreconnected]
-}
-theorem univ_allPreconnected : allPreconnected univ := by{
-  intro p
-  change IsPreconnected Set.univ
-  apply isPreconnected_univ
-}
-
 theorem adjacent_Symm {m : PlainMap} : Std.Symm m.adjacent := ⟨by{
   intro p0 p1 hp0
   rw[adjacent] at *
@@ -356,7 +338,266 @@ theorem congr_adjacent_right_of_rel {m : PlainMap} {z1 z2 : Point} (h12 : m z1 z
   simp only [adjacent_comm]
   apply congr_adjacent_left_of_rel h12
 }
+theorem not_same_of_adjacent {m : PlainMap} {p0 p1 : Point}
+  (h : m.adjacent p0 p1) : ¬m p0 p1 := h.1
+theorem ne_of_adjacent {m : PlainMap} {p0 p1 : Point}
+  (h : m.adjacent p0 p1) : p0 ≠ p1 := by{
+  have h' := not_same_of_adjacent h
+  contrapose h'
+  rw[h']
+  apply cover_of_adjacent_right h
+}
+
+def allOpen (m : PlainMap) : Prop :=
+  ∀p, IsOpen (m p)
+def allPreconnected (m : PlainMap) : Prop :=
+  ∀p, IsPreconnected (m p)
+theorem empty_allOpen : allOpen empty := by{
+  intro p
+  simp[empty]
+}
+theorem univ_allOpen : allOpen univ := by{
+  intro p
+  simp[univ]
+}
+theorem empty_allPreconnected : allPreconnected empty := by{
+  intro p
+  simp[empty, IsPreconnected]
+}
+theorem univ_allPreconnected : allPreconnected univ := by{
+  intro p
+  change IsPreconnected Set.univ
+  apply isPreconnected_univ
+}
 
 end PlainMap
+
+theorem ioo_separable {I1 I2 : Ioo} {p1 p2 : ℝ}
+  (hp12 : p1 ≠ p2) (hpI1 : p1 ∈ I1) (hpI2 : p2 ∈ I2) : ∃I1' I2',
+    I1' <+ I1 ∧ I2' <+ I2 ∧ p1 ∈ I1' ∧ p2 ∈ I2'
+    ∧ ∀p, p ∈ I1' → p ∉ I2' := by{
+  wlog hp12' : p1 < p2 with IH
+  · {
+    apply le_of_not_gt at hp12'
+    apply lt_of_ne_of_le hp12.symm at hp12'
+    specialize IH hp12.symm hpI2 hpI1 hp12'
+    have ⟨I2', I1', h⟩ := IH
+    use I1', I2'
+    simp only [h, true_and]
+    intro p
+    rw[Imp.swap]
+    apply h.2.2.2.2
+  }
+  let w := (p1 + p2) / 2
+  let I1' : Ioo := ⟨I1.inf, min I1.sup w⟩
+  let I2' : Ioo := ⟨max I2.inf w, I2.sup⟩
+  use I1', I2'
+  rw[Ioo.mem_iff] at hpI1 hpI2
+  split_ands <;> try {
+      simp[I1', I2', w]
+      try linarith
+    }
+  · simp only [lt_min_iff, w, I1']; split_ands <;> linarith
+  · simp only [max_lt_iff, w, I2']; split_ands <;> linarith
+  intro p
+  simp only [Ioo.mem_iff, lt_min_iff, max_lt_iff, not_and, not_lt, and_imp, I1', I2']
+  intros
+  linarith
+}
+
+theorem rect_separable {R1 R2 : Rectangle} {p1 p2 : Point}
+  (hp12 : p1 ≠ p2) (hpR1 : p1 ∈ R1) (hpR2 : p2 ∈ R2) : ∃R1' R2',
+    R1' <+ R1 ∧ R2' <+ R2 ∧ p1 ∈ R1' ∧ p2 ∈ R2'
+    ∧ ∀p, p ∈ R1' → p ∉ R2' := by{
+  rcases em' (p1.1 = p2.1) with hx | hx
+  · {
+    rw[Rectangle.mem_iff'] at hpR1 hpR2
+    have ⟨I1', I2', IH⟩ := ioo_separable hx hpR1.1 hpR2.1
+    let R1' : Rectangle := ⟨I1', R1.2⟩
+    let R2' : Rectangle := ⟨I2', R2.2⟩
+    have IH' := Rectangle.disjoint_of_hspan_disjoint (R1 := R1') (R2 := R2') IH.2.2.2.2
+    use R1', R2'
+    simp only [Ioo.subioo_def] at IH
+    simp only [Ioo.mem_iff] at hpR1 hpR2 IH
+    split_ands <;> try {
+      simp[R1', R2']
+      try linarith
+    }
+    exact IH'
+  }
+  have hy : p1.2 ≠ p2.2 := by{
+    contrapose hp12
+    ext <;> assumption
+  }
+  rw[Rectangle.mem_iff'] at hpR1 hpR2
+  have ⟨I1', I2', IH⟩ := ioo_separable hy hpR1.2 hpR2.2
+  let R1' : Rectangle := ⟨R1.1, I1'⟩
+  let R2' : Rectangle := ⟨R2.1, I2'⟩
+  have IH' := Rectangle.disjoint_of_vspan_disjoint (R1 := R1') (R2 := R2') IH.2.2.2.2
+  use R1', R2'
+  simp only [Ioo.subioo_def] at IH
+  simp only [Ioo.mem_iff] at hpR1 hpR2 IH
+  split_ands <;> try {
+    simp[R1', R2']
+    try linarith
+  }
+  exact IH'
+}
+
+theorem rect_fin_separable_from {n : ℕ} {R : Rectangle} {p : Point}
+  {k : Fin n → Point} {f : Fin n → Rectangle}
+  (hpR : p ∈ R) (hkp : ∀ i, k i ≠ p)
+  (hkf : ∀ i, k i ∈ f i)
+  : ∃ R' : Rectangle, ∃ f' : Fin n → Rectangle,
+  R' <+ R ∧ (∀i, f' i <+ f i)
+  ∧ p ∈ R' ∧ (∀i, k i ∈ f' i)
+  ∧ ∀p ∈ R', ∀i, p ∉ f' i
+  := by{
+  have rect_separable' {R1 R2 : Rectangle} {p1 p2 : Point}
+  (hp12 : p1 ≠ p2) (hpR1 : p1 ∈ R1) (hpR2 : p2 ∈ R2) :
+  ∃RR : Rectangle × Rectangle,
+    RR.1 <+ R1 ∧ RR.2 <+ R2 ∧ p1 ∈ RR.1 ∧ p2 ∈ RR.2
+    ∧ ∀p, p ∈ RR.1 → p ∉ RR.2 := by{
+    have ⟨R1, R2, h⟩ := rect_separable hp12 hpR1 hpR2
+    use (R1, R2)
+  }
+  let f'2 : Fin n → Rectangle × Rectangle := fun i =>
+    Classical.choose (rect_separable' (hkp i).symm hpR (hkf i))
+  have hf'2 := fun i => Classical.choose_spec (rect_separable' (hkp i).symm hpR (hkf i))
+  change ∀i, (f'2 i).1 <+ R ∧ (f'2 i).2 <+ f i ∧
+      p ∈ (f'2 i).1 ∧
+        k i ∈ (f'2 i).2 ∧ ∀ p_1 ∈ (f'2 i).1, p_1 ∉ (f'2 i).2 at hf'2
+  let f' : Fin n → Rectangle := fun i => (f'2 i).2
+  rcases eq_zero_or_pos n with hn0 | hnp
+  · {
+    use R
+    simp only [hn0, Fin.isEmpty_iff, IsEmpty.forall_iff, implies_true, and_self,
+      nonempty_fun, true_or, exists_const, hpR, Rectangle.subrect_refl]
+  }
+  have hs : (Finset.univ : Finset (Fin n)).Nonempty := by{
+    use ⟨0, hnp⟩
+    simp
+  }
+  let R' : Rectangle := Rectangle.iInter' hs (fun i => (f'2 i).1)
+  use R', f'
+  constructor
+  · {
+    apply Rectangle.iInter'_subrect_of_subrect
+    intro i _
+    exact (hf'2 i).1
+  }
+  constructor
+  · {
+    intro i
+    exact (hf'2 i).2.1
+  }
+  constructor
+  · {
+    unfold R'; rw[Rectangle.mem_iInter'_iff]
+    intro i _
+    exact (hf'2 i).2.2.1
+  }
+  constructor
+  · {
+    intro i
+    exact (hf'2 i).2.2.2.1
+  }
+  intro p hp i
+  unfold R' at hp; rw[Rectangle.mem_iInter'_iff] at hp
+  exact (hf'2 i).2.2.2.2 p (hp i (by{simp}))
+}
+
+theorem rect_fin_separable {n : ℕ} {k : Fin n → Point} {f : Fin n → Rectangle}
+  (hk : Injective k) (hkf : ∀ i, k i ∈ f i) : ∃ f' : Fin n → Rectangle,
+  (∀i, k i ∈ f' i) ∧ (∀i, f' i <+ f i)
+  ∧ (∀i j p, p ∈ f' i → p ∈ f' j → i = j)
+  := by{
+  induction n with
+  | zero => simp
+  | succ n ih => {
+    let k' : Fin n → Point := fun i => k i.castSucc
+    let f' : Fin n → Rectangle := fun i => f i.castSucc
+    specialize ih (k := k') (f := f')
+      (by{
+        intro i1 i2 hi12
+        unfold k' at hi12
+        apply hk at hi12
+        apply Fin.castSucc_injective at hi12
+        exact hi12
+      }) (by{
+        intro i
+        unfold k' f'
+        apply hkf
+      })
+    rcases ih with ⟨f'', hkf'', hff'', hfI''⟩
+    let p := k (Fin.last n)
+    let R := f (Fin.last n)
+    have hpR : p ∈ R := hkf _
+    have hk'p : ∀ i, k' i ≠ p := by{
+      intro i
+      unfold k' p
+      rw[hk.ne_iff]
+      simp
+    }
+    have ⟨R', f3, hf3⟩ := rect_fin_separable_from hpR hk'p hkf''
+    let f4 : Fin (n + 1) → Rectangle := fun i =>
+      if hi : i = Fin.last n then R'
+      else f3 (Fin.castPred i hi)
+    use f4
+    constructor
+    · {
+      intro i
+      unfold f4
+      split_ifs with hi
+      · rw[hi]; exact hf3.2.2.1
+      · {
+        have hf3' := hf3.2.2.2.1 (Fin.castPred i hi)
+        exact hf3'
+      }
+    }
+    constructor
+    · {
+      intro i
+      unfold f4
+      split_ifs with hi
+      · rw[hi]; exact hf3.1
+      · {
+        have hf3' := hf3.2.1 (Fin.castPred i hi)
+        have hff''' := hff'' (Fin.castPred i hi)
+        exact Rectangle.subrect_trans hf3' hff'''
+      }
+    }
+    · {
+      intro i j p hpi hpj
+      unfold f4 at hpi hpj
+      split_ifs at hpi hpj with hi hj hj
+      · rw[hi, hj]
+      · {
+        have hf3' := hf3.2.2.2.2 _ hpi _ hpj
+        contradiction
+      }
+      · {
+        have hf3' := hf3.2.2.2.2 _ hpj _ hpi
+        contradiction
+      }
+      · {
+        have hpi' : p ∈ f'' (i.castPred hi) := by{
+          have hf3' := hf3.2.1 (i.castPred hi)
+          apply hf3'.subset
+          exact hpi
+        }
+        have hpj' : p ∈ f'' (j.castPred hj) := by{
+          have hf3' := hf3.2.1 (j.castPred hj)
+          apply hf3'.subset
+          exact hpj
+        }
+        have hfI3 := hfI'' (Fin.castPred i hi) (Fin.castPred j hj)
+          p hpi' hpj'
+        rw[Fin.castPred_inj] at hfI3
+        exact hfI3
+      }
+    }
+  }
+}
 
 end RealPlane

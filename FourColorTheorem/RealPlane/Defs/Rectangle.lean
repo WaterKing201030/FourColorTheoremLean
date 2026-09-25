@@ -1,5 +1,8 @@
 import FourColorTheorem.RealPlane.Defs.Point
 import FourColorTheorem.RealPlane.Defs.Ioo
+import Mathlib.Data.Finset.Basic
+import Mathlib.Data.Finset.Fold
+import Mathlib.Data.Finset.Lattice.Fold
 
 /-! 实平面上的开长方形 -/
 
@@ -107,7 +110,7 @@ instance subrect.instAntisymm : Std.Antisymm (α := Rectangle) (· <+ ·) := ⟨
 }⟩
 theorem subrect_trans {R1 R2 R3 : Rectangle} (h1 : R1 <+ R2) (h2 : R2 <+ R3) : R1 <+ R3 :=
   subrect.instIsTrans.trans _ _ _ h1 h2
-theorem subrect_refl (R : Rectangle) : R <+ R :=
+@[refl] theorem subrect_refl (R : Rectangle) : R <+ R :=
   subrect.instRefl.refl _
 theorem subrect_antisymm {R1 R2 : Rectangle} (h1 : R1 <+ R2) (h2 : R2 <+ R1) : R1 = R2 :=
   subrect.instAntisymm.antisymm _ _ h1 h2
@@ -122,8 +125,143 @@ theorem subrect_inter_right {R1 R2 : Rectangle} (h : R1 <+ R2) : R2 ∩ R1 = R1 
   rw[inter_comm]
   apply subrect_inter_left h
 }
+theorem inter_subrect_left {R1 R2 : Rectangle} : R1 ∩ R2 <+ R1 := by{
+  match R1, R2 with
+  | ⟨⟨R1xl, R1xu⟩, ⟨R1yl, R1yu⟩⟩, ⟨⟨R2xl, R2xu⟩, ⟨R2yl, R2yu⟩⟩ => {
+    simp[inter_def, Ioo.inter_def, subrect_iff]
+  }
+}
+theorem inter_subrect_right {R1 R2 : Rectangle} : R1 ∩ R2 <+ R2 := by{
+  match R1, R2 with
+  | ⟨⟨R1xl, R1xu⟩, ⟨R1yl, R1yu⟩⟩, ⟨⟨R2xl, R2xu⟩, ⟨R2yl, R2yu⟩⟩ => {
+    simp[inter_def, Ioo.inter_def, subrect_iff]
+  }
+}
+theorem subrect_inter_of_subrect {R1 R2 R3 : Rectangle}
+  (h12 : R1 <+ R2) (h13 : R1 <+ R3) : R1 <+ R2 ∩ R3 := by{
+  match R1, R2, R3 with
+  | ⟨⟨R1xl, R1xu⟩, ⟨R1yl, R1yu⟩⟩,
+    ⟨⟨R2xl, R2xu⟩, ⟨R2yl, R2yu⟩⟩,
+    ⟨⟨R3xl, R3xu⟩, ⟨R3yl, R3yu⟩⟩ => {
+    simp only [subrect_iff, ge_iff_le, inter_def, Ioo.inter_def, sup_le_iff, le_inf_iff] at *
+    split_ands <;> linarith
+  }
+}
 
+instance : SemilatticeInf Rectangle where
+  le := (· <+ ·)
+  le_refl := subrect_refl
+  le_trans := fun _ _ _ => subrect_trans
+  le_antisymm := fun _ _ => subrect_antisymm
+  inf := (· ∩ ·)
+  inf_le_left := fun _ _ => inter_subrect_left
+  inf_le_right := fun _ _ => inter_subrect_right
+  le_inf := fun _ _ _ => subrect_inter_of_subrect
+
+def Nonempty (R : Rectangle) : Prop :=
+  R.hspan.Nonempty ∧ R.vspan.Nonempty
+theorem nonempty_def {R : Rectangle}
+: R.Nonempty ↔ R.hspan.Nonempty ∧ R.vspan.Nonempty := by rfl
+theorem nonempty_iff {R : Rectangle}
+: R.Nonempty ↔ R.hspan.inf < R.hspan.sup ∧ R.vspan.inf < R.vspan.sup := by rfl
+theorem nonempty_iff_coe {R : Rectangle}
+: R.Nonempty ↔ Set.Nonempty (R : Region) := by{
+  simp[nonempty_iff]
+}
+theorem nonempty_of_mem {I : Rectangle} {x : Point}
+  (hx : x ∈ I) : I.Nonempty := by{
+  rw[nonempty_iff_coe]
+  apply Set.nonempty_of_mem hx
+}
+theorem nonempty_iff_exists_mem {R : Rectangle}
+: R.Nonempty ↔ ∃x, x ∈ R := by{
+  simp only [Rectangle.mem_def, Prod.exists]
+  simp only [mem_prod, exists_and_left, exists_and_right]
+  simp only [nonempty_def, Ioo.nonempty_iff_exists_mem, Ioo.mem_def]
+}
+
+def null : Rectangle := ⟨⟨0, 0⟩, ⟨0, 0⟩⟩
+theorem null_coe : (null : Region) = ∅ := by{
+  simp[null]
+}
+theorem notMem_null {p : Point} : p ∉ null := by{
+  simp[null, mem_def]
+}
+theorem null_not_nonempty : ¬null.Nonempty := by{
+  simp[nonempty_iff_coe, null]
+}
+
+def iInter' {α : Type _} {s : Finset α} (hs : s.Nonempty) (f : α → Rectangle) : Rectangle :=
+  s.inf' hs f
+theorem mem_iInter'_iff {α : Type _} {s : Finset α} (hs : s.Nonempty)
+  {f : α → Rectangle} {p : Point} :
+  p ∈ iInter' hs f ↔ ∀i ∈ s, p ∈ f i := by{
+  unfold iInter'
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp at hs
+  | insert i s his ih => {
+    rcases em' (s.Nonempty) with hs' | hs'
+    · {
+      simp only [Finset.not_nonempty_iff_eq_empty] at hs'
+      simp[hs']
+    }
+    rw[Finset.inf'_insert hs']
+    simp only [Finset.mem_insert, forall_eq_or_imp]
+    specialize ih hs'
+    rw[← ih]
+    change p ∈ f i ∩ _ ↔ _
+    simp[mem_inter_iff]
+  }
+}
+theorem iInter'_subrect_of_subrect {α : Type _} {s : Finset α} (hs : s.Nonempty)
+  {f : α → Rectangle} {R : Rectangle}
+  (hfR : ∀ i ∈ s, f i <+ R) :
+  iInter' hs f <+ R:= by{
+  unfold iInter'
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp at hs
+  | insert i s his ih => {
+    rcases em' (s.Nonempty) with hs' | hs'
+    · {
+      simp only [Finset.not_nonempty_iff_eq_empty] at hs'
+      simp[hs'] at hfR
+      simp[hs', hfR]
+    }
+    rw[Finset.inf'_insert hs']
+    change f i ∩ _ <+ R
+    apply subrect_trans inter_subrect_left
+    apply hfR
+    simp
+  }
+}
+
+theorem disjoint_of_hspan_disjoint {R1 R2 : Rectangle}
+  (H : ∀ x, x ∈ R1.hspan → x ∉ R2.hspan) :
+  ∀p, p ∈ R1 → p ∉ R2 := by{
+  intro ⟨x, y⟩ h
+  rw[mem_iff'] at h
+  specialize H _ h.1
+  rw[mem_iff']
+  simp[H]
+}
+theorem disjoint_of_vspan_disjoint {R1 R2 : Rectangle}
+  (H : ∀ x, x ∈ R1.vspan → x ∉ R2.vspan) :
+  ∀p, p ∈ R1 → p ∉ R2 := by{
+  intro ⟨x, y⟩ h
+  rw[mem_iff'] at h
+  specialize H _ h.2
+  rw[mem_iff']
+  simp[H]
+}
 end Rectangle
+
+theorem exists_rect_to_mem (p : Point) :
+  ∃R : Rectangle, p ∈ R := by{
+  use ⟨⟨p.1 - 1, p.1 + 1⟩, ⟨p.2 - 1, p.2 + 1⟩⟩
+  simp[Rectangle.mem_def]
+}
 
 noncomputable def sepRectangle (p q : Point) : Rectangle
   := ⟨sepIoo p.1 q.1, sepIoo p.2 q.2⟩
